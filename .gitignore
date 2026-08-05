@@ -1,0 +1,35 @@
+# Binaries
+detent.build
+out
+*.exe
+
+# Build artifacts
+tmp/
+*.log
+
+# Environment (never commit secrets)
+.envrc
+.env
+
+# Generated files (can be regenerated)
+*_templ.go
+
+# Dependencies
+node_modules/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Tailwind output (generated)
+static/css/output.css
+
+# Design source material: keep the brief and concepts, drop the raw uploads
+design/uploads/
+design/.thumbnail
+design/support.js
