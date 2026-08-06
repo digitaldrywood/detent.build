@@ -1,6 +1,9 @@
 package config
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestValidateRejectsUnreachableProductionURLs(t *testing.T) {
 	tests := []struct {
@@ -19,7 +22,11 @@ func TestValidateRejectsUnreachableProductionURLs(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			cfg := &Config{Env: "production", Site: SiteConfig{URL: tt.siteURL}}
+			cfg := &Config{
+				Env:             "production",
+				SiteURLExplicit: tt.siteURL != "",
+				Site:            SiteConfig{URL: tt.siteURL},
+			}
 
 			err := cfg.Validate()
 
@@ -58,5 +65,54 @@ func TestLoadDefaults(t *testing.T) {
 	}
 	if cfg.TailscaleHostname != "" {
 		t.Errorf("TailscaleHostname = %q, want empty when unset", cfg.TailscaleHostname)
+	}
+}
+
+// SITE_URL falling back to its default in production is the failure that
+// shipped localhost canonicals. An unset variable must be rejected even though
+// the default value itself is well-formed.
+func TestValidateRejectsUnsetSiteURLInProduction(t *testing.T) {
+	cfg := &Config{
+		Env:             "production",
+		SiteURLExplicit: false,
+		Site:            SiteConfig{URL: "http://localhost:3000"},
+	}
+
+	if err := cfg.Validate(); err == nil {
+		t.Error("an unset SITE_URL was accepted in production")
+	}
+}
+
+// Validate only runs in production, so an unset ENV disables it entirely.
+// Warnings is what makes that visible in the deployment log.
+func TestWarningsFlagUnsetEnvAndSiteURL(t *testing.T) {
+	for _, key := range []string{"ENV", "SITE_URL", "PORT", "SITE_NAME", "DEFAULT_OG_IMAGE", "TAILSCALE_HOSTNAME"} {
+		t.Setenv(key, "")
+	}
+
+	got := Load().Warnings()
+
+	if len(got) != 2 {
+		t.Fatalf("Warnings() returned %d entries, want 2: %v", len(got), got)
+	}
+	for _, want := range []string{"ENV is not set", "SITE_URL is not set"} {
+		found := false
+		for _, w := range got {
+			if strings.Contains(w, want) {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("Warnings() does not mention %q: %v", want, got)
+		}
+	}
+}
+
+func TestNoWarningsWhenConfigured(t *testing.T) {
+	t.Setenv("ENV", "production")
+	t.Setenv("SITE_URL", "https://detent.build")
+
+	if got := Load().Warnings(); len(got) != 0 {
+		t.Errorf("Warnings() = %v, want none for a fully configured environment", got)
 	}
 }

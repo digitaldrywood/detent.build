@@ -16,7 +16,14 @@ type SiteConfig struct {
 type Config struct {
 	Port string
 	Env  string
-	Site SiteConfig
+	// EnvExplicit records whether ENV was actually set, as opposed to falling
+	// back to the development default. An unset ENV on a real deployment looks
+	// identical to local development, which is how a production container
+	// once shipped localhost canonicals — see Warnings.
+	EnvExplicit bool
+	Site        SiteConfig
+	// SiteURLExplicit records whether SITE_URL was set.
+	SiteURLExplicit bool
 	// TailscaleHostname is the MagicDNS name of the host, e.g.
 	// corys-mac-studio.tail60aac7.ts.net. When set, startup logs a second
 	// clickable URL so the dev server can be opened from any device on the
@@ -28,6 +35,8 @@ func Load() *Config {
 	return &Config{
 		Port:              getEnvOrDefault("PORT", "3000"),
 		Env:               getEnvOrDefault("ENV", "development"),
+		EnvExplicit:       os.Getenv("ENV") != "",
+		SiteURLExplicit:   os.Getenv("SITE_URL") != "",
 		TailscaleHostname: strings.TrimSpace(os.Getenv("TAILSCALE_HOSTNAME")),
 		Site: SiteConfig{
 			Name:           getEnvOrDefault("SITE_NAME", "detent.build"),
@@ -55,7 +64,7 @@ func (c *Config) Validate() error {
 
 	u := strings.TrimSuffix(c.Site.URL, "/")
 	switch {
-	case u == "":
+	case u == "" || !c.SiteURLExplicit:
 		return errors.New("SITE_URL must be set in production")
 	case strings.HasPrefix(u, "http://"):
 		return fmt.Errorf("SITE_URL %q must use https: .build is HSTS-preloaded, so http URLs are unreachable", u)
@@ -65,6 +74,29 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("SITE_URL %q uses a www host, which has no DNS record", u)
 	}
 	return nil
+}
+
+// Warnings returns misconfigurations that are not fatal but are almost
+// certainly mistakes.
+//
+// Validate only fires when ENV is production, which meant it was inert in the
+// exact situation it was written for: the first Dokploy deploy shipped with no
+// environment at all, so ENV fell back to development, Validate skipped, and
+// every canonical pointed at localhost. An unset ENV is indistinguishable from
+// local development by value alone — but not by whether it was set, because
+// .envrc sets it locally.
+func (c *Config) Warnings() []string {
+	var out []string
+
+	if !c.EnvExplicit {
+		out = append(out, "ENV is not set, defaulting to development: "+
+			"production checks are disabled and canonicals will not be validated")
+	}
+	if !c.SiteURLExplicit {
+		out = append(out, "SITE_URL is not set, defaulting to "+c.Site.URL+
+			": canonical, og:url, and sitemap entries will point there")
+	}
+	return out
 }
 
 func getEnvOrDefault(key, defaultValue string) string {
