@@ -8,6 +8,12 @@ export ENV=development
 export SITE_NAME=detent.build
 export SITE_URL=http://localhost:3000
 
+# MagicDNS name of this host, so startup logs a second clickable URL you can
+# open from a phone or laptop elsewhere on the tailnet. Get it with:
+#   tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//'
+# Development convenience only — leave it unset in production.
+export TAILSCALE_HOSTNAME="corys-mac-studio.tail60aac7.ts.net"
+
 # Production, set in the Dokploy application environment:
 #
 #   ENV=production

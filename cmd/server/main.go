@@ -82,6 +82,9 @@ func run() error {
 	defer stop()
 
 	slog.Info("starting server", "url", fmt.Sprintf("http://localhost:%s", cfg.Port), "env", cfg.Env)
+	if cfg.TailscaleHostname != "" {
+		slog.Info("network access", "url", fmt.Sprintf("http://%s:%s", cfg.TailscaleHostname, cfg.Port))
+	}
 	if err := serve(signalCtx, echoServer{e: e}, shutdownTimeout); err != nil {
 		return err
 	}
