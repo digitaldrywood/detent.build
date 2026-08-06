@@ -1,0 +1,41 @@
+package layouts
+
+import "detent.build/internal/meta"
+
+templ MetaTags(m meta.PageMeta) {
+	{{ ogImage := meta.OGImageFromCtx(ctx, m) }}
+	{{ canonical := meta.AbsoluteURL(ctx, m.Path) }}
+	<title>{ m.Title } &#183; { meta.SiteNameFromCtx(ctx) }</title>
+	if m.Description != "" {
+		<meta name="description" content={ m.Description }/>
+	}
+	if canonical != "" {
+		<link rel="canonical" href={ canonical }/>
+	}
+	if m.NoIndex {
+		<meta name="robots" content="noindex, nofollow"/>
+	}
+	<meta property="og:title" content={ m.Title }/>
+	<meta property="og:site_name" content={ meta.SiteNameFromCtx(ctx) }/>
+	<meta property="og:type" content={ m.OGType }/>
+	if canonical != "" {
+		<meta property="og:url" content={ canonical }/>
+	}
+	if m.Description != "" {
+		<meta property="og:description" content={ m.Description }/>
+	}
+	if ogImage != "" {
+		<meta property="og:image" content={ ogImage }/>
+		<meta property="og:image:width" content="2400"/>
+		<meta property="og:image:height" content="1260"/>
+		<meta property="og:image:alt" content="detent.build — you write the issue, the gates decide when it lands. The six board lanes with Human Review held at a gate."/>
+	}
+	<meta name="twitter:card" content="summary_large_image"/>
+	<meta name="twitter:title" content={ m.Title }/>
+	if m.Description != "" {
+		<meta name="twitter:description" content={ m.Description }/>
+	}
+	if ogImage != "" {
+		<meta name="twitter:image" content={ ogImage }/>
+	}
+}

@@ -1,0 +1,124 @@
+package components
+
+// Eyebrow is the numbered, uppercase mono label above a section heading.
+// Numbering the sections is deliberate: this is a spec sheet, not a brochure.
+templ Eyebrow(num string, label string) {
+	<div class="font-mono text-xs uppercase tracking-[0.08em] text-dim">
+		if num != "" {
+			<span class="text-accent">{ num }</span>
+			<span class="px-1.5">·</span>
+		}
+		{ label }
+	</div>
+}
+
+// Section is a numbered page section with a heading and an optional lede.
+templ Section(num string, label string, heading string, lede string) {
+	@section(num, label, heading, lede, false) {
+		{ children... }
+	}
+}
+
+// FirstSection is the section directly under an interior page's masthead. It
+// carries less top padding, because the masthead already supplies the break —
+// the standard gap reads as a hole there.
+templ FirstSection(num string, label string, heading string, lede string) {
+	@section(num, label, heading, lede, true) {
+		{ children... }
+	}
+}
+
+templ section(num string, label string, heading string, lede string, compact bool) {
+	<section
+		class={ "mx-auto max-w-[1280px] px-6 md:px-8",
+			templ.KV("pt-14", compact), templ.KV("pt-24", !compact) }
+	>
+		@Eyebrow(num, label)
+		<h2 class="mt-3 text-2xl font-bold text-text">{ heading }</h2>
+		if lede != "" {
+			<p class="mt-2 max-w-[640px] text-base text-sec">{ lede }</p>
+		}
+		<div class="mt-8">
+			{ children... }
+		</div>
+	</section>
+}
+
+// Card is the standard surface: hairline border, 6px radius, no shadow.
+templ Card(class string) {
+	<div class={ "rounded-card border border-line bg-surface", class }>
+		{ children... }
+	</div>
+}
+
+// Panel is an instrument-panel surface — one step darker than a card, used
+// for anything that represents live machine state.
+templ Panel(class string) {
+	<div class={ "rounded-card border border-line bg-page", class }>
+		{ children... }
+	</div>
+}
+
+// StatusDot renders the 6px semantic dot. Tone is ok, warn, err, or info —
+// never accent, which belongs to interactivity alone.
+templ StatusDot(tone string, pulse bool) {
+	<span
+		class={ "inline-block size-1.5 shrink-0 rounded-full", toneBg(tone),
+			templ.KV("dt-pulse", pulse) }
+		aria-hidden="true"
+	></span>
+}
+
+// Chip is a small mono label: a state name, a version, a flag.
+templ Chip(class string) {
+	<span class={ "inline-flex items-center gap-1.5 rounded-chip border border-line px-2 py-0.5 font-mono text-2xs text-sec", class }>
+		{ children... }
+	</span>
+}
+
+func toneBg(tone string) string {
+	switch tone {
+	case "ok":
+		return "bg-ok"
+	case "warn":
+		return "bg-warn"
+	case "err":
+		return "bg-err"
+	case "info":
+		return "bg-info"
+	default:
+		return "bg-dim"
+	}
+}
+
+// ToneText maps a semantic tone to its text color class.
+func ToneText(tone string) string {
+	switch tone {
+	case "ok":
+		return "text-ok"
+	case "warn":
+		return "text-warn"
+	case "err":
+		return "text-err"
+	case "info":
+		return "text-info"
+	default:
+		return "text-dim"
+	}
+}
+
+// ToneBorder maps a semantic tone to its border color class.
+func ToneBorder(tone string) string {
+	switch tone {
+	case "ok":
+		return "border-ok/40"
+	case "warn":
+		return "border-warn/40"
+	case "err":
+		return "border-err/40"
+	case "info":
+		return "border-info/40"
+	default:
+		return "border-line"
+	}
+}

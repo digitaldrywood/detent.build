@@ -1,0 +1,80 @@
+package layouts
+
+import (
+	"detent.build/internal/content"
+	"detent.build/ui/components"
+)
+
+templ Footer() {
+	<footer class="mt-24 border-t border-line">
+		<div class="mx-auto grid max-w-[1280px] gap-10 px-6 py-12 md:grid-cols-[1fr_auto] md:px-8">
+			<div class="max-w-[460px]">
+				<div class="flex items-center gap-2">
+					@components.Mark("size-[18px] text-brand-lift")
+					@components.Wordmark("text-[13px]")
+				</div>
+				<p class="mt-3 text-xs leading-relaxed text-dim">
+					MIT licensed. Free. Self-hosted, with no vendor control plane. You bring the model cost.
+					The intelligence is your config; Detent is the runtime that holds it to the gates.
+				</p>
+				<p class="mt-4 text-xs leading-relaxed text-dim">
+					Detent grew out of
+					<a href={ templ.SafeURL(content.SymphonyURL) } class="text-sec underline decoration-line underline-offset-2 hover:text-accent hover:decoration-accent">OpenAI&#39;s Symphony</a>
+					&#8212; the open spec for orchestrating Codex agents from a project board. It began as an Elixir
+					implementation against Linear and is now a ground-up Go rewrite against GitHub Projects.
+					That lineage is on the record because it is worth having.
+				</p>
+			</div>
+			<div class="grid grid-cols-2 gap-x-12 gap-y-8 text-sm sm:grid-cols-3">
+				@footerColumn("Site", []footerLink{
+					{"How it works", "/how-it-works"},
+					{"Why Detent", "/why-detent"},
+					{"Dashboard", "/dashboard"},
+					{"Install", "/install"},
+					{"Open source", "/open-source"},
+				})
+				@footerColumn("Project", []footerLink{
+					{"GitHub", content.RepoURL},
+					{"Releases", content.ReleasesURL},
+					{"Documentation", content.RepoURL + "#documentation"},
+					{"Issues", content.IssuesURL},
+					{"Contributing", content.ContributingURL},
+				})
+				@footerColumn("Proof", []footerLink{
+					{"detent-orchestration", content.OrchestrationURL},
+					{"CI status", content.CIURL},
+					{"License (MIT)", content.LicenseURL},
+					{"Comparison", content.Doc("comparison.md")},
+					{"Merge train", content.Doc("merge-train.md")},
+				})
+			</div>
+		</div>
+		<div class="border-t border-line">
+			<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4 font-mono text-2xs text-dim md:px-8">
+				<span>{ content.VersionFromCtx(ctx) }</span>
+				<span>MIT</span>
+				<span>no telemetry, no analytics, no cookies</span>
+				<span class="ml-auto">a Digital Drywood project</span>
+			</div>
+		</div>
+	</footer>
+}
+
+type footerLink struct {
+	Label string
+	Href  string
+}
+
+templ footerColumn(title string, links []footerLink) {
+	<div class="flex flex-col gap-1">
+		<span class="mb-1 font-mono text-2xs uppercase tracking-[0.06em] text-dim">{ title }</span>
+		for _, link := range links {
+			<a
+				href={ templ.SafeURL(link.Href) }
+				class="inline-flex min-h-6 items-center py-0.5 text-xs text-sec transition-colors hover:text-accent"
+			>
+				{ link.Label }
+			</a>
+		}
+	</div>
+}

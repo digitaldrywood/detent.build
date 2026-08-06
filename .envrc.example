@@ -1,0 +1,26 @@
+# Local development. Copy to .envrc and run `direnv allow`.
+#
+# There is no database and no secret here — the site is a stateless binary
+# serving templ-rendered pages. Nothing in this file is sensitive.
+
+export PORT=3000
+export ENV=development
+export SITE_NAME=detent.build
+export SITE_URL=http://localhost:3000
+
+# MagicDNS name of this host, so startup logs a second clickable URL you can
+# open from a phone or laptop elsewhere on the tailnet. Get it with:
+#   tailscale status --json | jq -r '.Self.DNSName' | sed 's/\.$//'
+# Development convenience only — leave it unset in production.
+export TAILSCALE_HOSTNAME="corys-mac-studio.tail60aac7.ts.net"
+
+# Production, set in the Dokploy application environment:
+#
+#   ENV=production
+#   SITE_URL=https://detent.build
+#
+# SITE_URL must be the apex, https, and carry no trailing slash. detent.build
+# has no www host, and .build is on the HSTS preload list, so a plain-http or
+# www absolute URL is unreachable rather than merely untidy.
+#
+# Leave PORT at 3000: the Dokploy domain entry is bound to container port 3000.

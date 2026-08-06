@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>body{margin:0;background:#07090b}a{color:#2dd4bf;text-decoration:none}a:hover{text-decoration:underline}</style>
+</helmet>
+<section style="padding:48px;font-family:'Geist',sans-serif;color:#edf0f4">
+  <div style="margin-bottom:32px;max-width:1100px">
+    <div style="font-family:'Geist Mono',monospace;font-size:13px;color:#808a97">detent.build — three home-page concepts · dark mode (default) · full 10-section pages</div>
+  </div>
+  <div style="display:flex;gap:64px;align-items:flex-start">
+    <div id="1a" style="flex-shrink:0;width:1440px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+        <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;background:#2dd4bf;color:#07090b;border-radius:4px;padding:2px 8px">1a</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:13px;color:#edf0f4">Board-first — instrument panel</span>
+        <span style="font-size:12px;color:#808a97">the six lanes ARE the hero · dense, hairlines, teal = interactive only, indigo = mark. Light mode: same panels on #f7f8fa with #e4e7ec hairlines; board cards go white.</span>
+      </div>
+      <div style="border:1px solid #262b33;border-radius:8px;overflow:hidden">
+        <dc-import name="ConceptA-BoardFirst" hint-size="1440px,5400px"></dc-import>
+      </div>
+    </div>
+    <div id="1b" style="flex-shrink:0;width:1440px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+        <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;background:#818CF8;color:#07090b;border-radius:4px;padding:2px 8px">1b</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:13px;color:#edf0f4">Mechanism-first — the detent, drawn literally</span>
+        <span style="font-size:12px;color:#808a97">ratchet rail with the ball seated at a stop · narrative, centered · unified on indigo. Light mode: rail on white, ball stays #3730A3 at full brand depth.</span>
+      </div>
+      <div style="border:1px solid #262b33;border-radius:8px;overflow:hidden">
+        <dc-import name="ConceptB-MechanismFirst" hint-size="1440px,5600px"></dc-import>
+      </div>
+    </div>
+    <div id="1c" style="flex-shrink:0;width:1100px">
+      <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+        <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;background:#8a93a2;color:#07090b;border-radius:4px;padding:2px 8px">1c</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:13px;color:#edf0f4">Document-first — the spec sheet</span>
+        <span style="font-size:12px;color:#808a97">§-numbered, README-honest, comparison matrix on the page · teal links, indigo §-marks. Light mode: reads like paper — white page, #1a1f27 text.</span>
+      </div>
+      <div style="border:1px solid #262b33;border-radius:8px;overflow:hidden">
+        <dc-import name="ConceptC-DocumentFirst" hint-size="1100px,5200px"></dc-import>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

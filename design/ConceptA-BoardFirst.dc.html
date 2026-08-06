@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0d10}
+a{color:#2dd4bf;text-decoration:none}a:hover{color:#5eead4;text-decoration:underline}
+@keyframes holdPulse{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,0)}50%{box-shadow:0 0 0 3px rgba(251,191,36,.25)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+</style>
+</helmet>
+<div style="font-family:'Geist',sans-serif;background:#0b0d10;color:#edf0f4;min-width:1280px" data-screen-label="Concept A — Board-first">
+
+<!-- nav -->
+<div style="display:flex;align-items:center;justify-content:space-between;padding:0 32px;height:56px;border-bottom:1px solid #262b33">
+  <div style="display:flex;align-items:center;gap:10px">
+    <svg viewBox="0 0 100 100" width="24" height="24"><path fill="#818CF8" fill-rule="evenodd" d="M22 15 H50 C73 15 87 31 87 50 C87 69 73 85 50 85 H22 Z M41 32 H50 C63 32 70 41 70 50 C70 59 63 68 50 68 H41 Z"></path><circle cx="51.5" cy="55.5" r="7.4" fill="#818CF8"></circle></svg>
+    <span style="font-family:'Geist Mono',monospace;font-size:15px;font-weight:600;letter-spacing:-.01em">detent<span style="color:#2dd4bf">.</span>build</span>
+  </div>
+  <div style="display:flex;gap:28px;font-size:13.5px;color:#8a93a2">
+    <a href="#" style="color:#8a93a2" style-hover="color:#2dd4bf">How it works</a>
+    <a href="#" style="color:#8a93a2" style-hover="color:#2dd4bf">Why Detent</a>
+    <a href="#" style="color:#8a93a2" style-hover="color:#2dd4bf">Dashboard</a>
+    <a href="#" style="color:#8a93a2" style-hover="color:#2dd4bf">Install</a>
+    <a href="#" style="color:#8a93a2" style-hover="color:#2dd4bf">Docs</a>
+    <a href="#" style="color:#8a93a2" style-hover="color:#2dd4bf">Open source</a>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97;border:1px solid #262b33;border-radius:4px;padding:3px 8px">v0.51.0 · MIT</span>
+    <a href="https://github.com/digitaldrywood/detent" style="font-family:'Geist Mono',monospace;font-size:12.5px;color:#edf0f4;border:1px solid #262b33;border-radius:6px;padding:6px 12px" style-hover="border-color:#2dd4bf;color:#2dd4bf;text-decoration:none">GitHub ↗</a>
+  </div>
+</div>
+
+<!-- hero -->
+<div style="max-width:1280px;margin:0 auto;padding:72px 32px 0">
+  <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:48px">
+    <div style="max-width:640px">
+      <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:16px">Status-driven agentic orchestration · one Go binary</div>
+      <h1 style="font-size:52px;line-height:1.06;letter-spacing:-.025em;font-weight:700;margin:0 0 18px;text-wrap:pretty">You write the issue.<br>The gates decide when it lands.</h1>
+      <p style="font-size:17px;line-height:1.55;color:#8a93a2;margin:0;max-width:540px;text-wrap:pretty">Mark an issue <span style="font-family:'Geist Mono',monospace;font-size:15px;color:#edf0f4">Todo</span>. Detent claims it, works it in an isolated worktree, runs your validation gate, opens a PR, and merges through a serialized train — only when your gates clear.</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding-bottom:6px;flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:12px;background:#14171c;border:1px solid #262b33;border-radius:6px;padding:12px 16px">
+        <span style="font-family:'Geist Mono',monospace;font-size:13.5px;color:#edf0f4"><span style="color:#808a97">$</span> brew install digitaldrywood/tap/detent</span>
+        <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#2dd4bf;border:1px solid #2dd4bf55;border-radius:4px;padding:3px 8px;cursor:pointer">copy</span>
+      </div>
+      <a href="https://github.com/digitaldrywood/detent" style="text-align:center;font-size:13.5px;color:#8a93a2;border:1px solid #262b33;border-radius:6px;padding:10px 16px" style-hover="color:#2dd4bf;border-color:#2dd4bf;text-decoration:none">View on GitHub — digitaldrywood/detent</a>
+    </div>
+  </div>
+
+  <!-- hero board: six lanes -->
+  <div style="margin-top:48px;background:#101318;border:1px solid #262b33;border-radius:6px;overflow:hidden">
+    <div style="display:flex;align-items:center;gap:20px;padding:10px 16px;border-bottom:1px solid #262b33;font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97">
+      <span style="display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:50%;background:#34d399;animation:blink 2.4s infinite"></span>live</span>
+      <span><span style="color:#edf0f4">3</span> running</span><span><span style="color:#edf0f4">1</span> queued</span><span><span style="color:#fbbf24">1</span> held at gate</span><span><span style="color:#edf0f4">52</span> completed · 48h</span>
+      <span style="margin-left:auto">tokens 41% · budget $6.20/$25 · rate ok</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0">
+      <!-- TODO -->
+      <div style="border-right:1px solid #262b33;padding:12px;min-height:280px">
+        <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:10px"><span>TODO</span><span>2</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#214 detent</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">Rotate lease on tracker stall</div></div>
+          <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#209 hostlet</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">Add .rpm smoke test to release CI</div></div>
+        </div>
+      </div>
+      <!-- IN PROGRESS -->
+      <div style="border-right:1px solid #262b33;padding:12px">
+        <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:10px"><span>IN&nbsp;PROGRESS</span><span>2</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#207 detent</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">OAuth token rotation for tracker auth</div><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#34d399;margin-top:6px">● agent working · 12m</div></div>
+          <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#198 pyroapex</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">POS wave 1 intake parser</div><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#34d399;margin-top:6px">● make check running</div></div>
+        </div>
+      </div>
+      <!-- HUMAN REVIEW -->
+      <div style="border-right:1px solid #262b33;padding:12px;background:#14171c40">
+        <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:10px"><span>HUMAN&nbsp;REVIEW</span><span>1</span></div>
+        <div style="background:#14171c;border:1px solid #fbbf2466;border-radius:6px;padding:10px;animation:holdPulse 2.8s infinite"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#196 detent · PR #201</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">Checksum-verified self-update</div><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#fbbf24;margin-top:6px">▲ held — gate: approval label</div></div>
+        <div style="font-family:'Geist Mono',monospace;font-size:10px;color:#808a97;margin-top:10px;text-align:center">⟨ the detent — released only by you ⟩</div>
+      </div>
+      <!-- REWORK -->
+      <div style="border-right:1px solid #262b33;padding:12px">
+        <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:10px"><span>REWORK</span><span>1</span></div>
+        <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#191 ghostreel · PR #195</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">Refresh stale CI comments</div><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#60a5fa;margin-top:6px">↺ 2 review threads unresolved</div></div>
+      </div>
+      <!-- MERGING -->
+      <div style="border-right:1px solid #262b33;padding:12px">
+        <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:10px"><span>MERGING</span><span>1</span></div>
+        <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#188 detent · PR #193</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">detent doctor: token scope probe</div><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#34d399;margin-top:6px">● train: rebased, CI watch 4/6</div></div>
+      </div>
+      <!-- DONE -->
+      <div style="padding:12px">
+        <div style="display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:10px"><span>DONE</span><span>52</span></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:10px;opacity:.65"><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97">#186 detent</div><div style="font-size:12.5px;line-height:1.35;margin-top:4px">Winget manifest for 0.51</div><div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#34d399;margin-top:6px">✓ merged · green</div></div>
+          <div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#808a97;text-align:center">+51 more · 48h</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- inversion -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">02 · The inversion</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 8px">A system, not an agent.</h2>
+  <p style="font-size:15.5px;color:#8a93a2;max-width:640px;line-height:1.55;margin:0 0 32px;text-wrap:pretty">Autonomy-first tools put the intelligence in the agent and ask you to supervise it. Detent puts the intelligence in your spec and supplies the discipline. Same task, two interaction models:</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div style="background:#14171c;border:1px solid #262b33;border-radius:6px;padding:24px">
+      <div style="font-family:'Geist Mono',monospace;font-size:12px;color:#808a97;margin-bottom:16px">“add OAuth token rotation” — autonomy-first assistant</div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:#8a93a2;line-height:1.5">
+        <div>→ Starts as a prompt. The agent picks a plan.</div>
+        <div>→ You review the plan, inspect partial edits.</div>
+        <div>→ It misses the migration; you redirect.</div>
+        <div>→ It skips tests; you redirect again.</div>
+        <div style="color:#f87171">→ You are the supervision loop.</div>
+      </div>
+    </div>
+    <div style="background:#14171c;border:1px solid #2dd4bf40;border-radius:6px;padding:24px">
+      <div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:16px">“add OAuth token rotation” — Detent</div>
+      <div style="display:flex;flex-direction:column;gap:10px;font-size:13.5px;color:#8a93a2;line-height:1.5">
+        <div>→ Starts as an issue: storage change, CLI behavior, migration, rollback, tests.</div>
+        <div>→ Worker executes the contract in an isolated worktree.</div>
+        <div>→ Produces a reviewable PR.</div>
+        <div>→ Does not merge until the gates are green.</div>
+        <div style="color:#34d399">→ Your process runs. You read one PR.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- how it works -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">03 · How it works</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 32px">Your lanes. Your gates between them.</h2>
+  <div style="display:flex;align-items:center;gap:0;font-family:'Geist Mono',monospace;font-size:12px;margin-bottom:40px;background:#101318;border:1px solid #262b33;border-radius:6px;padding:20px 24px;overflow-x:auto">
+    <span style="background:#1c2027;border:1px solid #262b33;border-radius:4px;padding:6px 12px;white-space:nowrap">Todo</span><span style="color:#808a97;padding:0 8px">──</span>
+    <span style="background:#1c2027;border:1px solid #262b33;border-radius:4px;padding:6px 12px;white-space:nowrap">In Progress</span><span style="color:#fbbf24;padding:0 6px" title="validation gate">─◃─</span>
+    <span style="background:#1c2027;border:1px solid #262b33;border-radius:4px;padding:6px 12px;white-space:nowrap">Human Review</span><span style="color:#fbbf24;padding:0 6px">─◃─</span>
+    <span style="background:#1c2027;border:1px solid #262b33;border-radius:4px;padding:6px 12px;white-space:nowrap">Rework</span><span style="color:#808a97;padding:0 8px">──</span>
+    <span style="background:#1c2027;border:1px solid #262b33;border-radius:4px;padding:6px 12px;white-space:nowrap">Merging</span><span style="color:#fbbf24;padding:0 6px">─◃─</span>
+    <span style="background:#1c2027;border:1px solid #34d39955;border-radius:4px;padding:6px 12px;color:#34d399;white-space:nowrap">Done</span>
+    <span style="color:#808a97;margin-left:auto;padding-left:16px;white-space:nowrap">◃ = a gate you defined · lanes are workflow-defined too — these six are ours</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c"><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:8px">1 — you write the contracts</div><p style="font-size:13.5px;color:#8a93a2;line-height:1.55;margin:0">A checked-in <span style="font-family:'Geist Mono',monospace;color:#edf0f4">detent.yaml</span> (states, gates, scheduling, leases) plus a portable <span style="font-family:'Geist Mono',monospace;color:#edf0f4">WORKFLOW.md</span> agent contract. Local overrides stay gitignored.</p></div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c"><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:8px">2 — you mark an issue Todo</div><p style="font-size:13.5px;color:#8a93a2;line-height:1.55;margin:0">Detent claims it, creates an isolated Git worktree from your checkout, dispatches a Codex agent with the contract, moves the issue to In Progress.</p></div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c"><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:8px">3 — the agent works</div><p style="font-size:13.5px;color:#8a93a2;line-height:1.55;margin:0">In its own branch. Runs your validation gate — default <span style="font-family:'Geist Mono',monospace;color:#edf0f4">make check</span> + CI — and opens or updates a PR.</p></div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c"><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:8px">4 — gates decide</div><p style="font-size:13.5px;color:#8a93a2;line-height:1.55;margin:0">Promotion waits in Human Review, waits in lane, requires a current-head automated review, or needs linked PR + green CI + quiet time. Unresolved feedback → Rework.</p></div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c"><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:8px">5 — the train merges</div><p style="font-size:13.5px;color:#8a93a2;line-height:1.55;margin:0">Serialized: one rebase, CI-watch, and merge at a time. Concurrent candidates never invalidate each other's CI. Then: Done.</p></div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c"><div style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf;margin-bottom:8px">6 — one host, many repos</div><p style="font-size:13.5px;color:#8a93a2;line-height:1.55;margin:0">A <span style="font-family:'Geist Mono',monospace;color:#edf0f4">global.yaml</span> runs multiple projects with weights, priority, pause, and fair scheduling — live on the dashboard and TUI.</p></div>
+  </div>
+</div>
+
+<div style="max-width:1280px;margin:16px auto 0;padding:0 32px"><div style="border:1px solid #262b33;border-radius:6px;background:#14171c;padding:16px 20px;font-size:13.5px;color:#8a93a2;line-height:1.55"><span style="font-family:'Geist Mono',monospace;font-size:12px;color:#2dd4bf">also in the contract</span> — Detent can log the bugs it finds as issues, gate them like any other work, and ship the fix. Whether that loop runs hands-off is project config, not product opinion.</div></div>
+
+<!-- merge train -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">04 · The merge train</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 8px">What lands is always green.</h2>
+  <p style="font-size:15.5px;color:#8a93a2;max-width:640px;line-height:1.55;margin:0 0 32px;text-wrap:pretty">The differentiator nobody else in the matrix has. Train width is yours to configure — we keep ours at one candidate at a time — so ten parallel agents never race each other's CI.</p>
+  <div style="background:#101318;border:1px solid #262b33;border-radius:6px;padding:28px 24px;display:flex;align-items:center;gap:12px;font-family:'Geist Mono',monospace;font-size:12.5px;overflow-x:auto">
+    <div style="display:flex;gap:8px">
+      <span style="border:1px solid #262b33;border-radius:4px;padding:8px 12px;color:#808a97;white-space:nowrap">PR #204 waits</span>
+      <span style="border:1px solid #262b33;border-radius:4px;padding:8px 12px;color:#808a97;white-space:nowrap">PR #199 waits</span>
+    </div>
+    <span style="color:#808a97">→</span>
+    <span style="border:1px solid #60a5fa66;border-radius:4px;padding:8px 12px;color:#60a5fa;white-space:nowrap">rebase PR #193</span>
+    <span style="color:#808a97">→</span>
+    <span style="border:1px solid #fbbf2466;border-radius:4px;padding:8px 12px;color:#fbbf24;white-space:nowrap">CI watch · 4/6 checks</span>
+    <span style="color:#808a97">→</span>
+    <span style="border:1px solid #34d39966;border-radius:4px;padding:8px 12px;color:#34d399;white-space:nowrap">merge</span>
+    <span style="color:#808a97">→</span>
+    <span style="border:1px solid #262b33;border-radius:4px;padding:8px 12px;color:#edf0f4;white-space:nowrap">main ✓ green</span>
+    <span style="margin-left:auto;color:#808a97;white-space:nowrap">width: 1 — our config. yours to set.</span>
+  </div>
+</div>
+
+<!-- operator surface -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">05 · The operator surface</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 8px">The board stays honest.</h2>
+  <p style="font-size:15.5px;color:#8a93a2;max-width:640px;line-height:1.55;margin:0 0 32px;text-wrap:pretty">Live counts, running agents, token / budget / rate-limit state, board flow, timelines. “In progress” means an agent is actually working.</p>
+  <img src="assets/dashboard-dark.png" alt="Detent dashboard — live board" style="width:100%;display:block;border:1px solid #262b33;border-radius:6px">
+  <div style="display:grid;grid-template-columns:1fr 320px;gap:16px;margin-top:16px">
+    <div style="background:#101318;border:1px solid #262b33;border-radius:6px;padding:18px 20px;font-family:'Geist Mono',monospace;font-size:12px;line-height:1.7;color:#8a93a2"><span style="color:#808a97">$ detent tui</span><br><span style="color:#edf0f4">detent</span> · 8 projects · <span style="color:#34d399">3 running</span> · <span style="color:#fbbf24">1 held</span> · budget $6.20/$25<br>▸ #207 detent      In Progress   agent 12m   make check …<br>▸ #196 detent      Human Review  <span style="color:#fbbf24">held: approval label</span><br>▸ #188 detent      Merging       <span style="color:#34d399">train: CI watch 4/6</span></div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:18px 20px;background:#14171c;font-size:13px;color:#8a93a2;line-height:1.55">And a terminal UI for people who live in tmux — same lanes, same counts, zero browser.</div>
+  </div>
+</div>
+
+<!-- contracts -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">06 · Contracts, shown</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 8px">Config you can read beats adjectives.</h2>
+  <p style="font-size:15.5px;color:#8a93a2;max-width:640px;line-height:1.55;margin:0 0 32px;text-wrap:pretty">Two files, checked in. The machine contract and the agent contract. You can keep reading by hand too; nobody will revoke your keyboard.</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div style="background:#101318;border:1px solid #262b33;border-radius:6px;overflow:hidden">
+      <div style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97;padding:10px 16px;border-bottom:1px solid #262b33">detent.yaml</div>
+      <pre style="margin:0;padding:16px 20px;font-family:'Geist Mono',monospace;font-size:12.5px;line-height:1.65;color:#8a93a2;overflow-x:auto"><span style="color:#60a5fa">tracker</span>:
+  <span style="color:#60a5fa">mode</span>: projectv2          <span style="color:#5d6470"># or status-field / labels</span>
+<span style="color:#60a5fa">states</span>: [Todo, In Progress, Human Review,
+         Rework, Merging, Done]
+<span style="color:#60a5fa">gates</span>:
+  <span style="color:#60a5fa">validate</span>: make check
+  <span style="color:#60a5fa">review</span>: automated         <span style="color:#5d6470"># current-head PR review</span>
+  <span style="color:#60a5fa">merge</span>: ci_green + quiet 10m
+<span style="color:#60a5fa">scheduling</span>:
+  <span style="color:#60a5fa">parallel</span>: 4
+  <span style="color:#60a5fa">lease</span>: 30m
+  <span style="color:#60a5fa">retries</span>: 2</pre>
+    </div>
+    <div style="background:#101318;border:1px solid #262b33;border-radius:6px;overflow:hidden">
+      <div style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97;padding:10px 16px;border-bottom:1px solid #262b33">WORKFLOW.md</div>
+      <pre style="margin:0;padding:16px 20px;font-family:'Geist Mono',monospace;font-size:12.5px;line-height:1.65;color:#8a93a2;overflow-x:auto"><span style="color:#edf0f4"># Agent contract</span>
+1. The issue is the spec. Do not exceed it.
+2. Work only in the assigned worktree
+   and branch.
+3. Run `make check` before every push.
+4. Open a PR linking the issue. Unresolved
+   review feedback returns you to Rework.
+5. Never merge. The train merges.</pre>
+    </div>
+  </div>
+</div>
+
+<!-- it builds itself -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="border:1px solid #262b33;border-radius:6px;background:linear-gradient(180deg,#14171c,#101318);padding:40px;display:flex;justify-content:space-between;align-items:center;gap:40px">
+    <div style="max-width:620px">
+      <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">07 · Proof</div>
+      <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 10px">It ships itself.</h2>
+      <p style="font-size:15.5px;color:#8a93a2;line-height:1.55;margin:0;text-wrap:pretty"><span style="font-family:'Geist Mono',monospace;font-size:14px;color:#edf0f4">digitaldrywood/detent-orchestration</span> is Detent's own production config. It dispatches the agents that build Detent. Copy it as a template for your first project.</p>
+    </div>
+    <a href="https://github.com/digitaldrywood/detent-orchestration" style="flex-shrink:0;font-family:'Geist Mono',monospace;font-size:13px;color:#0b0d10;background:#2dd4bf;border-radius:6px;padding:12px 20px;font-weight:600" style-hover="background:#5eead4;text-decoration:none">Copy the template ↗</a>
+  </div>
+</div>
+
+<!-- fleet -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">08 · One host, many repos</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 32px">Fleet scheduling from a single binary.</h2>
+  <div style="border:1px solid #262b33;border-radius:6px;overflow:hidden;font-family:'Geist Mono',monospace;font-size:12.5px">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:10px 20px;border-bottom:1px solid #262b33;color:#808a97;font-size:11px;letter-spacing:.06em">
+      <span>PROJECT</span><span>WEIGHT</span><span>PRIORITY</span><span>STATE</span><span>RUNNING</span>
+    </div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:12px 20px;border-bottom:1px solid #262b33;background:#14171c"><span style="color:#edf0f4">detent</span><span style="color:#8a93a2">3</span><span style="color:#8a93a2">high</span><span style="color:#34d399">active</span><span style="color:#edf0f4">2</span></div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:12px 20px;border-bottom:1px solid #262b33;background:#14171c"><span style="color:#edf0f4">pyroapex</span><span style="color:#8a93a2">2</span><span style="color:#8a93a2">normal</span><span style="color:#34d399">active</span><span style="color:#edf0f4">1</span></div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:12px 20px;border-bottom:1px solid #262b33;background:#14171c"><span style="color:#edf0f4">hostlet</span><span style="color:#8a93a2">1</span><span style="color:#8a93a2">normal</span><span style="color:#34d399">active</span><span style="color:#edf0f4">0</span></div>
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr;padding:12px 20px;background:#14171c"><span style="color:#edf0f4">ghostreel</span><span style="color:#8a93a2">1</span><span style="color:#8a93a2">low</span><span style="color:#fbbf24">paused</span><span style="color:#edf0f4">—</span></div>
+  </div>
+  <p style="font-size:13.5px;color:#8a93a2;margin:16px 0 0;line-height:1.55">Weights, priority, pause, fair scheduling — governed by one <span style="font-family:'Geist Mono',monospace;color:#edf0f4">global.yaml</span>. Budget caps and rate-limit state live on the dashboard.</p>
+</div>
+
+<!-- install -->
+<div style="max-width:1280px;margin:0 auto;padding:96px 32px 0">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;color:#808a97;text-transform:uppercase;margin-bottom:12px">09 · Install</div>
+  <h2 style="font-size:32px;letter-spacing:-.02em;font-weight:700;margin:0 0 32px">One CGO-free binary. No service to stand up.</h2>
+  <div style="display:grid;grid-template-columns:1fr 380px;gap:16px">
+    <div style="background:#101318;border:1px solid #262b33;border-radius:6px;overflow:hidden">
+      <div style="display:flex;gap:0;border-bottom:1px solid #262b33;font-family:'Geist Mono',monospace;font-size:12px">
+        <span style="padding:10px 18px;color:#2dd4bf;border-bottom:2px solid #2dd4bf">macOS</span><span style="padding:10px 18px;color:#808a97">Linux</span><span style="padding:10px 18px;color:#808a97">Windows</span><span style="padding:10px 18px;color:#808a97">Source</span>
+      </div>
+      <div style="padding:20px;font-family:'Geist Mono',monospace;font-size:13px;line-height:2;color:#edf0f4">
+        <div><span style="color:#808a97">$</span> brew install digitaldrywood/tap/detent</div>
+        <div><span style="color:#808a97">$</span> detent doctor <span style="color:#5d6470"># preflight: gh, codex, token scope</span></div>
+        <div><span style="color:#808a97">$</span> detent up <span style="color:#5d6470"># claim the first Todo</span></div>
+      </div>
+    </div>
+    <div style="border:1px solid #262b33;border-radius:6px;padding:20px;background:#14171c">
+      <div style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97;margin-bottom:12px">REQUIREMENTS</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#8a93a2;line-height:1.5">
+        <div>· Codex CLI, signed in to your ChatGPT plan</div>
+        <div>· <span style="font-family:'Geist Mono',monospace;color:#edf0f4">gh</span> assumed present</div>
+        <div>· GitHub token scoped to your tracker mode</div>
+        <div>· Go 1.26+ for source builds only</div>
+      </div>
+    </div>
+  </div>
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;color:#808a97;margin-top:14px">also: go install · winget · scoop · .deb · .rpm · or copy a single file</div>
+</div>
+
+<!-- footer -->
+<div style="max-width:1280px;margin:64px auto 0;padding:32px;border-top:1px solid #262b33;display:flex;justify-content:space-between;align-items:flex-start;gap:40px">
+  <div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <svg viewBox="0 0 100 100" width="18" height="18"><path fill="#818CF8" fill-rule="evenodd" d="M22 15 H50 C73 15 87 31 87 50 C87 69 73 85 50 85 H22 Z M41 32 H50 C63 32 70 41 70 50 C70 59 63 68 50 68 H41 Z"></path><circle cx="51.5" cy="55.5" r="7.4" fill="#818CF8"></circle></svg>
+      <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600">detent<span style="color:#2dd4bf">.</span>build</span>
+    </div>
+    <p style="font-size:12.5px;color:#808a97;max-width:420px;line-height:1.6;margin:0">MIT licensed. Free. Self-hosted; no vendor control plane. You bring the model cost. The intelligence is your config; Detent is the orchestrator that runs it.</p>
+  </div>
+  <div style="display:flex;gap:48px;font-size:13px">
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97">PROJECT</span><a href="https://github.com/digitaldrywood/detent" style="color:#8a93a2">GitHub</a><a href="#" style="color:#8a93a2">Releases</a><a href="#" style="color:#8a93a2">Docs</a></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:11px;letter-spacing:.06em;color:#808a97">PROOF</span><a href="https://github.com/digitaldrywood/detent-orchestration" style="color:#8a93a2">detent-orchestration</a><a href="#" style="color:#8a93a2">CI status</a><a href="#" style="color:#8a93a2">License (MIT)</a></div>
+  </div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>

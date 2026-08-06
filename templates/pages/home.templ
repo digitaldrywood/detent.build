@@ -1,0 +1,88 @@
+package pages
+
+import (
+	"detent.build/internal/content"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+)
+
+templ Home() {
+	@layouts.Base(homeMeta()) {
+		@heroSection()
+		@partials.Inversion("02", false)
+		@partials.HowItWorksSummary()
+		@partials.MergeTrainSection("04")
+		@partials.OperatorSurface()
+		@partials.ContractsSection()
+		@partials.ShipsItself("07")
+		@partials.FleetSection()
+		@partials.InstallSection()
+	}
+}
+
+func homeMeta() meta.PageMeta {
+	return meta.New(
+		"Hold the work until the gate clears",
+		"Detent is status-driven agentic work orchestration in a single Go binary. "+
+			"You write the issue; the gates decide when it lands. Self-hosted, MIT, no vendor control plane.",
+	).WithNav("home").WithPath("/")
+}
+
+templ heroSection() {
+	<section class="relative overflow-hidden">
+		<div class="pointer-events-none absolute inset-0 dt-grid opacity-[0.35]" aria-hidden="true"></div>
+		<div class="relative mx-auto max-w-[1280px] px-6 pb-4 pt-16 md:px-8 md:pt-20">
+			<div class="flex flex-col justify-between gap-10 lg:flex-row lg:items-end">
+				<div class="max-w-[720px]">
+					@components.Eyebrow("", "Status-driven agentic orchestration · one Go binary")
+					<h1 class="mt-4 text-2xl font-bold leading-[1.06] text-text sm:text-3xl">
+						You write the issue.
+						<br/>
+						The gates decide when it lands.
+					</h1>
+					<p class="mt-5 max-w-[560px] text-lg text-sec">
+						Mark an issue <span class="font-mono text-base text-text">Todo</span>. Detent claims it,
+						works it in an isolated Git worktree, runs your validation gate, opens a pull request,
+						and merges through a serialized train &#8212; only once the gates you wrote have cleared.
+					</p>
+					<p class="mt-4 max-w-[560px] text-sm text-dim">
+						It is a system, not an agent. The intelligence stays in your spec; the runtime supplies
+						the discipline.
+					</p>
+				</div>
+				<div class="flex w-full shrink-0 flex-col gap-2.5 lg:w-[420px]">
+					@components.Command(components.CommandProps{
+						ID:       "hero-install",
+						Cmd:      "brew install digitaldrywood/tap/detent",
+						Emphasis: true,
+					})
+					<div class="flex gap-2.5">
+						<a
+							href={ templ.SafeURL(content.RepoURL) }
+							class="flex-1 rounded-card border border-line px-4 py-2.5 text-center text-sm text-sec transition-colors hover:border-accent hover:text-accent"
+						>
+							View on GitHub
+						</a>
+						<a
+							href="/install"
+							class="flex-1 rounded-card border border-line px-4 py-2.5 text-center text-sm text-sec transition-colors hover:border-accent hover:text-accent"
+						>
+							Other platforms
+						</a>
+					</div>
+					<p class="px-1 font-mono text-2xs leading-relaxed text-dim">
+						No signup. No hosted plan. { content.VersionFromCtx(ctx) } &#183; MIT &#183; you bring the model cost.
+					</p>
+				</div>
+			</div>
+			<div class="mt-12">
+				@components.Board(content.Board)
+				<p class="mt-3 max-w-[840px] font-mono text-2xs leading-relaxed text-dim">
+					{ content.BoardCaption }
+				</p>
+			</div>
+		</div>
+	</section>
+}

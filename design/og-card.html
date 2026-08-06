@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>detent.build — Open Graph card source</title>
+    <!--
+      Source for static/images/og-default.png. Render at exactly 1200x630 and
+      screenshot. Uses the product's own tokens so the card is the same system
+      as the site: teal is interactivity, indigo is the mark, warn marks the
+      held stop, hairlines carry the structure.
+
+      Fonts resolve from the running site, so regenerate with the dev server up:
+        make dev
+      then open this file with a browser pointed at http://localhost:3000 for
+      /static/fonts, or inline the woff2 if you render it offline.
+    -->
+    <style>
+      @font-face {
+        font-family: "Geist";
+        src: url("http://localhost:3000/static/fonts/Geist-Variable.woff2") format("woff2");
+        font-weight: 100 900;
+      }
+      @font-face {
+        font-family: "Geist Mono";
+        src: url("http://localhost:3000/static/fonts/GeistMono-Variable.woff2") format("woff2");
+        font-weight: 100 900;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        width: 1200px;
+        height: 630px;
+        background: #0b0d10;
+        color: #edf0f4;
+        font-family: "Geist", system-ui, sans-serif;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 64px;
+        overflow: hidden;
+      }
+      .grid {
+        position: absolute; inset: 0;
+        background-image:
+          linear-gradient(to right, #262b33 1px, transparent 1px),
+          linear-gradient(to bottom, #262b33 1px, transparent 1px);
+        background-size: 64px 64px;
+        -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 10%, transparent 70%);
+        mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 10%, transparent 70%);
+        opacity: .5;
+      }
+      .row { position: relative; display: flex; align-items: center; gap: 14px; }
+      .wordmark { font-family: "Geist Mono", monospace; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
+      .dot { color: #2dd4bf; }
+      h1 {
+        position: relative;
+        font-size: 66px; line-height: 1.04; letter-spacing: -.028em; font-weight: 700;
+        max-width: 940px;
+      }
+      .lede { position: relative; margin-top: 20px; font-size: 24px; line-height: 1.45; color: #8a93a2; max-width: 860px; }
+      .rail { position: relative; display: flex; align-items: center; gap: 0; font-family: "Geist Mono", monospace; font-size: 17px; }
+      .stop { border: 1px solid #262b33; background: #1c2027; border-radius: 4px; padding: 9px 15px; white-space: nowrap; }
+      .stop.held { border-color: rgba(251,191,36,.55); color: #fbbf24; box-shadow: 0 0 0 4px rgba(251,191,36,.14); }
+      .stop.done { border-color: rgba(52,211,153,.4); color: #34d399; }
+      .join { color: #808a97; padding: 0 9px; }
+      .gate { color: #fbbf24; padding: 0 7px; }
+      .meta { position: relative; display: flex; gap: 26px; font-family: "Geist Mono", monospace; font-size: 18px; color: #808a97; }
+    </style>
+  </head>
+  <body>
+    <div class="grid"></div>
+
+    <div class="row">
+      <svg viewBox="0 0 100 100" width="34" height="34" aria-hidden="true">
+        <path fill="#818CF8" fill-rule="evenodd"
+          d="M22 15 H50 C73 15 87 31 87 50 C87 69 73 85 50 85 H22 Z M41 32 H50 C63 32 70 41 70 50 C70 59 63 68 50 68 H41 Z" />
+        <circle cx="51.5" cy="55.5" r="7.4" fill="#818CF8" />
+      </svg>
+      <span class="wordmark">detent<span class="dot">.</span>build</span>
+    </div>
+
+    <div>
+      <h1>You write the issue.<br />The gates decide when it lands.</h1>
+      <p class="lede">
+        Status-driven agentic work orchestration. One Go binary, self-hosted,
+        with a serialized merge train so what lands is always green.
+      </p>
+    </div>
+
+    <div class="rail">
+      <span class="stop">Todo</span><span class="join">——</span>
+      <span class="stop">In&nbsp;Progress</span><span class="gate">—◄—</span>
+      <span class="stop held">Human&nbsp;Review</span><span class="join">——</span>
+      <span class="stop">Rework</span><span class="gate">—◄—</span>
+      <span class="stop">Merging</span><span class="gate">—◄—</span>
+      <span class="stop done">Done</span>
+    </div>
+
+    <div class="meta">
+      <span>MIT</span><span>self-hosted</span><span>no vendor control plane</span><span>free</span>
+    </div>
+  </body>
+</html>

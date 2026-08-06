@@ -1,0 +1,108 @@
+package pages
+
+import (
+	"detent.build/internal/content"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+)
+
+templ Dashboard() {
+	@layouts.Base(dashboardMeta()) {
+		@partials.PageHeader(
+			"Dashboard",
+			"The board stays honest.",
+			"Detent ships a web dashboard and a terminal UI over the same state. \"In progress\" means an agent is working right now, not that someone forgot to move a card.",
+		)
+		<section class="mx-auto max-w-[1280px] px-6 pt-14 md:px-8">
+			<figure>
+				<img
+					src="/static/images/dashboard-dark.png"
+					alt="The Detent dashboard: a project sidebar, a header row of running, queued, waiting, blocked, and completed counts, and Kanban lanes for Backlog, Blocked, Human Review, and Review with issue cards showing repository, title, dispatch source, and waiting reason."
+					width="2972"
+					height="1745"
+					class="block w-full rounded-card border border-line"
+				/>
+				<figcaption class="mt-3 font-mono text-2xs text-dim">
+					A real board across nine projects. Note the waiting reasons on the blocked cards — the
+					dashboard says why something is stopped, not just that it is.
+				</figcaption>
+			</figure>
+		</section>
+		@components.Section("01", "What it shows", "Instrument panel, not a status page.", "") {
+			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				@surfaceCard("Live counts", "Running, queued, waiting, blocked, and completed over the last 48 hours, across every project on the host.")
+				@surfaceCard("Running agents", "Which issue each agent has, how long it has been working, and what it is doing right now — dispatch, make check, PR update.")
+				@surfaceCard("Why something is stopped", "Not just the lane. The actual reason: dependency not ready, paused by project status, mergeStateStatus DIRTY, awaiting review artifact.")
+				@surfaceCard("Token, budget, and rate limit", "Live spend against your cap and the current rate-limit posture, so a run that is about to hit a wall is visible before it does.")
+				@surfaceCard("Board flow", "Charts, trends, and timelines with hover detail — where work is accumulating and how long it sits in each lane.")
+				@surfaceCard("Density and staleness", "Compact, cozy, and comfy card densities, plus an explicit stale-data banner when the tracker poll is behind.")
+			</div>
+			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+				The dashboard is also an API. Everything the browser renders is available as JSON.
+				<a href={ templ.SafeURL(content.Doc("dashboard-api.md")) } class="text-accent hover:underline">Dashboard and APIs &#8594;</a>
+			</p>
+		}
+		@components.Section("02", "The lanes", "The same six stops, live.",
+			"A ProjectV2 board, a boardless issue Status field, or repository status labels all render into this view.") {
+			@components.Board(content.Board)
+			<p class="mt-3 max-w-[840px] font-mono text-2xs leading-relaxed text-dim">
+				{ content.BoardCaption }
+			</p>
+		}
+		@components.Section("03", "The terminal UI", "For people who live in tmux.",
+			"Same lanes, same counts, same reasons — no browser.") {
+			<div class="grid gap-4 lg:grid-cols-[1fr_320px]">
+				@components.Terminal("$ detent tui") {
+					<span class="text-text">{ "detent" }</span>{ "  ·  9 projects  ·  " }<span class="text-ok">{ "running" }</span>{ "  ·  " }<span class="text-warn">{ "held" }</span>{ "  ·  budget and rate limit in the header\n\n" }
+					{ "▸ In Progress   agent working, make check …\n" }
+					{ "▸ Human Review  " }<span class="text-warn">{ "held: approval label" }</span>{ "\n" }
+					{ "▸ Rework        " }<span class="text-info">{ "review threads unresolved" }</span>{ "\n" }
+					{ "▸ Merging       " }<span class="text-ok">{ "train: rebased, CI watch" }</span>
+				}
+				@components.Card("p-5") {
+					<p class="text-sm leading-relaxed text-sec">
+						The TUI reads the same state the dashboard does. There is no separate data path to
+						drift out of sync, and no browser tab to keep open on a second monitor.
+					</p>
+					<p class="mt-3 text-xs leading-relaxed text-dim">
+						The dashboard binds locally by default. Nothing is exposed to a network you did not
+						choose to expose it to.
+					</p>
+				}
+			</div>
+		}
+		@components.Section("04", "Design rules", "The same system this site is built in.",
+			"The dashboard's palette, type scale, and geometry are the ones you are reading right now — the marketing site imports the product's tokens rather than approximating them.") {
+			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+				@ruleCard("Four semantics, one accent", "ok, warn, error, info — and teal for interactivity only. Never a fifth semantic, and never accent for status.")
+				@ruleCard("Hairlines, not shadows", "1px borders carry every boundary. Card radius 6px, chip radius 4px, on a strict 4px spacing grid.")
+				@ruleCard("Mono means machine", "State names, config, CLI output, and lane labels are set in Geist Mono because they are literal strings, not decoration.")
+				@ruleCard("One thing animates", "A 6px pulsing dot per active agent, and the held card's ring. Reduced-motion turns both off.")
+			</div>
+		}
+		@partials.NextSteps("dashboard")
+	}
+}
+
+func dashboardMeta() meta.PageMeta {
+	return meta.New(
+		"Dashboard",
+		"A tour of the Detent operator surface: live lanes, running agents, waiting reasons, token and budget and rate-limit state, board flow charts, and the terminal UI.",
+	).WithNav("dashboard").WithPath("/dashboard")
+}
+
+templ surfaceCard(title string, body string) {
+	@components.Card("p-5") {
+		<h3 class="text-sm font-semibold text-text">{ title }</h3>
+		<p class="mt-2 text-sm leading-relaxed text-sec">{ body }</p>
+	}
+}
+
+templ ruleCard(title string, body string) {
+	@components.Panel("p-5") {
+		<h3 class="font-mono text-xs text-text">{ title }</h3>
+		<p class="mt-2 text-xs leading-relaxed text-sec">{ body }</p>
+	}
+}

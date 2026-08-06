@@ -1,0 +1,30 @@
+package pages
+
+import (
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+	"strconv"
+)
+
+// Error is the page shown for any HTTP error. A marketing site that answers a
+// mistyped URL with raw JSON has stopped being a marketing site.
+templ Error(status int, heading string, body string) {
+	@layouts.Base(errorMeta(status, heading)) {
+		@partials.PageHeader(
+			"HTTP "+strconv.Itoa(status),
+			heading,
+			body,
+		)
+		@components.FirstSection("", "Where to go instead", "The site is small; it is probably one of these.", "") {
+			@partials.SiteLinks("")
+		}
+	}
+}
+
+func errorMeta(status int, heading string) meta.PageMeta {
+	m := meta.New(heading, "")
+	m.NoIndex = true
+	return m.WithNav("")
+}

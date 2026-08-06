@@ -1,0 +1,39 @@
+# Dokploy builds this with Nixpacks. The rules below are load-bearing:
+#
+#   - No `providers = [...]`. Dual Go+Node providers pull in a second nodejs
+#     and the npm bash-completion files collide. Every package is listed
+#     explicitly in nixPkgs instead.
+#   - nodejs_20, not nodejs_22 — nodejs_22 is not in this nixpkgs archive.
+#   - Do not add "npm"; it ships inside nodejs_20 and fails as its own package.
+#   - The archive is pinned because the default one only carries Go 1.22.
+#   - `go install` binaries land in /root/go/bin, which is not on PATH during
+#     the build phase, so templ is invoked by full path.
+#   - `go install` needs network access, which only the install phase has.
+#
+# The container serves plain HTTP on 3000. Traefik terminates TLS in front of
+# it, so there is deliberately no TLS and no http-to-https redirect in the app.
+
+[phases.setup]
+nixpkgsArchive = 'a1bab9e494f5f4939442a57a58d0449a109593fe'
+nixPkgs = ["go_1_25", "nodejs_20"]
+
+[phases.install]
+cmds = [
+    "npm ci",
+    "go install github.com/a-h/templ/cmd/templ@v0.3.1001",
+    # `go install pkg@version` resolves outside the main module, so it does NOT
+    # populate this module's own dependencies. Without an explicit download the
+    # build phase — which has no network — fails on every import. Verified by
+    # reproducing with a cold GOMODCACHE and GOPROXY=off.
+    "go mod download",
+]
+
+[phases.build]
+cmds = [
+    "/root/go/bin/templ generate",
+    "npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --minify",
+    "CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o out ./cmd/server",
+]
+
+[start]
+cmd = "./out"
