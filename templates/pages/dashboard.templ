@@ -90,7 +90,7 @@ func dashboardMeta() meta.PageMeta {
 	return meta.New(
 		"Dashboard",
 		"A tour of the Detent operator surface: live lanes, running agents, waiting reasons, token and budget and rate-limit state, board flow charts, and the terminal UI.",
-	).WithNav("dashboard").WithCanonical("https://detent.build/dashboard")
+	).WithNav("dashboard").WithPath("/dashboard")
 }
 
 templ surfaceCard(title string, body string) {

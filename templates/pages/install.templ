@@ -121,7 +121,7 @@ func installMeta(target content.InstallTarget) meta.PageMeta {
 	return meta.New(
 		"Install — "+target.Label,
 		"Install Detent on macOS, Linux, or Windows: Homebrew, the checksum-verified shell and PowerShell installers, Winget, Scoop, .deb, .rpm, or go install. Requirements and first run included.",
-	).WithNav("install").WithCanonical("https://detent.build/install")
+	).WithNav("install").WithPath("/install")
 }
 
 templ updateCard(title string, cmd string, note string) {

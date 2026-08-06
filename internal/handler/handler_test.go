@@ -13,19 +13,29 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func newTestServer(t *testing.T) *echo.Echo {
+// newTestServerWithSiteURL builds the server through config.Load() rather than
+// a hand-written Config, so the tests exercise the same defaults production
+// gets and cannot silently drift from them.
+func newTestServerWithSiteURL(t *testing.T, siteURL string) *echo.Echo {
 	t.Helper()
 
-	cfg := &config.Config{
-		Port: "3000",
-		Env:  "test",
-		Site: config.SiteConfig{Name: "detent.build", URL: "https://detent.build"},
-	}
+	t.Setenv("PORT", "")
+	t.Setenv("ENV", "test")
+	t.Setenv("SITE_NAME", "detent.build")
+	t.Setenv("SITE_URL", siteURL)
+	t.Setenv("DEFAULT_OG_IMAGE", "")
+
+	cfg := config.Load()
 
 	e := echo.New()
 	middleware.Setup(e, cfg)
 	New(cfg).RegisterRoutes(e)
 	return e
+}
+
+func newTestServer(t *testing.T) *echo.Echo {
+	t.Helper()
+	return newTestServerWithSiteURL(t, "https://detent.build")
 }
 
 func get(t *testing.T, e *echo.Echo, path string, headers map[string]string) *httptest.ResponseRecorder {
@@ -152,6 +162,56 @@ func TestNoWWWAndNoPlainHTTPForProductionHost(t *testing.T) {
 	}
 }
 
+// Canonicals and og:url resolve from SITE_URL rather than being hard-coded,
+// and the card image must be absolute or crawlers cannot fetch it.
+func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
+	e := newTestServer(t)
+
+	tests := []struct {
+		path string
+		want string
+	}{
+		{"/", "https://detent.build/"},
+		{"/how-it-works", "https://detent.build/how-it-works"},
+		{"/why-detent", "https://detent.build/why-detent"},
+		{"/dashboard", "https://detent.build/dashboard"},
+		{"/install", "https://detent.build/install"},
+		{"/open-source", "https://detent.build/open-source"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			body := get(t, e, tt.path, nil).Body.String()
+
+			if want := `<link rel="canonical" href="` + tt.want + `">`; !strings.Contains(body, want) {
+				t.Errorf("missing canonical %s", tt.want)
+			}
+			if want := `<meta property="og:url" content="` + tt.want + `">`; !strings.Contains(body, want) {
+				t.Errorf("missing og:url %s", tt.want)
+			}
+			if want := `<meta property="og:image" content="https://detent.build/static/images/og-default.png">`; !strings.Contains(body, want) {
+				t.Error("og:image is missing or not an absolute URL")
+			}
+		})
+	}
+}
+
+// Every install tab is the same page with a different tab selected, so they
+// must all point at /install rather than competing for the index.
+func TestInstallTabsShareOneCanonical(t *testing.T) {
+	e := newTestServer(t)
+
+	for _, target := range content.InstallTargets {
+		t.Run(target.Key, func(t *testing.T) {
+			body := get(t, e, "/install/"+target.Key, nil).Body.String()
+
+			if !strings.Contains(body, `<link rel="canonical" href="https://detent.build/install">`) {
+				t.Errorf("/install/%s does not canonicalize to /install", target.Key)
+			}
+		})
+	}
+}
+
 func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 	e := newTestServer(t)
 
@@ -178,19 +238,27 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 // The site URL is configured with no trailing slash in production, but a
 // stray one must not corrupt the sitemap.
 func TestSitemapTolerantOfTrailingSlashConfig(t *testing.T) {
-	cfg := &config.Config{
-		Port: "3000",
-		Env:  "test",
-		Site: config.SiteConfig{Name: "detent.build", URL: "https://detent.build/"},
-	}
-	e := echo.New()
-	middleware.Setup(e, cfg)
-	New(cfg).RegisterRoutes(e)
+	e := newTestServerWithSiteURL(t, "https://detent.build/")
 
 	body := get(t, e, "/sitemap.xml", nil).Body.String()
 
 	if strings.Contains(body, "detent.build//") {
 		t.Error("trailing slash in SITE_URL produced a doubled slash")
+	}
+}
+
+// A trailing slash in SITE_URL must not leak into canonicals or the card URL
+// either — a doubled slash is a different URL to a crawler.
+func TestCanonicalTolerantOfTrailingSlashConfig(t *testing.T) {
+	e := newTestServerWithSiteURL(t, "https://detent.build/")
+
+	body := get(t, e, "/how-it-works", nil).Body.String()
+
+	if strings.Contains(body, "detent.build//") {
+		t.Error("trailing slash in SITE_URL produced a doubled slash in page metadata")
+	}
+	if !strings.Contains(body, `<link rel="canonical" href="https://detent.build/how-it-works">`) {
+		t.Error("canonical is wrong when SITE_URL carries a trailing slash")
 	}
 }
 

@@ -112,7 +112,7 @@ func openSourceMeta() meta.PageMeta {
 	return meta.New(
 		"Open source",
 		"Detent is MIT licensed, free, and self-hosted with no vendor control plane. The license, releases, contributing guide, the Symphony lineage, and the self-hosting proof via detent-orchestration.",
-	).WithNav("open-source").WithCanonical("https://detent.build/open-source")
+	).WithNav("open-source").WithPath("/open-source")
 }
 
 templ termCard(label string, value string, href string) {

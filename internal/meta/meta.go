@@ -5,9 +5,13 @@ type PageMeta struct {
 	Description string
 	OGType      string
 	OGImage     string
-	Canonical   string
-	NoIndex     bool
-	NavKey      string
+	// Path is the page's site-root path, e.g. "/how-it-works". The canonical
+	// and og:url are resolved from it against the configured site URL, so the
+	// production host lives in one place (SITE_URL) rather than being repeated
+	// in every page's metadata.
+	Path    string
+	NoIndex bool
+	NavKey  string
 }
 
 func New(title, description string) PageMeta {
@@ -23,8 +27,9 @@ func (m PageMeta) WithOGImage(url string) PageMeta {
 	return m
 }
 
-func (m PageMeta) WithCanonical(url string) PageMeta {
-	m.Canonical = url
+// WithPath sets the site-root path the canonical and og:url resolve from.
+func (m PageMeta) WithPath(path string) PageMeta {
+	m.Path = path
 	return m
 }
 
