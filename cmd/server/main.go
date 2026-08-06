@@ -57,6 +57,9 @@ func run() error {
 	if err := cfg.Validate(); err != nil {
 		return fmt.Errorf("invalid configuration: %w", err)
 	}
+	for _, w := range cfg.Warnings() {
+		slog.Warn("configuration", "issue", w)
+	}
 
 	e := echo.New()
 	e.HideBanner = true

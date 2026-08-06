@@ -79,10 +79,24 @@ same commit.
 ## Verifying a deploy
 
 ```sh
-curl -sS https://detent.build/health                  # {"status":"ok"}
-curl -sS -o /dev/null -w '%{http_code}\n' https://detent.build/
-curl -sS https://detent.build/sitemap.xml | head -3
+make smoke                                # against https://detent.build
+make smoke SMOKE_URL=http://localhost:3000
 ```
+
+`scripts/smoke.sh` asserts what only a real deployment can break: every route,
+the 404, the absence of www and plain-http and localhost references, the
+canonical and `og:image` matching the deployed host, the sitemap, the
+proxy's http-to-https redirect, and the security headers.
+
+**Run it after every deploy.** The first production deploy passed CI, returned
+200 on every route, and reported a healthy container while emitting
+`http://localhost:3000` as the canonical on every page — because the Dokploy
+application had no environment set, so `ENV` fell back to `development` and
+`SITE_URL` to its local default. Nothing in the test suite or the container
+health check could see it. This script can.
+
+The binary also logs a warning at startup for each of `ENV` and `SITE_URL` when
+they are unset, which is visible in the Dokploy log viewer.
 
 If `/health` answers and `/` does not, the binary is up and the templ or CSS
 build step produced nothing — check that the build phase ran
