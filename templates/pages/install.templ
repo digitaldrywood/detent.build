@@ -15,7 +15,7 @@ templ Install(target content.InstallTarget) {
 			"One CGO-free binary. No service to stand up.",
 			"macOS, Linux, and Windows. Install it, run the preflight check, point it at a repository, and mark an issue Todo.",
 		)
-		@components.Section("01", "Install", "Pick your platform.", "") {
+		@components.FirstSection("01", "Install", "Pick your platform.", "") {
 			<div class="grid gap-4 lg:grid-cols-[1fr_380px]">
 				@partials.InstallTabs(target)
 				@components.Card("h-fit p-5") {

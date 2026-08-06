@@ -19,8 +19,12 @@ const (
 
 	DocsBase = RepoURL + "/blob/main/docs/"
 
-	Version = "v0.55.0"
-	License = "MIT"
+	// Version is hand-maintained and will rot. It should come from the
+	// releases API or a build flag; until then TestVersionMatchesBare keeps the
+	// two spellings in sync, and nothing else.
+	Version     = "v0.55.0"
+	VersionBare = "0.55.0"
+	License     = "MIT"
 )
 
 // Doc returns a link to a document in the Detent repository.
@@ -116,7 +120,7 @@ type ProofPoint struct {
 
 var ProofPoints = []ProofPoint{
 	{"One CGO-free Go binary", "macOS, Linux, and Windows. go install, Homebrew, Winget, Scoop, .deb, .rpm, or copy a single file. No service to stand up."},
-	{"Self-hosted, air-gappable", "Runs fully local. There is no Detent vendor control plane, and nothing phones home."},
+	{"Self-hosted, air-gappable", "Runs fully local. There is no Detent vendor control plane and no Detent telemetry — the only outbound traffic is to your tracker and your model provider."},
 	{"Deterministic gated merge train", "Serialized rebase, CI-watch, and merge — one candidate at a time, so what lands is always green."},
 	{"Multi-instance fleet governance", "Many projects from one host with weights, priority, pause, and fair scheduling."},
 	{"Budget and cost caps", "Token, budget, and rate-limit state live on the dashboard, with caps you configure."},
@@ -158,8 +162,14 @@ var InstallTargets = []InstallTarget{
 		Shell:   "sh",
 		Primary: Command{"Shell installer — downloads the release archive and verifies its SHA-256 checksum", "curl -fsSL https://raw.githubusercontent.com/digitaldrywood/detent/main/install.sh | sh"},
 		Others: []Command{
-			{"Or a native .deb, owned by apt", "sudo apt install ./detent_${DETENT_VERSION}_linux_${DETENT_ARCH}.deb"},
-			{"Or a native .rpm", "sudo rpm -Uvh ./detent_${DETENT_VERSION}_linux_${DETENT_ARCH}.rpm"},
+			{"Or a native .deb, so apt owns the binary, removal, and upgrades",
+				"DETENT_VERSION=" + VersionBare + " DETENT_ARCH=amd64 \\\n" +
+					"  curl -LO \"https://github.com/digitaldrywood/detent/releases/download/v${DETENT_VERSION}/detent_${DETENT_VERSION}_linux_${DETENT_ARCH}.deb\" \\\n" +
+					"  && sudo apt install \"./detent_${DETENT_VERSION}_linux_${DETENT_ARCH}.deb\""},
+			{"Or a native .rpm",
+				"DETENT_VERSION=" + VersionBare + " DETENT_ARCH=amd64 \\\n" +
+					"  curl -LO \"https://github.com/digitaldrywood/detent/releases/download/v${DETENT_VERSION}/detent_${DETENT_VERSION}_linux_${DETENT_ARCH}.rpm\" \\\n" +
+					"  && sudo rpm -Uvh \"./detent_${DETENT_VERSION}_linux_${DETENT_ARCH}.rpm\""},
 			{"Homebrew works on Linux too", "brew install digitaldrywood/tap/detent"},
 		},
 		Footnote: "The installer writes to /usr/local/bin when writable, otherwise $HOME/.local/bin. Set DETENT_INSTALL_DIR to override.",
@@ -265,7 +275,7 @@ var Matrix = []Row{
 	{"Runs fully local / air-gappable", []Verdict{
 		{"yes", ""}, {"yes", ""}, {"no", ""}, {"no", ""}, {"yes", ""}, {"yes", ""}, {"no", "cloud"},
 	}},
-	{"Board-native (issue → PR)", []Verdict{
+	{"Board/tracker-native (issue→PR)", []Verdict{
 		{"yes", "GH Projects, issue fields, or labels"}, {"yes", "Linear"}, {"yes", "GH Issues"},
 		{"no", ""}, {"no", ""}, {"no", ""}, {"no", "own workspace"},
 	}},
@@ -281,16 +291,16 @@ var Matrix = []Row{
 	{"Multi-instance fleet governance", []Verdict{
 		{"yes", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"partial", "hosted agent controls"},
 	}},
-	{"Model-agnostic, BYO including local", []Verdict{
-		{"partial", "Codex now, seam shipped"}, {"no", "Codex"}, {"yes", "vendor-managed"}, {"yes", "vendor-managed"},
+	{"Model-agnostic, BYO incl. local", []Verdict{
+		{"partial", "codex now, seam shipped"}, {"no", "Codex"}, {"yes", "vendor-managed"}, {"yes", "vendor-managed"},
 		{"yes", ""}, {"yes", ""}, {"no", "cloud-managed"},
 	}},
-	{"Local skills / workflows", []Verdict{
-		{"yes", ""}, {"partial", ""}, {"no", ""}, {"partial", ""}, {"yes", ""}, {"yes", ""}, {"yes", "hosted skills"},
+	{"Local skills / workflows (your e2e etc.)", []Verdict{
+		{"yes", ""}, {"partial", ""}, {"no", ""}, {"partial", ""}, {"yes", ""}, {"yes", ""}, {"yes", "hosted skills/knowledge"},
 	}},
 	{"Multi-channel triggers", []Verdict{
-		{"partial", "tracker-driven"}, {"partial", "Linear"}, {"partial", "GitHub"}, {"partial", "IDE / cloud tasks"},
-		{"yes", "messaging gateway"}, {"yes", "local gateway"}, {"yes", "Slack, schedules, webhooks, email"},
+		{"partial", "tracker-driven"}, {"partial", "Linear"}, {"partial", "GitHub"}, {"partial", "IDE/cloud tasks"},
+		{"yes", "messaging gateway"}, {"yes", "local gateway"}, {"yes", "Slack, schedules, webhooks, email, Telegram, Live Mode"},
 	}},
 	{"Open source", []Verdict{
 		{"yes", "MIT"}, {"yes", "Apache-2.0"}, {"no", ""}, {"no", ""}, {"yes", "MIT"}, {"yes", "MIT"}, {"no", "closed-source"},
@@ -299,7 +309,10 @@ var Matrix = []Row{
 		{"yes", ""}, {"yes", ""}, {"no", "paid"}, {"no", "paid"}, {"yes", ""}, {"yes", ""}, {"no", "usage-billed"},
 	}},
 	{"Single static binary", []Verdict{
-		{"yes", ""}, {"no", "Elixir / BEAM"}, {"na", "SaaS"}, {"na", "SaaS"}, {"no", "gateway"}, {"no", "gateway"}, {"na", "SaaS"},
+		{"yes", ""}, {"no", "Elixir/BEAM"}, {"na", "SaaS"}, {"na", "SaaS"}, {"no", "gateway"}, {"no", "gateway"}, {"na", "SaaS"},
+	}},
+	{"~5-min setup", []Verdict{
+		{"yes", ""}, {"no", ""}, {"yes", "zero-install"}, {"yes", ""}, {"partial", ""}, {"partial", ""}, {"partial", "hosted onboarding"},
 	}},
 }
 
@@ -312,17 +325,20 @@ type FleetProject struct {
 	ID       string
 	Weight   string
 	Priority string
-	State    string
 }
 
+// Fleet is the projects block of Detent's own global.yaml. Only the fields
+// that file actually sets — there is no per-project state column in it, and
+// inventing one would make the "from Detent's own config" claim false.
 var Fleet = []FleetProject{
-	{"detent", "1", "0", "active"},
-	{"gopher-ai", "1", "3", "active"},
-	{"gopher-corp", "1", "3", "active"},
+	{"detent", "1", "0"},
+	{"gopher-ai", "1", "3"},
+	{"gopher-corp", "1", "3"},
 }
 
 // FleetNote explains what the table above is.
-const FleetNote = "Detent's own global.yaml, verbatim. max_concurrent_agents: 5, strict scheduling, fair-share half-life 1h."
+const FleetNote = "The projects block of Detent's own global.yaml. That file also sets " +
+	"max_concurrent_agents: 5, strict scheduling, and a 1h fair-share half-life."
 
 // Card is one work item sitting in a lane on the hero board.
 type Card struct {
@@ -397,18 +413,34 @@ var Board = []BoardColumn{
 	},
 	{
 		Lane:  Lanes[5],
-		Count: "1,628",
+		Count: MergedPRs,
 		Cards: []Card{
 			{Ref: "#1624", Repo: "detent", Title: "test(project): relax watcher deadlock guard",
 				Status: "merged, green", Tone: "ok"},
 		},
-		Overflow: "every one of them merged by the train",
 	},
 }
 
+// MergedPRs is the number of pull requests landed on digitaldrywood/detent.
+// Derived, and checkable:
+//
+//	git log --format='%s' | rg -c '\(#[0-9]+\)$'
+//
+// Squash merges put the PR reference in the commit subject, so this counts
+// landed pull requests rather than raw commits. Hand-updated; see the note on
+// Version about the same staleness problem.
+const MergedPRs = "722"
+
+// BoardLabel replaces a "live" indicator. The board is a composition, and
+// saying so in the header rather than in a caption underneath is the whole
+// difference between an illustration and a false claim.
+const BoardLabel = "composed snapshot"
+
 // BoardCaption is the honesty note printed under the hero board.
-const BoardCaption = "Real merged work from digitaldrywood/detent — Detent's own agents wrote all of it. " +
-	"Arranged to show one item at every stop at once; a live board only shows one instant."
+const BoardCaption = "Not a live board. The issue numbers, titles, and lanes are real work from " +
+	"digitaldrywood/detent, arranged to show one item at every stop at once — a running board only " +
+	"ever shows one instant. The counts describe this illustration; " + MergedPRs +
+	" is the all-time landed pull requests on that repository."
 
 // MergeTrainStage is one step in the serialized merge train diagram.
 type MergeTrainStage struct {

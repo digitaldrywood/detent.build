@@ -20,7 +20,8 @@ func New(cfg *config.Config) *Handler {
 func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	e.Static("/static", "static")
 	e.Static("/assets", "assets") // templUI component JavaScript
-	e.File("/favicon.ico", "static/images/favicon.ico")
+	// No /favicon.ico route: the layout links the SVG mark, and a registered
+	// route to a file that does not exist just turns a 404 into a slower 404.
 	e.File("/robots.txt", "static/robots.txt")
 	e.GET("/sitemap.xml", h.Sitemap)
 

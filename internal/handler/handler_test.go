@@ -113,8 +113,19 @@ func TestInstallPlatformHTMXSwapsTabStrip(t *testing.T) {
 	if !strings.Contains(body, `id="install-tabs"`) {
 		t.Error("HTMX response does not include the tab strip, so the selected tab cannot update")
 	}
-	if !strings.Contains(body, `href="/install/windows" hx-get="/install/windows" hx-target="#install-tabs" hx-swap="outerHTML" hx-push-url="true" aria-selected="true"`) {
-		t.Error("the Windows tab is not marked selected in the swapped fragment")
+	if !strings.Contains(body, `hx-get="/install/windows"`) {
+		t.Error("the swapped fragment does not contain the Windows link")
+	}
+	// These are navigation links, not an ARIA tabs widget: aria-current marks
+	// the selected one, and only one link may carry it.
+	if got := strings.Count(body, `aria-current="page"`); got != 1 {
+		t.Errorf("aria-current appears %d times in the swapped fragment, want exactly 1", got)
+	}
+	if !strings.Contains(body, `href="/install/windows" hx-get="/install/windows" hx-target="#install-tabs" hx-swap="outerHTML" hx-push-url="true" aria-current="page"`) {
+		t.Error("the Windows link is not the one marked aria-current after the swap")
+	}
+	if strings.Contains(body, `role="tab"`) {
+		t.Error("role=tab is back without the tabpanel, roving tabindex, and arrow-key model it promises")
 	}
 }
 

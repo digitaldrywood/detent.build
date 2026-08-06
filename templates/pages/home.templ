@@ -11,7 +11,7 @@ import (
 templ Home() {
 	@layouts.Base(homeMeta()) {
 		@heroSection()
-		@partials.Inversion("02")
+		@partials.Inversion("02", false)
 		@partials.HowItWorksSummary()
 		@partials.MergeTrainSection("04")
 		@partials.OperatorSurface()

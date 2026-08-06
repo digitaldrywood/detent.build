@@ -215,30 +215,13 @@
     animation: dt-hold 2.8s ease-in-out infinite;
   }
 
-  /* Section entrances. One-shot, short, and gone. */
-  @keyframes dt-rise {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
-  }
-
-  .dt-rise {
-    animation: dt-rise 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
-  }
-
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
     }
 
     .dt-pulse,
-    .dt-held,
-    .dt-rise {
+    .dt-held {
       animation: none !important;
     }
   }
@@ -262,9 +245,3 @@
   }
 }
 
-/* Unlayered on purpose: this has to beat the pt-24 utility on the section
-   itself. Sections carry generous top padding, which reads as a hole directly
-   under an interior page's masthead — close it up once, here. */
-.dt-masthead + section {
-  padding-top: calc(var(--spacing) * 14);
-}

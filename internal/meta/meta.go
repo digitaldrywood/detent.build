@@ -22,6 +22,7 @@ func New(title, description string) PageMeta {
 	}
 }
 
+// WithOGImage overrides the site-wide default card for one page.
 func (m PageMeta) WithOGImage(url string) PageMeta {
 	m.OGImage = url
 	return m
@@ -36,10 +37,5 @@ func (m PageMeta) WithPath(path string) PageMeta {
 // WithNav marks which top-level nav item is current for this page.
 func (m PageMeta) WithNav(key string) PageMeta {
 	m.NavKey = key
-	return m
-}
-
-func (m PageMeta) AsArticle() PageMeta {
-	m.OGType = "article"
 	return m
 }

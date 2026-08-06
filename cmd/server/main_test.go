@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"errors"
+	"net"
 	"net/http"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -146,5 +148,44 @@ func TestFindAvailablePortZero(t *testing.T) {
 
 	if port == "0" {
 		t.Fatal("findAvailablePort returned port 0")
+	}
+}
+
+// Production must not silently relocate to another port: the Dokploy domain
+// entry is bound to one container port, so a relocated process is healthy
+// internally and unreachable from outside.
+func TestListenStrictFailsWhenPortIsTaken(t *testing.T) {
+	occupied, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("occupy a port: %v", err)
+	}
+	t.Cleanup(func() { _ = occupied.Close() })
+
+	port := strconv.Itoa(occupied.Addr().(*net.TCPAddr).Port)
+
+	if ln, _, err := listen(port, true); err == nil {
+		_ = ln.Close()
+		t.Fatal("strict listen succeeded on an occupied port; production would be unroutable")
+	}
+}
+
+// Development keeps the scan, so several projects can share a machine.
+func TestListenNonStrictScansForward(t *testing.T) {
+	occupied, err := net.Listen("tcp", ":0")
+	if err != nil {
+		t.Fatalf("occupy a port: %v", err)
+	}
+	t.Cleanup(func() { _ = occupied.Close() })
+
+	port := strconv.Itoa(occupied.Addr().(*net.TCPAddr).Port)
+
+	ln, got, err := listen(port, false)
+	if err != nil {
+		t.Fatalf("non-strict listen: %v", err)
+	}
+	t.Cleanup(func() { _ = ln.Close() })
+
+	if got == port {
+		t.Errorf("non-strict listen returned the occupied port %s", got)
 	}
 }

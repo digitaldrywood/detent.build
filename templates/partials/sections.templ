@@ -9,9 +9,10 @@ import (
 // at: the same task under an autonomy-first assistant and under Detent. It
 // appears at a different position on each page that uses it, so the section
 // number is a parameter rather than a constant.
-templ Inversion(num string) {
-	@components.Section(num, "The inversion", "A system, not an agent.",
-		"Autonomy-first tools put the intelligence in the agent and ask you to supervise it. Detent puts the intelligence in your spec and supplies the discipline. Same task, two interaction models.") {
+// first is true when this is the section directly under a page masthead, which
+// wants the tighter top padding.
+templ Inversion(num string, first bool) {
+	@inversionSection(num, first) {
 		<div class="grid gap-4 lg:grid-cols-2">
 			@components.Card("p-6") {
 				<div class="font-mono text-xs text-dim">
@@ -43,6 +44,20 @@ templ Inversion(num string) {
 			judgment of engineers who already have a high bar. The system does not try to be smarter than
 			you; it tries to be as disciplined as you would be, every time, in parallel.
 		</p>
+	}
+}
+
+templ inversionSection(num string, first bool) {
+	{{ heading := "A system, not an agent." }}
+	{{ lede := "Autonomy-first tools put the intelligence in the agent and ask you to supervise it. Detent puts the intelligence in your spec and supplies the discipline. Same task, two interaction models." }}
+	if first {
+		@components.FirstSection(num, "The inversion", heading, lede) {
+			{ children... }
+		}
+	} else {
+		@components.Section(num, "The inversion", heading, lede) {
+			{ children... }
+		}
 	}
 }
 
@@ -116,7 +131,7 @@ templ OperatorSurface() {
 		<figure class="overflow-hidden rounded-card border border-line bg-page">
 			<img
 				src="/static/images/dashboard-dark.png"
-				alt="The Detent dashboard: a sidebar of eight projects, a live board with Backlog, Blocked, Human Review, and Review lanes, and a header row showing running, queued, waiting, blocked, and completed counts."
+				alt="The Detent dashboard: a sidebar of nine projects, a live board with Backlog, Blocked, Human Review, and Review lanes, and a header row showing running, queued, waiting, blocked, and completed counts."
 				width="2972"
 				height="1745"
 				class="block w-full"
@@ -126,7 +141,7 @@ templ OperatorSurface() {
 		</figure>
 		<div class="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
 			@components.Terminal("$ detent tui") {
-				<span class="text-text">detent</span>{ "  ·  8 projects  ·  " }<span class="text-ok">running</span>{ "  ·  " }<span class="text-warn">held</span>{ "  ·  budget and rate limit in the header\n" }
+				<span class="text-text">detent</span>{ "  ·  9 projects  ·  " }<span class="text-ok">running</span>{ "  ·  " }<span class="text-warn">held</span>{ "  ·  budget and rate limit in the header\n" }
 				{ "▸ In Progress   agent working, make check …\n" }
 				{ "▸ Human Review  " }<span class="text-warn">held: approval label</span>{ "\n" }
 				{ "▸ Merging       " }<span class="text-ok">train: rebased, CI watch</span>
@@ -135,7 +150,7 @@ templ OperatorSurface() {
 				<p class="text-sm leading-relaxed text-sec">
 					And a terminal UI for people who live in tmux &#8212; the same lanes, the same counts, no browser.
 				</p>
-				<a href="/dashboard" class="mt-3 inline-block font-mono text-xs text-accent hover:underline">
+				<a href="/dashboard" class="mt-3 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
 					Tour the operator surface &#8594;
 				</a>
 			}
@@ -213,20 +228,16 @@ templ ShipsItself(num string) {
 // FleetSection is the multi-project story, using Detent's own global.yaml.
 templ FleetSection() {
 	@components.Section("08", "One host, many repos", "Fleet scheduling from a single binary.",
-		"A global.yaml runs many projects with weights, priority, pause, and fair scheduling. Below is Detent's own, verbatim.") {
+		"A global.yaml runs many projects with weights, priority, pause, and fair scheduling. Below is the projects block of Detent's own.") {
 		<div class="overflow-hidden rounded-card border border-line">
-			<div class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 border-b border-line bg-page px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.06em] text-dim">
-				<span>Project</span><span>Weight</span><span>Priority</span><span>State</span>
+			<div class="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-line bg-page px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.06em] text-dim">
+				<span>Project</span><span>Weight</span><span>Priority</span>
 			</div>
 			for _, p := range content.Fleet {
-				<div class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 border-b border-line bg-surface px-5 py-3 font-mono text-xs last:border-b-0">
+				<div class="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-line bg-surface px-5 py-3 font-mono text-xs last:border-b-0">
 					<span class="truncate text-text">{ p.ID }</span>
 					<span class="text-sec">{ p.Weight }</span>
 					<span class="text-sec">{ p.Priority }</span>
-					<span class="flex items-center gap-1.5 text-ok">
-						@components.StatusDot("ok", false)
-						{ p.State }
-					</span>
 				</div>
 			}
 		</div>

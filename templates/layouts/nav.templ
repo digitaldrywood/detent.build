@@ -61,7 +61,7 @@ templ Nav(current string) {
 templ navLink(item navItem, current string) {
 	<a
 		href={ templ.SafeURL(item.Href) }
-		class={ "whitespace-nowrap transition-colors hover:text-accent",
+		class={ "inline-flex min-h-6 items-center whitespace-nowrap py-1 transition-colors hover:text-accent",
 			templ.KV("text-accent", item.Key == current),
 			templ.KV("text-sec", item.Key != current) }
 		if item.Key == current {

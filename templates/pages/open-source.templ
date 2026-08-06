@@ -15,7 +15,7 @@ templ OpenSource() {
 			"MIT. Free. Self-hosted. No control plane.",
 			"There is no hosted tier, no per-seat charge, and nothing to sign up for. You bring the model cost, and that is the whole business model.",
 		)
-		@components.Section("01", "The terms", "Short version, on one screen.", "") {
+		@components.FirstSection("01", "The terms", "Short version, on one screen.", "") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 				@termCard("License", "MIT", content.LicenseURL)
 				@termCard("Current release", content.Version, content.ReleasesURL)
@@ -75,7 +75,7 @@ templ OpenSource() {
 						implementation that polls a Linear board. Its slogan &#8212; manage work, not agents
 						&#8212; is the idea Detent is built on.
 					</p>
-					<a href={ templ.SafeURL(content.SymphonyURL) } class="mt-3 inline-block font-mono text-xs text-accent hover:underline">
+					<a href={ templ.SafeURL(content.SymphonyURL) } class="mt-3 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
 						openai/symphony &#8599;
 					</a>
 				}

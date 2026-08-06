@@ -15,7 +15,7 @@ templ WhyDetent() {
 			"You are not steering an agent. You are running your process at scale.",
 			"This page is the argument, the two default choices that define Detent's footprint, and the comparison matrix — including the rows where Detent loses.",
 		)
-		@partials.Inversion("01")
+		@partials.Inversion("01", true)
 		@components.Section("02", "Who this is for", "And who should close the tab.", "") {
 			<div class="grid gap-4 lg:grid-cols-3">
 				@audienceCard("The engineer who runs delivery",
@@ -110,7 +110,10 @@ templ WhyDetent() {
 			<div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				for _, c := range content.Competitors {
 					@components.Card("p-5") {
-						<a href={ templ.SafeURL(c.URL) } class="font-mono text-xs text-accent hover:underline">
+						<a
+							href={ templ.SafeURL(c.URL) }
+							class="inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline"
+						>
 							{ c.Name } &#8599;
 						</a>
 						<p class="mt-2 text-sm leading-relaxed text-sec">{ c.What }</p>
@@ -128,7 +131,7 @@ templ WhyDetent() {
 				@objection("Will it merge garbage?",
 					"Not without passing the gates you wrote. Promotion to Merging requires whatever the workflow declared — a human release, a current-head automated review, or a linked PR with green CI and a quiet window. Then the serialized train rebases, watches CI on the exact commit about to land, and merges one candidate at a time.")
 				@objection("What if the agent goes off the rails?",
-					"It goes off the rails inside its own worktree, on its own branch, behind your validation gate. It cannot merge — only the train merges. Unresolved review feedback routes it to Rework rather than forward.")
+					"It works on its own branch in its own worktree, and it cannot merge — only the train merges, after your gates clear. Be precise about the limit, though: a worktree is collision isolation, not an OS sandbox. Detent's own config runs the agent with full host access, so the guarantee is about what lands, not about what the process can touch.")
 				@objection("Why Codex and not Claude?",
 					"Metering, for headless parallel dispatch. See the defaults above. Detent supports explicit backend routing including Claude Code, per role.")
 				@objection("Why GitHub Projects and not Linear?",

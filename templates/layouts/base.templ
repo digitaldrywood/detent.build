@@ -15,6 +15,10 @@ templ Base(m meta.PageMeta) {
 			<link rel="icon" href="/static/images/detent-mark.svg" type="image/svg+xml"/>
 			<link rel="stylesheet" href="/static/css/output.css"/>
 			@themeScript()
+			// htmx injects a <style> element for its indicator CSS, which trips
+			// style-src. The equivalent rules are already in input.css, so turn
+			// the injection off rather than widening the policy.
+			<meta name="htmx-config" content='{"includeIndicatorStyles":false}'/>
 			<script src="/static/js/htmx.min.js" defer></script>
 			@copybutton.Script()
 		</head>

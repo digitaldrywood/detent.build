@@ -25,7 +25,7 @@ templ Dashboard() {
 					class="block w-full rounded-card border border-line"
 				/>
 				<figcaption class="mt-3 font-mono text-2xs text-dim">
-					A real board across eight projects. Note the waiting reasons on the blocked cards — the
+					A real board across nine projects. Note the waiting reasons on the blocked cards — the
 					dashboard says why something is stopped, not just that it is.
 				</figcaption>
 			</figure>
@@ -55,7 +55,7 @@ templ Dashboard() {
 			"Same lanes, same counts, same reasons — no browser.") {
 			<div class="grid gap-4 lg:grid-cols-[1fr_320px]">
 				@components.Terminal("$ detent tui") {
-					<span class="text-text">{ "detent" }</span>{ "  ·  8 projects  ·  " }<span class="text-ok">{ "running" }</span>{ "  ·  " }<span class="text-warn">{ "held" }</span>{ "  ·  budget and rate limit in the header\n\n" }
+					<span class="text-text">{ "detent" }</span>{ "  ·  9 projects  ·  " }<span class="text-ok">{ "running" }</span>{ "  ·  " }<span class="text-warn">{ "held" }</span>{ "  ·  budget and rate limit in the header\n\n" }
 					{ "▸ In Progress   agent working, make check …\n" }
 					{ "▸ Human Review  " }<span class="text-warn">{ "held: approval label" }</span>{ "\n" }
 					{ "▸ Rework        " }<span class="text-info">{ "review threads unresolved" }</span>{ "\n" }
@@ -76,7 +76,7 @@ templ Dashboard() {
 		@components.Section("04", "Design rules", "The same system this site is built in.",
 			"The dashboard's palette, type scale, and geometry are the ones you are reading right now — the marketing site imports the product's tokens rather than approximating them.") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-				@ruleCard("Five semantics, one accent", "ok, warn, error, info — and teal for interactivity only. Never a seventh color, and never accent for status.")
+				@ruleCard("Four semantics, one accent", "ok, warn, error, info — and teal for interactivity only. Never a fifth semantic, and never accent for status.")
 				@ruleCard("Hairlines, not shadows", "1px borders carry every boundary. Card radius 6px, chip radius 4px, on a strict 4px spacing grid.")
 				@ruleCard("Mono means machine", "State names, config, CLI output, and lane labels are set in Geist Mono because they are literal strings, not decoration.")
 				@ruleCard("One thing animates", "A 6px pulsing dot per active agent, and the held card's ring. Reduced-motion turns both off.")

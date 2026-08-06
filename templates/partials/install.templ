@@ -10,17 +10,23 @@ import (
 // URL that HTMX swaps in place; with JavaScript off, the link is a normal
 // navigation that renders the same page with that tab selected.
 templ InstallTabs(current content.InstallTarget) {
+	// These are navigation links, not a tabs widget. Each one is a real URL that
+	// renders a full page on its own, and HTMX only shortcuts the round trip.
+	// Claiming role="tab" without tabpanel wiring, roving tabindex, and arrow
+	// keys promises a keyboard model that does not exist — a labeled nav with
+	// aria-current is both simpler and actually true.
 	<div id="install-tabs" class="overflow-hidden rounded-card border border-line bg-page">
-		<div class="flex overflow-x-auto border-b border-line font-mono text-xs" role="tablist">
+		<nav aria-label="Install platform" class="flex overflow-x-auto border-b border-line font-mono text-xs">
 			for _, t := range content.InstallTargets {
 				<a
-					role="tab"
 					href={ templ.SafeURL("/install/" + t.Key) }
 					hx-get={ "/install/" + t.Key }
 					hx-target="#install-tabs"
 					hx-swap="outerHTML"
 					hx-push-url="true"
-					aria-selected={ ariaSelected(t.Key == current.Key) }
+					if t.Key == current.Key {
+						aria-current="page"
+					}
 					class={ "whitespace-nowrap border-b-2 px-5 py-3 transition-colors",
 						templ.KV("border-accent text-accent", t.Key == current.Key),
 						templ.KV("border-transparent text-dim hover:text-sec", t.Key != current.Key) }
@@ -28,7 +34,7 @@ templ InstallTabs(current content.InstallTarget) {
 					{ t.Label }
 				</a>
 			}
-		</div>
+		</nav>
 		@InstallPanel(current)
 	</div>
 }
@@ -64,13 +70,6 @@ func sigilFor(shell string) string {
 	return "$"
 }
 
-func ariaSelected(selected bool) string {
-	if selected {
-		return "true"
-	}
-	return "false"
-}
-
 // InstallSection is the home page's install block: the tabs, plus the first
 // run and the requirements underneath.
 templ InstallSection() {
@@ -94,7 +93,7 @@ templ InstallSection() {
 						<span>Go 1.26+ for source builds only</span>
 					</li>
 				</ul>
-				<a href="/install" class="mt-4 inline-block font-mono text-xs text-accent hover:underline">
+				<a href="/install" class="mt-4 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
 					Full requirements and first run &#8594;
 				</a>
 			}

@@ -71,6 +71,22 @@ func serve(ctx context.Context, srv server, timeout time.Duration) error {
 	return errors.Join(shutdownErr, err)
 }
 
+// listen binds the configured port. When strict is true the configured port is
+// the only acceptable one and an occupied port is a hard failure; otherwise it
+// scans forward for a free port, which is convenient in development where
+// several projects share a machine.
+func listen(configuredPort string, strict bool) (net.Listener, string, error) {
+	if !strict {
+		return findAvailablePort(configuredPort)
+	}
+
+	ln, err := net.Listen("tcp", ":"+configuredPort)
+	if err != nil {
+		return nil, "", fmt.Errorf("port %s is required in production and is unavailable: %w", configuredPort, err)
+	}
+	return ln, configuredPort, nil
+}
+
 func findAvailablePort(configuredPort string) (net.Listener, string, error) {
 	startPort, err := strconv.Atoi(configuredPort)
 	if err != nil {

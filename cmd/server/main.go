@@ -53,14 +53,20 @@ func main() {
 
 func run() error {
 	cfg := config.Load()
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("invalid configuration: %w", err)
+	}
 
 	e := echo.New()
 	e.HideBanner = true
 	e.HidePort = true
 
-	ln, actualPort, err := findAvailablePort(cfg.Port)
+	// In production the port is not ours to choose: the Dokploy domain entry is
+	// bound to one container port, so a process that quietly moves to the next
+	// free port is healthy internally and unroutable from outside. Fail instead.
+	ln, actualPort, err := listen(cfg.Port, cfg.IsProduction())
 	if err != nil {
-		return fmt.Errorf("find available port: %w", err)
+		return fmt.Errorf("listen on port %s: %w", cfg.Port, err)
 	}
 	e.Listener = ln
 	configureHTTPServer(e.Server)

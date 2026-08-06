@@ -19,21 +19,19 @@ templ Board(columns []content.BoardColumn) {
 
 templ boardHeader() {
 	<div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line px-4 py-2.5 font-mono text-2xs text-dim">
-		<span class="flex items-center gap-1.5">
-			@StatusDot("ok", true)
-			live
-		</span>
-		<span><span class="text-text">2</span> running</span>
-		<span><span class="text-text">2</span> queued</span>
+		<span class="text-sec">{ content.BoardLabel }</span>
+		<span><span class="text-text">2</span> working</span>
 		<span><span class="text-warn">1</span> held at gate</span>
-		<span class="hidden sm:inline"><span class="text-text">1,628</span> merged</span>
+		<span class="hidden sm:inline">
+			<span class="text-text">{ content.MergedPRs }</span> merged, all time
+		</span>
 		<span class="ml-auto hidden lg:inline">tokens · budget · rate limit — all on the dashboard</span>
 	</div>
 }
 
 templ boardLane(col content.BoardColumn, last bool) {
 	<div
-		class={ "min-h-[15rem] p-3", templ.KV("xl:border-r xl:border-line", !last),
+		class={ "p-3 xl:min-h-[15rem]", templ.KV("xl:border-r xl:border-line", !last),
 			templ.KV("bg-surface/40", col.Lane.Slug == "human-review") }
 	>
 		<div class="mb-2.5 flex items-baseline justify-between font-mono text-2xs uppercase tracking-[0.06em] text-dim">
@@ -71,9 +69,13 @@ templ BoardCard(card content.Card) {
 		</div>
 		<p class="mt-1 text-xs leading-snug text-text">{ card.Title }</p>
 		if card.Status != "" {
-			<div class={ "mt-1.5 flex items-center gap-1.5 font-mono text-2xs", ToneText(card.Tone) }>
-				@StatusDot(card.Tone, card.Tone == "ok" && !card.Held)
-				<span class="truncate">{ card.Status }</span>
+			<div class={ "mt-1.5 flex items-start gap-1.5 font-mono text-2xs", ToneText(card.Tone) }>
+				<span class="mt-1 shrink-0">
+					@StatusDot(card.Tone, card.Tone == "ok" && !card.Held)
+				</span>
+				// Wraps on narrow lanes rather than truncating — a status the
+				// reader cannot finish reading is worse than one on two lines.
+				<span class="min-w-0 break-words xl:truncate">{ card.Status }</span>
 			</div>
 		}
 	</article>
@@ -98,8 +100,9 @@ templ LaneRail() {
 				</span>
 			}
 		</div>
-		<p class="mt-4 font-mono text-2xs text-dim">
-			The notch marks a gate you defined. Lanes are workflow-defined too — these six are Detent's own.
+		<p class="mt-4 font-mono text-2xs leading-relaxed text-dim">
+			The notch marks a gate you defined. Lanes are workflow-defined: this is the delivery path.
+			Detent&#39;s own board also configures Backlog, Blocked, and Cancelled.
 		</p>
 	</div>
 }

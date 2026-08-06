@@ -7,7 +7,7 @@ import (
 
 // PageHeader is the masthead every interior page opens with.
 templ PageHeader(eyebrow string, heading string, lede string) {
-	<section class="dt-masthead relative overflow-hidden border-b border-line">
+	<section class="relative overflow-hidden border-b border-line">
 		<div class="pointer-events-none absolute inset-0 dt-grid opacity-25" aria-hidden="true"></div>
 		<div class="relative mx-auto max-w-[1280px] px-6 py-14 md:px-8 md:py-16">
 			@components.Eyebrow("", eyebrow)

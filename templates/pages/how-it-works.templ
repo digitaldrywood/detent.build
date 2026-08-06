@@ -15,8 +15,8 @@ templ HowItWorks() {
 			"The mechanism, stop by stop.",
 			"Configured GitHub status is the state machine. Everything below is behavior the runtime actually implements — the state table and connector model live in the repository's Concepts document, and each step here links to it.",
 		)
-		@components.Section("01", "The state machine", "Six stops, and the catches between them.",
-			"Lanes are workflow-defined. These six are the ones Detent runs on its own board; a workflow can define fewer, more, or different ones.") {
+		@components.FirstSection("01", "The state machine", "Six stops, and the catches between them.",
+			"Lanes are workflow-defined. These six are the delivery path — a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done.") {
 			@components.LaneRail()
 			<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				for _, lane := range content.Lanes {
@@ -40,34 +40,44 @@ templ HowItWorks() {
 				}
 			</ol>
 		}
-		@components.Section("03", "Isolation", "One worktree per issue.",
-			"Every claimed issue gets its own Git worktree created from your source checkout, and its own branch. An agent that goes wrong goes wrong inside that worktree.") {
+		@components.Section("03", "Isolation", "One worktree per issue — and what that does not mean.",
+			"Every claimed issue gets its own Git worktree from your source checkout, and its own branch. That is collision isolation, and it is worth being precise about where it stops.") {
 			<div class="grid gap-4 lg:grid-cols-2">
 				@components.Card("p-6") {
-					<div class="font-mono text-xs text-dim">What contains a bad run</div>
+					<div class="font-mono text-xs text-ok">What the worktree and the gates do</div>
 					<ul class="mt-4 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
-						<li>An isolated worktree per issue, so no two agents share a working tree.</li>
-						<li>A branch per issue, so nothing touches your main line directly.</li>
-						<li>Your validation gate, which the agent must pass before it can push.</li>
-						<li>Your review policy, which decides whether promotion waits for a human.</li>
-						<li>The <span class="font-mono text-xs text-text">Rework</span> lane, where unresolved feedback sends the work back.</li>
-						<li>Leases and retries, so a stalled claim is released rather than held forever.</li>
+						<li>A worktree per issue, so no two agents share a working tree or fight over the index.</li>
+						<li>A branch per issue, so no agent commits onto your main line.</li>
+						<li>Your validation gate runs before anything is pushed.</li>
+						<li>Promotion is decided by the gates you configured, not by the agent.</li>
+						<li>The <span class="font-mono text-xs text-text">Rework</span> lane catches unresolved review feedback.</li>
+						<li>Leases and retries release a stalled claim instead of holding it forever.</li>
+						<li>The merge train, not the agent, performs every merge.</li>
 					</ul>
 				}
 				@components.Card("p-6") {
-					<div class="font-mono text-xs text-dim">What the agent cannot do</div>
-					<ul class="mt-4 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
-						<li>It cannot merge. Only the train merges.</li>
-						<li>It cannot skip the validation gate you configured.</li>
-						<li>It cannot promote itself past a gate the workflow marked as human.</li>
-						<li>It cannot work outside its assigned worktree and branch.</li>
-					</ul>
-					<p class="mt-4 text-xs leading-relaxed text-dim">
-						Those last two are contract terms in
-						<span class="font-mono text-sec">WORKFLOW.md</span> and policy in
-						<span class="font-mono text-sec">detent.yaml</span> &#8212; which means you can read
-						them, and change them, before you trust them.
+					<div class="font-mono text-xs text-warn">What it is not</div>
+					<p class="mt-4 text-sm leading-relaxed text-sec">
+						A Git worktree is not an OS sandbox, and
+						<span class="font-mono text-xs text-text">WORKFLOW.md</span> is an instruction to the
+						agent rather than a capability boundary. Detent&#39;s own production config runs
+						<span class="font-mono text-xs text-text">thread_sandbox: danger-full-access</span>, so
+						the agent process has whatever host, filesystem, network, and GitHub access its
+						runtime policy allows.
 					</p>
+					<p class="mt-3 text-sm leading-relaxed text-sec">
+						What the gates and the train guarantee is about
+						<em>promotion</em>: nothing lands on your main branch without clearing them. Treat the
+						agent as a trusted process you have configured, not as a contained one, and set
+						<span class="font-mono text-xs text-text">approval_policy</span> and the sandbox mode
+						deliberately.
+					</p>
+					<a
+						href={ templ.SafeURL(content.Doc("config.md")) }
+						class="mt-3 inline-flex min-h-6 items-center font-mono text-2xs text-accent hover:underline"
+					>
+						Sandbox and approval configuration &#8594;
+					</a>
 				}
 			</div>
 		}
@@ -131,7 +141,7 @@ templ stepRow(step content.Step) {
 				if step.DocPath != "" {
 					<a
 						href={ templ.SafeURL(content.Doc(step.DocPath)) }
-						class="mt-3 inline-block font-mono text-2xs text-accent hover:underline"
+						class="mt-3 inline-flex min-h-6 items-center font-mono text-2xs text-accent hover:underline"
 					>
 						{ step.DocName } &#8594;
 					</a>
