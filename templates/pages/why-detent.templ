@@ -1,0 +1,166 @@
+package pages
+
+import (
+	"detent.build/internal/content"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+)
+
+templ WhyDetent() {
+	@layouts.Base(whyDetentMeta()) {
+		@partials.PageHeader(
+			"Why Detent",
+			"You are not steering an agent. You are running your process at scale.",
+			"This page is the argument, the two default choices that define Detent's footprint, and the comparison matrix — including the rows where Detent loses.",
+		)
+		@partials.Inversion("01")
+		@components.Section("02", "Who this is for", "And who should close the tab.", "") {
+			<div class="grid gap-4 lg:grid-cols-3">
+				@audienceCard("The engineer who runs delivery",
+					"Staff, principal, or lead. You already have CI gates, review standards, merge rules, and dependency ordering written down. Your bottleneck is throughput on well-specified work without lowering the bar.",
+					"You want the state machine, the gate model, the merge-train guarantee, and the isolation story. You will read a detent.yaml before you read a testimonial. There is no testimonial on this site.")
+				@audienceCard("The solo builder with five repos",
+					"One person, several repositories, a queue of work that is clear but unwritten. You want parallelism without babysitting five chat sessions.",
+					"Fast time to first run, a single-binary install, multi-project from one host, and visible budget and rate-limit state. Detent is free and MIT, and it bills agent work against a ChatGPT plan you already pay for.")
+				@audienceCard("The platform or devprod team",
+					"Evaluating agentic delivery for an organization. Your questions are governance questions.",
+					"Self-hosted, air-gappable, no vendor control plane, budget caps, fleet governance, and an audit trail in GitHub where reviews already live. MIT licensed.")
+			</div>
+			<div class="mt-4 rounded-card border border-line bg-page p-6">
+				<div class="font-mono text-xs text-dim">Not for</div>
+				<p class="mt-3 max-w-[760px] text-sm leading-relaxed text-sec">
+					People who want an autonomous assistant to talk to. People who want a hosted SaaS with a
+					signup button. People looking for a coding copilot inside an editor. Detent is none of
+					those, and it is better for everyone if that is clear on the home page rather than three
+					pages into the docs.
+				</p>
+			</div>
+		}
+		@components.Section("03", "The defaults", "Two choices define the footprint. Both are deliberate.", "") {
+			<div class="grid gap-4 lg:grid-cols-2">
+				@components.Card("p-6") {
+					<h3 class="text-base font-semibold text-text">Why GitHub Projects, not Linear</h3>
+					<p class="mt-3 text-sm leading-relaxed text-sec">
+						The reference design Detent grew from polls a Linear board while code, pull requests,
+						and CI live in GitHub &#8212; two systems for one unit of work. That split forces you
+						to map Linear issue IDs onto GitHub PR numbers and to read discussion in two places.
+					</p>
+					<p class="mt-3 text-sm leading-relaxed text-sec">
+						Detent puts the whole state machine in one system. A GitHub Project <em>is</em> the
+						board; its issues are the work items, its pull requests are the deliverables, and its
+						comments and reviews are where every conversation happens. One ID space, one place to
+						look.
+					</p>
+					<dl class="mt-5 flex flex-col gap-3 border-t border-line pt-5 text-sm">
+						<div>
+							<dt class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">Cost</dt>
+							<dd class="mt-1 leading-relaxed text-sec">
+								GitHub Projects has no per-seat charge. Linear&#39;s Business plan is $16 per user
+								per month &#8212; about $9,600 a year at 50 seats &#8212; and its free tier is capped.
+							</dd>
+						</div>
+						<div>
+							<dt class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">API headroom</dt>
+							<dd class="mt-1 leading-relaxed text-sec">
+								Authenticated GitHub REST allows 5,000 requests an hour, more for GitHub Apps.
+								Linear allows 1,500 an hour against a complexity budget. A poller driving many
+								repositories wants the larger ceiling.
+							</dd>
+						</div>
+					</dl>
+				}
+				@components.Card("p-6") {
+					<h3 class="text-base font-semibold text-text">Why Codex, not Claude</h3>
+					<p class="mt-3 text-sm leading-relaxed text-sec">
+						Detent dispatches agents non-interactively, headless, many at once. The important
+						question is how that mode is metered.
+					</p>
+					<ul class="mt-4 flex flex-col gap-3 text-sm leading-relaxed text-sec">
+						<li>
+							A ChatGPT plan &#8212; Plus, Pro, or Business &#8212; covers Codex CLI usage
+							<em>including scripted <span class="font-mono text-xs">codex exec</span> automation</em>,
+							billed against the subscription you already have.
+						</li>
+						<li>
+							Claude Code keeps interactive terminal and IDE use on subscription limits. Effective
+							June 15, 2026, Anthropic moves headless <span class="font-mono text-xs">claude -p</span>,
+							the Agent SDK, Claude Code GitHub Actions, and third-party Agent SDK apps to a
+							separate monthly Agent SDK credit &#8212; per-user, non-rolling, with overages at
+							standard API rates.
+						</li>
+					</ul>
+					<p class="mt-4 text-sm leading-relaxed text-dim">
+						For an orchestrator running agents around the clock in parallel, the Codex subscription
+						is the default that makes the economics work. Detent still supports explicit backend
+						routing, including Claude Code, per role &#8212; so operators can pick a backend where
+						the limits, auth mode, and isolation trade-offs fit that work.
+					</p>
+				}
+			</div>
+		}
+		@components.Section("04", "Comparison", "Including the rows Detent loses.",
+			"This matrix is copied from docs/comparison.md in the repository. Where a competitor is better, the table says so.") {
+			@components.Matrix(content.Matrix, content.Competitors)
+			<p class="mt-4 font-mono text-2xs text-dim">
+				&#10003; yes &#183; &#9680; partial &#183; &#10007; no &#183; &#8212; not applicable.
+				Last verified { content.MatrixAsOf }; check vendor pricing and models before relying on them.
+			</p>
+			<div class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				for _, c := range content.Competitors {
+					@components.Card("p-5") {
+						<a href={ templ.SafeURL(c.URL) } class="font-mono text-xs text-accent hover:underline">
+							{ c.Name } &#8599;
+						</a>
+						<p class="mt-2 text-sm leading-relaxed text-sec">{ c.What }</p>
+					}
+				}
+			</div>
+			<p class="mt-6 max-w-[860px] text-sm leading-relaxed text-dim">
+				Copilot and Cursor have closed much of the &#8220;runs near my code&#8221; gap and win
+				zero-install inside their own platforms. They do not give you a board-native release runtime
+				under your control. That is the trade, stated plainly.
+			</p>
+		}
+		@components.Section("05", "Objections", "The questions people actually ask.", "") {
+			<div class="grid gap-4 md:grid-cols-2">
+				@objection("Will it merge garbage?",
+					"Not without passing the gates you wrote. Promotion to Merging requires whatever the workflow declared — a human release, a current-head automated review, or a linked PR with green CI and a quiet window. Then the serialized train rebases, watches CI on the exact commit about to land, and merges one candidate at a time.")
+				@objection("What if the agent goes off the rails?",
+					"It goes off the rails inside its own worktree, on its own branch, behind your validation gate. It cannot merge — only the train merges. Unresolved review feedback routes it to Rework rather than forward.")
+				@objection("Why Codex and not Claude?",
+					"Metering, for headless parallel dispatch. See the defaults above. Detent supports explicit backend routing including Claude Code, per role.")
+				@objection("Why GitHub Projects and not Linear?",
+					"One ID space and one place to look, plus no per-seat cost and 5,000 requests an hour against Linear's 1,500 on a complexity budget.")
+				@objection("Is this a toy?",
+					"Judge it the way you would judge any repository: version history, a CI badge, a release channel, installer smoke tests on Ubuntu and Windows against real release assets, and the fact that it builds itself.")
+				@objection("What is the catch?",
+					"You bring the model cost, and you write the contracts. Detent will not invent your acceptance criteria, and it is not trying to. A vague issue produces a vague pull request faster than before.")
+			</div>
+		}
+		@partials.NextSteps("why-detent")
+	}
+}
+
+func whyDetentMeta() meta.PageMeta {
+	return meta.New(
+		"Why Detent",
+		"The contract-first interaction model versus autonomy-first agents, why GitHub Projects and Codex are the defaults, and the full comparison matrix against Symphony, Copilot, Cursor, Hermes, OpenClaw, and Hyperagent.",
+	).WithNav("why-detent").WithCanonical("https://detent.build/why-detent")
+}
+
+templ audienceCard(title string, who string, need string) {
+	@components.Card("flex flex-col p-6") {
+		<h3 class="text-base font-semibold text-text">{ title }</h3>
+		<p class="mt-3 text-sm leading-relaxed text-sec">{ who }</p>
+		<p class="mt-3 text-sm leading-relaxed text-dim">{ need }</p>
+	}
+}
+
+templ objection(question string, answer string) {
+	@components.Card("p-6") {
+		<h3 class="text-sm font-semibold text-text">{ question }</h3>
+		<p class="mt-2.5 text-sm leading-relaxed text-sec">{ answer }</p>
+	}
+}

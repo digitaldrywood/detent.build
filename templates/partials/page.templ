@@ -1,0 +1,69 @@
+package partials
+
+import (
+	"detent.build/internal/content"
+	"detent.build/ui/components"
+)
+
+// PageHeader is the masthead every interior page opens with.
+templ PageHeader(eyebrow string, heading string, lede string) {
+	<section class="dt-masthead relative overflow-hidden border-b border-line">
+		<div class="pointer-events-none absolute inset-0 dt-grid opacity-25" aria-hidden="true"></div>
+		<div class="relative mx-auto max-w-[1280px] px-6 py-14 md:px-8 md:py-16">
+			@components.Eyebrow("", eyebrow)
+			<h1 class="mt-3 max-w-[820px] text-2xl font-bold leading-tight text-text md:text-3xl">{ heading }</h1>
+			if lede != "" {
+				<p class="mt-4 max-w-[720px] text-base leading-relaxed text-sec">{ lede }</p>
+			}
+		</div>
+	</section>
+}
+
+type nextStep struct {
+	Key   string
+	Label string
+	Href  string
+	Blurb string
+}
+
+var allNextSteps = []nextStep{
+	{"how-it-works", "How it works", "/how-it-works", "The state machine, the gate model, worktree isolation, and the merge train."},
+	{"why-detent", "Why Detent", "/why-detent", "The interaction-model argument, the default choices, and the comparison matrix."},
+	{"dashboard", "Dashboard", "/dashboard", "The operator surface: lanes, agent activity, budget and rate-limit state, and the TUI."},
+	{"install", "Install", "/install", "Platform-tabbed install commands, requirements, and the first run."},
+	{"open-source", "Open source", "/open-source", "MIT, the repository, releases, contributing, and the self-hosting proof."},
+}
+
+// NextSteps closes an interior page with the other pages, minus the current one.
+templ NextSteps(current string) {
+	<section class="mx-auto max-w-[1280px] px-6 pt-24 md:px-8">
+		@components.Eyebrow("", "Keep reading")
+		<div class="mt-5 grid gap-4 md:grid-cols-2">
+			for _, step := range allNextSteps {
+				if step.Key != current {
+					<a
+						href={ templ.SafeURL(step.Href) }
+						class="group rounded-card border border-line bg-surface p-5 transition-colors hover:border-accent"
+					>
+						<div class="font-mono text-xs text-text transition-colors group-hover:text-accent">
+							{ step.Label } &#8594;
+						</div>
+						<p class="mt-2 text-sm leading-relaxed text-sec">{ step.Blurb }</p>
+					</a>
+				}
+			}
+			<a
+				href={ templ.SafeURL(content.RepoURL + "#documentation") }
+				class="group rounded-card border border-line bg-surface p-5 transition-colors hover:border-accent"
+			>
+				<div class="font-mono text-xs text-text transition-colors group-hover:text-accent">
+					Documentation &#8599;
+				</div>
+				<p class="mt-2 text-sm leading-relaxed text-sec">
+					The real docs live in the repository, next to the code they describe. This site does not
+					pretend to have documentation it has not written.
+				</p>
+			</a>
+		</div>
+	</section>
+}

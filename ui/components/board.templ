@@ -1,0 +1,119 @@
+package components
+
+import "detent.build/internal/content"
+
+// Board is the hero visual: Detent's six lanes with real work sitting in them
+// and exactly one card held at a gate. It is the product's most recognizable
+// surface, so the marketing site leads with the thing itself rather than a
+// screenshot of it.
+templ Board(columns []content.BoardColumn) {
+	<div class="overflow-hidden rounded-card border border-line bg-page">
+		@boardHeader()
+		<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
+			for i, col := range columns {
+				@boardLane(col, i == len(columns)-1)
+			}
+		</div>
+	</div>
+}
+
+templ boardHeader() {
+	<div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-line px-4 py-2.5 font-mono text-2xs text-dim">
+		<span class="flex items-center gap-1.5">
+			@StatusDot("ok", true)
+			live
+		</span>
+		<span><span class="text-text">2</span> running</span>
+		<span><span class="text-text">2</span> queued</span>
+		<span><span class="text-warn">1</span> held at gate</span>
+		<span class="hidden sm:inline"><span class="text-text">1,628</span> merged</span>
+		<span class="ml-auto hidden lg:inline">tokens · budget · rate limit — all on the dashboard</span>
+	</div>
+}
+
+templ boardLane(col content.BoardColumn, last bool) {
+	<div
+		class={ "min-h-[15rem] p-3", templ.KV("xl:border-r xl:border-line", !last),
+			templ.KV("bg-surface/40", col.Lane.Slug == "human-review") }
+	>
+		<div class="mb-2.5 flex items-baseline justify-between font-mono text-2xs uppercase tracking-[0.06em] text-dim">
+			<span class="truncate">{ col.Lane.Name }</span>
+			<span class="pl-2 tabular-nums">{ col.Count }</span>
+		</div>
+		<div class="flex flex-col gap-2">
+			for _, card := range col.Cards {
+				@BoardCard(card)
+			}
+			if col.Lane.Slug == "human-review" {
+				<div class="pt-1 text-center font-mono text-2xs leading-relaxed text-dim">
+					the detent —<br/>released only by you
+				</div>
+			}
+			if col.Overflow != "" {
+				<div class="pt-1 text-center font-mono text-2xs text-dim">{ col.Overflow }</div>
+			}
+		</div>
+	</div>
+}
+
+// BoardCard is one work item. The held card carries the warn ring — that is
+// the catch, and it is the only element on the page that repeats an animation
+// other than the live dot.
+templ BoardCard(card content.Card) {
+	<article
+		class={ "rounded-card border bg-surface p-2.5",
+			templ.KV("border-warn/40 dt-held", card.Held),
+			templ.KV("border-line", !card.Held) }
+	>
+		<div class="flex items-baseline gap-1.5 font-mono text-2xs text-dim">
+			<span class="text-sec">{ card.Ref }</span>
+			<span class="truncate">{ card.Repo }</span>
+		</div>
+		<p class="mt-1 text-xs leading-snug text-text">{ card.Title }</p>
+		if card.Status != "" {
+			<div class={ "mt-1.5 flex items-center gap-1.5 font-mono text-2xs", ToneText(card.Tone) }>
+				@StatusDot(card.Tone, card.Tone == "ok" && !card.Held)
+				<span class="truncate">{ card.Status }</span>
+			</div>
+		}
+	</article>
+}
+
+// LaneRail draws the six states as a horizontal run with the gates marked
+// between them. A gate is a catch, so it is drawn as one: a notch, not an
+// arrow.
+templ LaneRail() {
+	<div class="overflow-x-auto rounded-card border border-line bg-page p-5">
+		<div class="flex min-w-max items-center gap-0 font-mono text-xs">
+			for i, lane := range content.Lanes {
+				if i > 0 {
+					@railJoin(hasGate(i))
+				}
+				<span
+					class={ "whitespace-nowrap rounded-chip border px-3 py-1.5",
+						templ.KV("border-ok/40 text-ok", lane.Slug == "done"),
+						templ.KV("border-line bg-elev text-text", lane.Slug != "done") }
+				>
+					{ lane.Name }
+				</span>
+			}
+		</div>
+		<p class="mt-4 font-mono text-2xs text-dim">
+			The notch marks a gate you defined. Lanes are workflow-defined too — these six are Detent's own.
+		</p>
+	</div>
+}
+
+templ railJoin(gate bool) {
+	if gate {
+		<span class="px-1.5 text-warn" title="a gate you defined">&#8212;&#9666;&#8212;</span>
+	} else {
+		<span class="px-2 text-dim">&#8212;&#8212;</span>
+	}
+}
+
+// hasGate reports whether a gate sits before the lane at index i. Gates guard
+// entry to Human Review, Merging, and Done.
+func hasGate(i int) bool {
+	return i == 2 || i == 4 || i == 5
+}

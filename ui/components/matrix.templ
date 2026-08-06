@@ -1,0 +1,100 @@
+package components
+
+import "detent.build/internal/content"
+
+// Matrix renders the capability comparison. It is a plain table on purpose:
+// the reader is here to check claims, and a table is the fastest surface for
+// checking claims.
+templ Matrix(rows []content.Row, competitors []content.Competitor) {
+	// The wrapper scrolls horizontally on narrow screens. On lg and up the table
+	// fits, so overflow goes back to visible — which is what lets the header row
+	// stick to the viewport instead of to a scrollport that never scrolls.
+	<div class="overflow-x-auto rounded-card border border-line lg:overflow-x-visible">
+		<table class="w-full min-w-[880px] border-collapse text-left">
+			<caption class="sr-only">
+				Capability comparison between Detent and adjacent agent orchestration tools.
+			</caption>
+			<thead class="sticky top-14 z-20">
+				<tr class="bg-elev">
+					<th scope="col" class="z-30 border-b border-line bg-elev px-5 py-3 font-mono text-2xs uppercase tracking-[0.06em] text-dim max-lg:sticky max-lg:left-0">
+						Capability
+					</th>
+					for i, c := range competitors {
+						<th
+							scope="col"
+							class={ "border-b border-line bg-elev px-4 py-3 font-mono text-2xs uppercase tracking-[0.06em]",
+								templ.KV("text-accent", i == 0), templ.KV("text-dim", i != 0) }
+						>
+							{ c.Name }
+						</th>
+					}
+				</tr>
+			</thead>
+			<tbody>
+				for _, row := range rows {
+					<tr class="border-t border-line bg-surface">
+						<th scope="row" class="z-10 bg-surface px-5 py-3 text-sm font-normal text-text max-lg:sticky max-lg:left-0">
+							{ row.Capability }
+						</th>
+						for i, cell := range row.Cells {
+							<td class={ "px-4 py-3 align-top", templ.KV("bg-accent/[0.04]", i == 0) }>
+								@verdict(cell)
+							</td>
+						}
+					</tr>
+				}
+			</tbody>
+		</table>
+	</div>
+}
+
+templ verdict(v content.Verdict) {
+	<div class="flex flex-col gap-1">
+		<span class={ "font-mono text-xs", markClass(v.Mark) } title={ markLabel(v.Mark) }>
+			{ markGlyph(v.Mark) }
+			<span class="sr-only">{ markLabel(v.Mark) }</span>
+		</span>
+		if v.Note != "" {
+			<span class="text-2xs leading-snug text-dim">{ v.Note }</span>
+		}
+	</div>
+}
+
+func markGlyph(mark string) string {
+	switch mark {
+	case "yes":
+		return "✓"
+	case "partial":
+		return "◐"
+	case "no":
+		return "✗"
+	default:
+		return "—"
+	}
+}
+
+func markClass(mark string) string {
+	switch mark {
+	case "yes":
+		return "text-ok"
+	case "partial":
+		return "text-warn"
+	case "no":
+		return "text-dim"
+	default:
+		return "text-dim"
+	}
+}
+
+func markLabel(mark string) string {
+	switch mark {
+	case "yes":
+		return "yes"
+	case "partial":
+		return "partial"
+	case "no":
+		return "no"
+	default:
+		return "not applicable"
+	}
+}

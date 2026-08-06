@@ -1,0 +1,23 @@
+package components
+
+// Mark is the Detent brand mark: a filled D with a ball bearing seated in the
+// lower counter. Indigo is the brand's color and is used nowhere else on this
+// site — teal stays reserved for interactivity, as it is in the product.
+templ Mark(class string) {
+	<svg viewBox="0 0 100 100" role="img" aria-label="Detent" class={ class }>
+		<path
+			fill="currentColor"
+			fill-rule="evenodd"
+			d="M22 15 H50 C73 15 87 31 87 50 C87 69 73 85 50 85 H22 Z M41 32 H50 C63 32 70 41 70 50 C70 59 63 68 50 68 H41 Z"
+		></path>
+		<circle cx="51.5" cy="55.5" r="7.4" fill="currentColor"></circle>
+	</svg>
+}
+
+// Wordmark sets the domain as the logotype. The dot is the typographic beat —
+// it is the only teal thing in the mark, and it reads as the click-stop.
+templ Wordmark(size string) {
+	<span class={ "font-mono font-semibold tracking-tight text-text", size }>
+		detent<span class="text-accent">.</span>build
+	</span>
+}

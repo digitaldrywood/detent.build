@@ -1,0 +1,156 @@
+package pages
+
+import (
+	"detent.build/internal/content"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+)
+
+templ HowItWorks() {
+	@layouts.Base(howItWorksMeta()) {
+		@partials.PageHeader(
+			"How it works",
+			"The mechanism, stop by stop.",
+			"Configured GitHub status is the state machine. Everything below is behavior the runtime actually implements — the state table and connector model live in the repository's Concepts document, and each step here links to it.",
+		)
+		@components.Section("01", "The state machine", "Six stops, and the catches between them.",
+			"Lanes are workflow-defined. These six are the ones Detent runs on its own board; a workflow can define fewer, more, or different ones.") {
+			@components.LaneRail()
+			<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+				for _, lane := range content.Lanes {
+					@components.Card("p-5") {
+						<div class="font-mono text-xs text-text">{ lane.Name }</div>
+						<p class="mt-2 text-sm leading-relaxed text-sec">{ lane.Blurb }</p>
+					}
+				}
+			</div>
+			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+				The source of truth can be a GitHub ProjectV2 board, or Detent can run boardless from an
+				issue <span class="font-mono text-xs text-sec">Status</span> field or from repository status
+				labels while supplying its own Kanban view.
+				<a href={ templ.SafeURL(content.Doc("concepts.md")) } class="text-accent hover:underline">Concepts: connectors and board states &#8594;</a>
+			</p>
+		}
+		@components.Section("02", "The mechanism", "Six steps, in the order they happen.", "") {
+			<ol class="flex flex-col gap-3">
+				for _, step := range content.Steps {
+					@stepRow(step)
+				}
+			</ol>
+		}
+		@components.Section("03", "Isolation", "One worktree per issue.",
+			"Every claimed issue gets its own Git worktree created from your source checkout, and its own branch. An agent that goes wrong goes wrong inside that worktree.") {
+			<div class="grid gap-4 lg:grid-cols-2">
+				@components.Card("p-6") {
+					<div class="font-mono text-xs text-dim">What contains a bad run</div>
+					<ul class="mt-4 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
+						<li>An isolated worktree per issue, so no two agents share a working tree.</li>
+						<li>A branch per issue, so nothing touches your main line directly.</li>
+						<li>Your validation gate, which the agent must pass before it can push.</li>
+						<li>Your review policy, which decides whether promotion waits for a human.</li>
+						<li>The <span class="font-mono text-xs text-text">Rework</span> lane, where unresolved feedback sends the work back.</li>
+						<li>Leases and retries, so a stalled claim is released rather than held forever.</li>
+					</ul>
+				}
+				@components.Card("p-6") {
+					<div class="font-mono text-xs text-dim">What the agent cannot do</div>
+					<ul class="mt-4 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
+						<li>It cannot merge. Only the train merges.</li>
+						<li>It cannot skip the validation gate you configured.</li>
+						<li>It cannot promote itself past a gate the workflow marked as human.</li>
+						<li>It cannot work outside its assigned worktree and branch.</li>
+					</ul>
+					<p class="mt-4 text-xs leading-relaxed text-dim">
+						Those last two are contract terms in
+						<span class="font-mono text-sec">WORKFLOW.md</span> and policy in
+						<span class="font-mono text-sec">detent.yaml</span> &#8212; which means you can read
+						them, and change them, before you trust them.
+					</p>
+				}
+			</div>
+		}
+		@components.Section("04", "Gates", "A gate is a condition you wrote, not a vibe.",
+			"The workflow decides what promotion to Merging requires. These are the shipped options.") {
+			<div class="grid gap-4 md:grid-cols-2">
+				@gateCard("Human Review", "The issue moves to the Human Review lane and stops. Nothing advances until a person releases it. This is the detent in its most literal form.")
+				@gateCard("Wait in the active lane", "The issue stays active with status: complete in the Workpad. Autopilot workflows use this when no human stop is wanted.")
+				@gateCard("Automated PR review", "Promotion requires a current-head automated review. A review of a stale head does not count.")
+				@gateCard("Linked PR + green CI + quiet time", "The lightest gate: a linked pull request, passing CI, and a quiet window with no new activity.")
+			</div>
+			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+				Validation gates are pluggable. Code defaults to
+				<span class="font-mono text-xs text-sec">make check</span> plus CI plus automated review; a
+				human approval-label gate is available when the workflow explicitly asks for one.
+				Unresolved review feedback routes the issue back into the
+				<span class="font-mono text-xs text-sec">Rework</span> lane.
+			</p>
+		}
+		@partials.MergeTrainSection("05")
+		@components.Section("06", "Admission", "Deciding what is even worth dispatching.",
+			"A scheduled read-only pass scores Backlog issues against the admission criteria in your WORKFLOW.md and proposes the ones worth working.") {
+			@components.CodeSurface("detent.yaml", "digitaldrywood/detent-orchestration") {
+				<span class="text-info">backlog_admission</span>{ ":\n" }
+				{ "    " }<span class="text-info">enabled</span>{ ": true\n" }
+				{ "    " }<span class="text-info">schedule</span>{ ": '*/15 * * * *'\n" }
+				{ "    " }<span class="text-info">auto_admit</span>{ ": true\n" }
+				{ "    " }<span class="text-info">auto_admit_min_confidence</span>{ ": 0.85\n" }
+				{ "    " }<span class="text-info">sources</span>{ ":\n" }
+				{ "        " }<span class="text-info">states</span>{ ":\n            - Backlog" }
+			}
+			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+				That confidence bar started at 0.9 and was lowered to 0.85 after every sub-0.9 proposal to
+				date had been accepted by hand anyway &#8212; the original bar was stricter than the
+				operator&#39;s own judgment and was producing silent waits. The comment explaining that
+				decision is in the config, next to the value.
+				<a href={ templ.SafeURL(content.Doc("admission.md")) } class="text-accent hover:underline">Admission criteria &#8594;</a>
+			</p>
+		}
+		@partials.NextSteps("how-it-works")
+	}
+}
+
+func howItWorksMeta() meta.PageMeta {
+	return meta.New(
+		"How it works",
+		"The Detent state machine, the gate model, worktree isolation per issue, the serialized merge train, and scheduled backlog admission.",
+	).WithNav("how-it-works").WithCanonical("https://detent.build/how-it-works")
+}
+
+templ stepRow(step content.Step) {
+	<li class="rounded-card border border-line bg-surface p-6">
+		<div class="grid gap-5 md:grid-cols-[3rem_1fr]">
+			<div class="font-mono text-xl font-semibold text-accent">{ pad(step.Num) }</div>
+			<div>
+				<h3 class="text-base font-semibold text-text">{ step.Title }</h3>
+				<p class="mt-2 max-w-[760px] text-sm leading-relaxed text-sec">{ step.Body }</p>
+				if step.Detail != "" {
+					<p class="mt-2 max-w-[760px] text-sm leading-relaxed text-dim">{ step.Detail }</p>
+				}
+				if step.DocPath != "" {
+					<a
+						href={ templ.SafeURL(content.Doc(step.DocPath)) }
+						class="mt-3 inline-block font-mono text-2xs text-accent hover:underline"
+					>
+						{ step.DocName } &#8594;
+					</a>
+				}
+			</div>
+		</div>
+	</li>
+}
+
+templ gateCard(title string, body string) {
+	@components.Card("p-6") {
+		<div class="flex items-center gap-2 font-mono text-xs text-warn">
+			<span aria-hidden="true">&#9666;</span>
+			{ title }
+		</div>
+		<p class="mt-3 text-sm leading-relaxed text-sec">{ body }</p>
+	}
+}
+
+func pad(n int) string {
+	return "0" + string(rune('0'+n))
+}

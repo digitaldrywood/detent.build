@@ -1,0 +1,238 @@
+package partials
+
+import (
+	"detent.build/internal/content"
+	"detent.build/ui/components"
+)
+
+// Inversion is the section that makes someone understand what they are looking
+// at: the same task under an autonomy-first assistant and under Detent. It
+// appears at a different position on each page that uses it, so the section
+// number is a parameter rather than a constant.
+templ Inversion(num string) {
+	@components.Section(num, "The inversion", "A system, not an agent.",
+		"Autonomy-first tools put the intelligence in the agent and ask you to supervise it. Detent puts the intelligence in your spec and supplies the discipline. Same task, two interaction models.") {
+		<div class="grid gap-4 lg:grid-cols-2">
+			@components.Card("p-6") {
+				<div class="font-mono text-xs text-dim">
+					&#8220;add OAuth token rotation&#8221; &#8212; autonomy-first assistant
+				</div>
+				<ol class="mt-5 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
+					<li>It starts as a prompt. The agent picks a plan.</li>
+					<li>You read the plan and inspect partial edits.</li>
+					<li>It misses the migration. You redirect.</li>
+					<li>It skips the tests. You redirect again.</li>
+					<li class="pt-1 text-err">You are the supervision loop.</li>
+				</ol>
+			}
+			<div class="rounded-card border border-accent/40 bg-surface p-6">
+				<div class="font-mono text-xs text-accent">
+					&#8220;add OAuth token rotation&#8221; &#8212; Detent
+				</div>
+				<ol class="mt-5 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
+					<li>It starts as an issue naming the storage change, CLI behavior, migration, rollback, and tests.</li>
+					<li>A worker executes that contract in an isolated worktree.</li>
+					<li>It produces a reviewable pull request.</li>
+					<li>It does not merge until your gates are green.</li>
+					<li class="pt-1 text-ok">Your process runs. You read one PR.</li>
+				</ol>
+			</div>
+		</div>
+		<p class="mt-6 max-w-[760px] text-sm leading-relaxed text-dim">
+			The goal is not to replace engineers or hide work behind opaque behavior. It is to scale the
+			judgment of engineers who already have a high bar. The system does not try to be smarter than
+			you; it tries to be as disciplined as you would be, every time, in parallel.
+		</p>
+	}
+}
+
+// HowItWorksSummary is the home page's condensed mechanism: the lane rail plus
+// the six numbered steps.
+templ HowItWorksSummary() {
+	@components.Section("03", "How it works", "Your lanes. Your gates between them.",
+		"Configured GitHub status is the state machine. A ProjectV2 board, a boardless issue Status field, or repository status labels all drive it.") {
+		@components.LaneRail()
+		<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+			for _, step := range content.Steps {
+				@stepCard(step)
+			}
+		</div>
+		<div class="mt-4">
+			<a href="/how-it-works" class="font-mono text-xs text-accent hover:underline">
+				The mechanism in full, with the gate model and worktree isolation &#8594;
+			</a>
+		</div>
+	}
+}
+
+templ stepCard(step content.Step) {
+	@components.Card("flex flex-col p-5") {
+		<div class="font-mono text-xs text-accent">
+			{ stepNum(step.Num) } &#8212; { step.Title }
+		</div>
+		<p class="mt-2.5 text-sm leading-relaxed text-sec">{ step.Body }</p>
+	}
+}
+
+func stepNum(n int) string {
+	return string(rune('0' + n))
+}
+
+// MergeTrainSection is its own section because it is the differentiator nobody
+// else in the comparison matrix has.
+templ MergeTrainSection(num string) {
+	@components.Section(num, "The merge train", "What lands is always green.",
+		"Serialized: one rebase, one CI watch, one merge at a time. Ten agents working in parallel never invalidate each other's CI, because only one candidate is ever being tested against the head that will receive it.") {
+		<div class="overflow-x-auto rounded-card border border-line bg-page p-6">
+			<div class="flex min-w-max items-center gap-3 font-mono text-xs">
+				for i, stage := range content.MergeTrain {
+					if i > 0 {
+						<span class="text-dim">&#8594;</span>
+					}
+					<span
+						class={ "whitespace-nowrap rounded-chip border px-3 py-2",
+							components.ToneBorder(stage.Tone), components.ToneText(stage.Tone),
+							templ.KV("text-text", stage.Tone == "") }
+					>
+						{ stage.Label }
+					</span>
+				}
+			</div>
+		</div>
+		<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+			Train width is configuration, not doctrine &#8212; Detent runs its own board at one candidate at
+			a time. The guarantee that follows is narrow and worth stating plainly: a merge only happens
+			after CI passed on the exact commit that is about to land.
+			<a href={ templ.SafeURL(content.Doc("merge-train.md")) } class="text-accent hover:underline">Merge train configuration &#8594;</a>
+		</p>
+	}
+}
+
+// OperatorSurface shows the real dashboard, large. It is the highest-value
+// image the project has, and it is a screenshot of the running product.
+templ OperatorSurface() {
+	@components.Section("05", "The operator surface", "The board stays honest.",
+		"Live counts, running agents, token / budget / rate-limit state, board flow, timelines. \"In progress\" means an agent is actually working right now.") {
+		<figure class="overflow-hidden rounded-card border border-line bg-page">
+			<img
+				src="/static/images/dashboard-dark.png"
+				alt="The Detent dashboard: a sidebar of eight projects, a live board with Backlog, Blocked, Human Review, and Review lanes, and a header row showing running, queued, waiting, blocked, and completed counts."
+				width="2972"
+				height="1745"
+				class="block w-full"
+				loading="lazy"
+				decoding="async"
+			/>
+		</figure>
+		<div class="mt-4 grid gap-4 lg:grid-cols-[1fr_320px]">
+			@components.Terminal("$ detent tui") {
+				<span class="text-text">detent</span>{ "  ·  8 projects  ·  " }<span class="text-ok">running</span>{ "  ·  " }<span class="text-warn">held</span>{ "  ·  budget and rate limit in the header\n" }
+				{ "▸ In Progress   agent working, make check …\n" }
+				{ "▸ Human Review  " }<span class="text-warn">held: approval label</span>{ "\n" }
+				{ "▸ Merging       " }<span class="text-ok">train: rebased, CI watch</span>
+			}
+			@components.Card("p-5") {
+				<p class="text-sm leading-relaxed text-sec">
+					And a terminal UI for people who live in tmux &#8212; the same lanes, the same counts, no browser.
+				</p>
+				<a href="/dashboard" class="mt-3 inline-block font-mono text-xs text-accent hover:underline">
+					Tour the operator surface &#8594;
+				</a>
+			}
+		</div>
+	}
+}
+
+// ContractsSection shows the two checked-in files, because developers believe
+// config they can read.
+templ ContractsSection() {
+	@components.Section("06", "Contracts, shown", "Config you can read beats adjectives.",
+		"Two files, checked into your repository: the machine contract and the agent contract. Both are excerpted here from Detent's own production config.") {
+		<div class="grid gap-4 lg:grid-cols-2">
+			@components.CodeSurface("detent.yaml", "digitaldrywood/detent-orchestration") {
+				<span class="text-info">tracker</span>{ ":\n" }
+				{ "    " }<span class="text-info">kind</span>{ ": github\n" }
+				{ "    " }<span class="text-info">github_status_source</span>{ ": label\n" }
+				{ "    " }<span class="text-info">repository</span>{ ": digitaldrywood/detent\n" }
+				{ "    " }<span class="text-info">status_label_prefix</span>{ ": \"detent:\"\n" }
+				{ "    " }<span class="text-info">active_states</span>{ ":\n" }
+				{ "        - Todo\n        - In Progress\n        - Rework\n        - Merging\n" }
+				{ "    " }<span class="text-info">terminal_states</span>{ ":\n" }
+				{ "        - Done\n        - Cancelled\n" }
+				{ "    " }<span class="text-info">dependency_auto_unblock</span>{ ":\n" }
+				{ "        " }<span class="text-info">enabled</span>{ ": true\n" }
+				{ "        " }<span class="text-info">target_state</span>{ ": Todo\n" }
+				{ "        " }<span class="text-info">readiness</span>{ ": terminal_or_merged" }
+			}
+			@components.CodeSurface("WORKFLOW.md", "the agent contract, checked in and portable") {
+				{ "You are working on " }<span class="text-text">**Detent**</span>{ " — a Go agent-orchestrator\ndelivered as a single binary — on GitHub issue\n" }<span class="text-text">{ "{{ issue.identifier }}" }</span>{ ".\n\n" }
+				<span class="text-text">{ "## Detent Protocol" }</span>{ "\n\n" }
+				{ "Keep one persistent " }<span class="text-text">## Codex Workpad</span>{ " issue comment\nupdated with the plan, validation evidence, blockers,\nand final handoff. Every update must contain one\n" }<span class="text-text">detent-status</span>{ " signal.\n\n" }
+				{ "Follow CLAUDE.md and AGENTS.md; they are the project\nauthority for layout, formatting, validation, and\nreview conventions." }
+			}
+		</div>
+		<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+			Gitignored <span class="font-mono text-xs text-sec">detent.local.yaml</span> and
+			<span class="font-mono text-xs text-sec">WORKFLOW.local.md</span> apply machine-specific
+			overrides without touching the shared contracts. You can keep reading by hand too; nobody will
+			revoke your keyboard.
+		</p>
+	}
+}
+
+// ShipsItself is the credibility anchor, and it is literally true. The section
+// number is a parameter because this block appears at a different position on
+// the home page than it does on the open-source page.
+templ ShipsItself(num string) {
+	<section class="mx-auto max-w-[1280px] px-6 pt-24 md:px-8">
+		<div class="rounded-card border border-line bg-gradient-to-b from-surface to-page p-8 md:p-10">
+			<div class="flex flex-col justify-between gap-8 lg:flex-row lg:items-center">
+				<div class="max-w-[640px]">
+					@components.Eyebrow(num, "Proof")
+					<h2 class="mt-3 text-2xl font-bold text-text">It ships itself.</h2>
+					<p class="mt-3 text-base leading-relaxed text-sec">
+						<span class="font-mono text-sm text-text">digitaldrywood/detent-orchestration</span>
+						is Detent&#39;s own production config. It dispatches the agents that build Detent, and
+						the merged pull requests shown on this site were written by agents it dispatched.
+					</p>
+					<p class="mt-3 text-sm leading-relaxed text-dim">
+						It is copyable as a template for your first project.
+					</p>
+				</div>
+				<a
+					href={ templ.SafeURL(content.OrchestrationURL) }
+					class="shrink-0 self-start rounded-card border border-accent bg-accent px-5 py-3 font-mono text-xs font-semibold text-page transition-opacity hover:opacity-90 lg:self-auto"
+				>
+					Copy the template &#8599;
+				</a>
+			</div>
+		</div>
+	</section>
+}
+
+// FleetSection is the multi-project story, using Detent's own global.yaml.
+templ FleetSection() {
+	@components.Section("08", "One host, many repos", "Fleet scheduling from a single binary.",
+		"A global.yaml runs many projects with weights, priority, pause, and fair scheduling. Below is Detent's own, verbatim.") {
+		<div class="overflow-hidden rounded-card border border-line">
+			<div class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 border-b border-line bg-page px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.06em] text-dim">
+				<span>Project</span><span>Weight</span><span>Priority</span><span>State</span>
+			</div>
+			for _, p := range content.Fleet {
+				<div class="grid grid-cols-[2fr_1fr_1fr_1fr] gap-4 border-b border-line bg-surface px-5 py-3 font-mono text-xs last:border-b-0">
+					<span class="truncate text-text">{ p.ID }</span>
+					<span class="text-sec">{ p.Weight }</span>
+					<span class="text-sec">{ p.Priority }</span>
+					<span class="flex items-center gap-1.5 text-ok">
+						@components.StatusDot("ok", false)
+						{ p.State }
+					</span>
+				</div>
+			}
+		</div>
+		<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
+			{ content.FleetNote } Budget caps and rate-limit state live on the dashboard.
+			<a href={ templ.SafeURL(content.Doc("multi-project.md")) } class="text-accent hover:underline">Multi-project operation &#8594;</a>
+		</p>
+	}
+}

@@ -1,0 +1,82 @@
+package components
+
+import (
+	"detent.build/components/copybutton"
+	"detent.build/utils"
+)
+
+// CodeSurface is a titled code panel. Config on this site is real config,
+// pasted from the repository, because developers believe config they can read.
+templ CodeSurface(filename string, caption string) {
+	<div class="overflow-hidden rounded-card border border-line bg-page">
+		<div class="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+			<span class="font-mono text-2xs text-sec">{ filename }</span>
+			if caption != "" {
+				<span class="truncate font-mono text-2xs text-dim">{ caption }</span>
+			}
+		</div>
+		<pre class="overflow-x-auto px-5 py-4 font-mono text-xs leading-relaxed text-sec"><code>{ children... }</code></pre>
+	</div>
+}
+
+// Terminal renders real CLI output. Nothing here is a mockup of a shell that
+// does not exist; every command shown is one the binary accepts.
+templ Terminal(label string) {
+	<div class="overflow-hidden rounded-card border border-line bg-page">
+		if label != "" {
+			<div class="border-b border-line px-4 py-2.5 font-mono text-2xs text-sec">{ label }</div>
+		}
+		<pre class="overflow-x-auto px-5 py-4 font-mono text-xs leading-relaxed text-sec"><code>{ children... }</code></pre>
+	</div>
+}
+
+// CommandProps configures a single copyable shell command.
+type CommandProps struct {
+	// ID must be unique on the page; the copy button targets it.
+	ID string
+	// Prompt is the shell sigil, "$" or "PS>".
+	Prompt string
+	Cmd    string
+	// Caption explains, in plain English, what the command is for.
+	Caption string
+	// Emphasis renders the command as the primary call to action.
+	Emphasis bool
+}
+
+// Command is a copy-to-clipboard shell command. This is the site's only
+// call-to-action pattern: there is nothing to sign up for, so the button that
+// matters is the one that puts an install line on your clipboard.
+//
+// The shell sigil sits outside the copy target, so what lands on the clipboard
+// is the command and nothing else.
+templ Command(p CommandProps) {
+	{{ id := p.ID }}
+	if id == "" {
+		{{ id = "cmd-" + utils.RandomID() }}
+	}
+	<div class="min-w-0">
+		if p.Caption != "" {
+			<p class="mb-1.5 text-xs text-dim">{ p.Caption }</p>
+		}
+		<div
+			class={ "flex items-center gap-2.5 rounded-card border bg-surface py-2 pl-4 pr-2",
+				templ.KV("border-accent/40", p.Emphasis),
+				templ.KV("border-line", !p.Emphasis) }
+		>
+			<span aria-hidden="true" class="shrink-0 select-none font-mono text-xs text-dim">{ p.Sigil() }</span>
+			<code id={ id } class="min-w-0 flex-1 overflow-x-auto whitespace-pre font-mono text-xs text-text">{ p.Cmd }</code>
+			@copybutton.CopyButton(copybutton.Props{
+				TargetID: id,
+				Class:    "size-7 shrink-0 text-dim hover:text-accent",
+			})
+		</div>
+	</div>
+}
+
+// Sigil returns the shell prompt character to show ahead of the command.
+func (p CommandProps) Sigil() string {
+	if p.Prompt == "" {
+		return "$"
+	}
+	return p.Prompt
+}

@@ -1,0 +1,110 @@
+package partials
+
+import (
+	"detent.build/internal/content"
+	"detent.build/ui/components"
+	"strconv"
+)
+
+// InstallTabs renders the platform-tabbed install surface. Each tab is a real
+// URL that HTMX swaps in place; with JavaScript off, the link is a normal
+// navigation that renders the same page with that tab selected.
+templ InstallTabs(current content.InstallTarget) {
+	<div id="install-tabs" class="overflow-hidden rounded-card border border-line bg-page">
+		<div class="flex overflow-x-auto border-b border-line font-mono text-xs" role="tablist">
+			for _, t := range content.InstallTargets {
+				<a
+					role="tab"
+					href={ templ.SafeURL("/install/" + t.Key) }
+					hx-get={ "/install/" + t.Key }
+					hx-target="#install-tabs"
+					hx-swap="outerHTML"
+					hx-push-url="true"
+					aria-selected={ ariaSelected(t.Key == current.Key) }
+					class={ "whitespace-nowrap border-b-2 px-5 py-3 transition-colors",
+						templ.KV("border-accent text-accent", t.Key == current.Key),
+						templ.KV("border-transparent text-dim hover:text-sec", t.Key != current.Key) }
+				>
+					{ t.Label }
+				</a>
+			}
+		</div>
+		@InstallPanel(current)
+	</div>
+}
+
+// InstallPanel is the swappable body: one platform's commands.
+templ InstallPanel(target content.InstallTarget) {
+	<div id="install-panel" class="flex flex-col gap-4 p-6">
+		@components.Command(components.CommandProps{
+			ID:       "install-" + target.Key,
+			Prompt:   sigilFor(target.Shell),
+			Cmd:      target.Primary.Cmd,
+			Caption:  target.Primary.Caption,
+			Emphasis: true,
+		})
+		for i, cmd := range target.Others {
+			@components.Command(components.CommandProps{
+				ID:      "install-" + target.Key + "-alt-" + strconv.Itoa(i),
+				Prompt:  sigilFor(target.Shell),
+				Cmd:     cmd.Cmd,
+				Caption: cmd.Caption,
+			})
+		}
+		if target.Footnote != "" {
+			<p class="pt-1 text-xs leading-relaxed text-dim">{ target.Footnote }</p>
+		}
+	</div>
+}
+
+func sigilFor(shell string) string {
+	if shell == "powershell" {
+		return "PS>"
+	}
+	return "$"
+}
+
+func ariaSelected(selected bool) string {
+	if selected {
+		return "true"
+	}
+	return "false"
+}
+
+// InstallSection is the home page's install block: the tabs, plus the first
+// run and the requirements underneath.
+templ InstallSection() {
+	@components.Section("09", "Install", "One CGO-free binary. No service to stand up.",
+		"macOS, Linux, and Windows. Install it, run the preflight check, and point it at a repository.") {
+		<div class="grid gap-4 lg:grid-cols-[1fr_380px]">
+			@InstallTabs(content.InstallTargets[0])
+			@components.Card("p-5") {
+				<div class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">Requirements</div>
+				<ul class="mt-3 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
+					for _, req := range content.Requirements {
+						if !req.Optional {
+							<li class="flex gap-2">
+								<span class="text-dim" aria-hidden="true">&#183;</span>
+								<span>{ req.Name }</span>
+							</li>
+						}
+					}
+					<li class="flex gap-2 text-dim">
+						<span aria-hidden="true">&#183;</span>
+						<span>Go 1.26+ for source builds only</span>
+					</li>
+				</ul>
+				<a href="/install" class="mt-4 inline-block font-mono text-xs text-accent hover:underline">
+					Full requirements and first run &#8594;
+				</a>
+			}
+		</div>
+		<div class="mt-4">
+			@components.Terminal("first run") {
+				<span class="text-dim">{ "$ " }</span>{ "detent doctor         " }<span class="text-dim">{ "# preflight: gh, codex, token scope, config discovery" }</span>{ "\n" }
+				<span class="text-dim">{ "$ " }</span>{ "detent version        " }<span class="text-dim">{ "# binary version, commit, and build date" }</span>{ "\n" }
+				<span class="text-dim">{ "$ " }</span>{ "detent update --check " }<span class="text-dim">{ "# checksum-verified self-update" }</span>
+			}
+		</div>
+	}
+}

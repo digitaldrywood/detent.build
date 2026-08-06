@@ -1,0 +1,137 @@
+package pages
+
+import (
+	"detent.build/internal/content"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+)
+
+templ Install(target content.InstallTarget) {
+	@layouts.Base(installMeta(target)) {
+		@partials.PageHeader(
+			"Install",
+			"One CGO-free binary. No service to stand up.",
+			"macOS, Linux, and Windows. Install it, run the preflight check, point it at a repository, and mark an issue Todo.",
+		)
+		@components.Section("01", "Install", "Pick your platform.", "") {
+			<div class="grid gap-4 lg:grid-cols-[1fr_380px]">
+				@partials.InstallTabs(target)
+				@components.Card("h-fit p-5") {
+					<div class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">Also available</div>
+					<ul class="mt-3 flex flex-col gap-2 font-mono text-xs text-sec">
+						<li>go install</li>
+						<li>Homebrew (macOS and Linux)</li>
+						<li>Winget and Scoop</li>
+						<li>.deb and .rpm</li>
+						<li>or copy a single file</li>
+					</ul>
+					<p class="mt-4 text-xs leading-relaxed text-dim">
+						Release self-updates verify SHA-256 checksums fetched from GitHub releases. Update
+						integrity currently rests on GitHub TLS plus the published checksum file; release
+						signing with a pinned minisign key is still open work, and the repository says so.
+					</p>
+				}
+			</div>
+		}
+		@components.Section("02", "Requirements", "What has to be on the host.",
+			"Detent dispatches agents from the machine it runs on, so the agent CLI and its login live there too.") {
+			<div class="overflow-hidden rounded-card border border-line">
+				for _, req := range content.Requirements {
+					<div class="flex flex-col gap-3 border-b border-line bg-surface p-5 last:border-b-0 md:flex-row md:items-start md:justify-between">
+						<div class="max-w-[640px]">
+							<div class="flex items-center gap-2.5">
+								<h3 class="text-sm font-semibold text-text">{ req.Name }</h3>
+								if req.Optional {
+									@components.Chip("") {
+										optional
+									}
+								}
+							</div>
+							<p class="mt-1.5 text-sm leading-relaxed text-sec">{ req.Detail }</p>
+						</div>
+						<code class="shrink-0 rounded-chip border border-line bg-page px-2.5 py-1 font-mono text-2xs text-dim">
+							{ req.Verify }
+						</code>
+					</div>
+				}
+			</div>
+		}
+		@components.Section("03", "First run", "Preflight, then point it at a board.", "") {
+			<div class="grid gap-4 lg:grid-cols-2">
+				@components.Terminal("verify the host") {
+					<span class="text-dim">{ "$ " }</span>{ "detent doctor\n" }
+					<span class="text-dim">{ "  checks gh, codex, token scope, config discovery,\n  workspace roots, and dashboard bind\n\n" }</span>
+					<span class="text-dim">{ "$ " }</span>{ "detent doctor --port 0\n" }
+					<span class="text-dim">{ "  read-only: never mutates, safe on an existing install" }</span>
+				}
+				@components.Terminal("check what you installed") {
+					<span class="text-dim">{ "$ " }</span>{ "detent version\n" }
+					<span class="text-dim">{ "$ " }</span>{ "detent --format json version\n" }
+					<span class="text-dim">{ "  version, commit, and build date as JSON\n\n" }</span>
+					<span class="text-dim">{ "$ " }</span>{ "detent update --check" }
+				}
+			</div>
+			<div class="mt-4 rounded-card border border-line bg-page p-6">
+				<h3 class="text-sm font-semibold text-text">Then let an agent onboard you</h3>
+				<p class="mt-2 max-w-[760px] text-sm leading-relaxed text-sec">
+					Detent is meant to be driven from the top down by AI agents, and setup is no exception.
+					The repository ships an agent-executable onboarding runbook that inspects your target
+					repository, works out which path applies &#8212; new install, existing install, or a new
+					project on an existing host &#8212; and asks only the decisions it genuinely needs from
+					you. It will not create, link, or mutate a GitHub Project, label, issue, or config file
+					until you confirm.
+				</p>
+				<div class="mt-4 flex flex-wrap gap-3">
+					<a
+						href={ templ.SafeURL(content.Doc("ONBOARDING.md")) }
+						class="rounded-card border border-line px-4 py-2 font-mono text-xs text-sec transition-colors hover:border-accent hover:text-accent"
+					>
+						Project onboarding runbook &#8599;
+					</a>
+					<a
+						href={ templ.SafeURL(content.Doc("getting-started.md")) }
+						class="rounded-card border border-line px-4 py-2 font-mono text-xs text-sec transition-colors hover:border-accent hover:text-accent"
+					>
+						Quick start &#8599;
+					</a>
+					<a
+						href={ templ.SafeURL(content.Doc("bootstrap.md")) }
+						class="rounded-card border border-line px-4 py-2 font-mono text-xs text-sec transition-colors hover:border-accent hover:text-accent"
+					>
+						Bootstrap a new machine &#8599;
+					</a>
+				</div>
+			</div>
+		}
+		@components.Section("04", "Updating", "The package manager that installed it, owns it.", "") {
+			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+				@updateCard("Release installer", "detent update", "Use --yes for non-interactive automation and --format json for machine-readable status. On Windows the replacement is staged and completes after the running detent.exe exits.")
+				@updateCard("Homebrew", "brew upgrade digitaldrywood/tap/detent", "")
+				@updateCard("Winget and Scoop", "winget upgrade --id DigitalDrywood.Detent", "Or scoop update detent.")
+				@updateCard("Go install", "detent update --from-release", "Switches a go-installed binary to the checksum-verified release asset and pins future updates to release-binary management.")
+			</div>
+		}
+		@partials.NextSteps("install")
+	}
+}
+
+func installMeta(target content.InstallTarget) meta.PageMeta {
+	return meta.New(
+		"Install — "+target.Label,
+		"Install Detent on macOS, Linux, or Windows: Homebrew, the checksum-verified shell and PowerShell installers, Winget, Scoop, .deb, .rpm, or go install. Requirements and first run included.",
+	).WithNav("install").WithCanonical("https://detent.build/install")
+}
+
+templ updateCard(title string, cmd string, note string) {
+	@components.Card("flex flex-col p-5") {
+		<h3 class="text-sm font-semibold text-text">{ title }</h3>
+		<code class="mt-2.5 block overflow-x-auto whitespace-pre rounded-chip border border-line bg-page px-2.5 py-1.5 font-mono text-2xs text-sec">
+			{ cmd }
+		</code>
+		if note != "" {
+			<p class="mt-2.5 text-xs leading-relaxed text-dim">{ note }</p>
+		}
+	}
+}
