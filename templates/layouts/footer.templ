@@ -51,7 +51,7 @@ templ Footer() {
 		</div>
 		<div class="border-t border-line">
 			<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4 font-mono text-2xs text-dim md:px-8">
-				<span>{ content.Version }</span>
+				<span>{ content.VersionFromCtx(ctx) }</span>
 				<span>MIT</span>
 				<span>no telemetry, no analytics, no cookies</span>
 				<span class="ml-auto">a Digital Drywood project</span>

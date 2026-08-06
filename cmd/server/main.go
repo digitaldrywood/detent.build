@@ -11,10 +11,11 @@ import (
 	"syscall"
 
 	"detent.build/internal/config"
+	"detent.build/internal/content"
 	"detent.build/internal/handler"
 	"detent.build/internal/middleware"
+	"detent.build/internal/release"
 
-	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/labstack/echo/v4"
 )
 
@@ -77,15 +78,20 @@ func run() error {
 		cfg.Site.URL = replacePort(cfg.Site.URL, actualPort)
 	}
 
-	middleware.Setup(e, cfg)
+	signalCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	// Keep the displayed release current without a redeploy. Off outside
+	// production so `make dev` and the tests never depend on the network.
+	versions := release.New(content.Version)
+	if cfg.IsProduction() {
+		versions.Start(signalCtx)
+	}
+
+	middleware.Setup(e, cfg, versions)
 
 	h := handler.New(cfg)
 	h.RegisterRoutes(e)
-
-	e.Use(echo.WrapMiddleware(chimw.Logger))
-
-	signalCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
 
 	slog.Info("starting server", "url", fmt.Sprintf("http://localhost:%s", cfg.Port), "env", cfg.Env)
 	if cfg.TailscaleHostname != "" {

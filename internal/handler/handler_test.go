@@ -28,7 +28,7 @@ func newTestServerWithSiteURL(t *testing.T, siteURL string) *echo.Echo {
 	cfg := config.Load()
 
 	e := echo.New()
-	middleware.Setup(e, cfg)
+	middleware.Setup(e, cfg, nil)
 	New(cfg).RegisterRoutes(e)
 	return e
 }

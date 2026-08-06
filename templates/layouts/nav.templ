@@ -37,7 +37,7 @@ templ Nav(current string) {
 					href={ templ.SafeURL(content.ReleasesURL) }
 					class="hidden rounded-chip border border-line px-2 py-1 font-mono text-2xs text-dim transition-colors hover:border-accent hover:text-accent sm:inline-block"
 				>
-					{ content.Version } &#183; { content.License }
+					{ content.VersionFromCtx(ctx) } &#183; { content.License }
 				</a>
 				@ThemeToggle()
 				<a

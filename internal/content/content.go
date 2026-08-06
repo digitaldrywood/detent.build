@@ -6,6 +6,12 @@
 // invented, and nothing describes behavior the repository cannot substantiate.
 package content
 
+import (
+	"context"
+
+	"detent.build/internal/ctxkeys"
+)
+
 const (
 	RepoURL          = "https://github.com/digitaldrywood/detent"
 	OrchestrationURL = "https://github.com/digitaldrywood/detent-orchestration"
@@ -29,6 +35,17 @@ const (
 
 // Doc returns a link to a document in the Detent repository.
 func Doc(path string) string { return DocsBase + path }
+
+// VersionFromCtx returns the release tag for this request. A background
+// watcher refreshes it from the GitHub releases API; when that is disabled or
+// has not succeeded yet, this falls back to the compiled-in Version so a page
+// never renders an empty release.
+func VersionFromCtx(ctx context.Context) string {
+	if v, ok := ctx.Value(ctxkeys.Version).(string); ok && v != "" {
+		return v
+	}
+	return Version
+}
 
 // Lane is one stop on the board. The six lanes below are the workflow Detent
 // ships in its own production config; lanes are workflow-defined, not fixed.

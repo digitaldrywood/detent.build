@@ -18,7 +18,7 @@ templ OpenSource() {
 		@components.FirstSection("01", "The terms", "Short version, on one screen.", "") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 				@termCard("License", "MIT", content.LicenseURL)
-				@termCard("Current release", content.Version, content.ReleasesURL)
+				@termCard("Current release", content.VersionFromCtx(ctx), content.ReleasesURL)
 				@termCard("Source", "digitaldrywood/detent", content.RepoURL)
 				@termCard("CI", "GitHub Actions", content.CIURL)
 			</div>

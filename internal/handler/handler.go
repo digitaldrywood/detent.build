@@ -18,6 +18,8 @@ func New(cfg *config.Config) *Handler {
 }
 
 func (h *Handler) RegisterRoutes(e *echo.Echo) {
+	e.HTTPErrorHandler = ErrorHandler
+
 	e.Static("/static", "static")
 	e.Static("/assets", "assets") // templUI component JavaScript
 	// No /favicon.ico route: the layout links the SVG mark, and a registered
@@ -45,8 +47,13 @@ func (h *Handler) Health(c echo.Context) error {
 }
 
 // render writes a templ component as an HTML response.
+//
+// It writes to c.Response(), not c.Response().Writer. The former is Echo's
+// wrapper, which counts bytes and marks the response committed; the latter is
+// the raw http.ResponseWriter, and writing to it leaves every access log line
+// reporting 0 bytes.
 func render(c echo.Context, status int, component templ.Component) error {
 	c.Response().Header().Set(echo.HeaderContentType, echo.MIMETextHTMLCharsetUTF8)
 	c.Response().WriteHeader(status)
-	return component.Render(c.Request().Context(), c.Response().Writer)
+	return component.Render(c.Request().Context(), c.Response())
 }
