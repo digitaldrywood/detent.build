@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0d10}
+a{color:#2dd4bf;text-decoration:none}a:hover{color:#5eead4;text-decoration:underline}
+</style>
+</helmet>
+<div style="font-family:'Geist',sans-serif;background:#0b0d10;color:#edf0f4;min-width:1100px" data-screen-label="Concept C — Document-first">
+
+<!-- top rule / nav -->
+<div style="border-bottom:1px solid #262b33">
+  <div style="max-width:880px;margin:0 auto;padding:16px 32px;display:flex;align-items:baseline;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:12.5px">
+    <div style="display:flex;align-items:center;gap:9px">
+      <svg viewBox="0 0 100 100" width="20" height="20" style="transform:translateY(4px)"><path fill="#818CF8" fill-rule="evenodd" d="M22 15 H50 C73 15 87 31 87 50 C87 69 73 85 50 85 H22 Z M41 32 H50 C63 32 70 41 70 50 C70 59 63 68 50 68 H41 Z"></path><circle cx="51.5" cy="55.5" r="7.4" fill="#818CF8"></circle></svg>
+      <span style="font-weight:600;font-size:14px">detent.build</span>
+    </div>
+    <div style="display:flex;gap:18px;color:#8a93a2">
+      <a href="#" style="color:#8a93a2">how-it-works</a><a href="#" style="color:#8a93a2">why-detent</a><a href="#" style="color:#8a93a2">dashboard</a><a href="#" style="color:#8a93a2">install</a><a href="#" style="color:#8a93a2">docs</a><a href="https://github.com/digitaldrywood/detent">github ↗</a>
+    </div>
+  </div>
+</div>
+
+<div style="max-width:880px;margin:0 auto;padding:64px 32px 0">
+  <!-- hero -->
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;color:#808a97;line-height:1.9">detent — status-driven agentic work orchestration<br>v0.51.0 · MIT · one CGO-free Go binary · self-hosted · <a href="https://github.com/digitaldrywood/detent">digitaldrywood/detent</a></div>
+  <h1 style="font-size:42px;line-height:1.12;letter-spacing:-.025em;font-weight:700;margin:24px 0 16px;text-wrap:balance">Your process, running in parallel.</h1>
+  <p style="font-size:16.5px;line-height:1.65;color:#8a93a2;margin:0 0 24px;max-width:660px;text-wrap:pretty">Mark a GitHub issue <span style="font-family:'Geist Mono',monospace;font-size:14.5px;color:#edf0f4">Todo</span>. Detent claims it, creates an isolated Git worktree, dispatches a Codex agent against a workflow contract you wrote, runs your validation gate, opens a pull request, waits for the review gate you specified, and merges through a serialized merge train. Many issues, many repositories, one host.</p>
+  <div style="display:flex;gap:12px;align-items:center;margin-bottom:28px">
+    <div style="display:flex;align-items:center;gap:12px;background:#14171c;border:1px solid #262b33;border-radius:6px;padding:11px 16px">
+      <span style="font-family:'Geist Mono',monospace;font-size:13px"><span style="color:#808a97">$</span> brew install digitaldrywood/tap/detent</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#2dd4bf;border:1px solid #2dd4bf55;border-radius:4px;padding:2px 8px;cursor:pointer">copy</span>
+    </div>
+    <a href="https://github.com/digitaldrywood/detent" style="font-family:'Geist Mono',monospace;font-size:12.5px;border:1px solid #262b33;border-radius:6px;padding:11px 16px;color:#8a93a2" style-hover="color:#2dd4bf;border-color:#2dd4bf;text-decoration:none">View on GitHub</a>
+  </div>
+  <!-- TOC -->
+  <div style="border:1px solid #262b33;border-radius:6px;background:#101318;padding:18px 24px;font-family:'Geist Mono',monospace;font-size:12.5px;line-height:2;color:#8a93a2;column-count:2;column-gap:40px">
+    <div>§1  the state machine</div><div>§2  the inversion</div><div>§3  how it works</div><div>§4  the merge train</div><div>§5  the operator surface</div><div>§6  contracts</div><div>§7  it builds itself</div><div>§8  one host, many repos</div><div>§9  install</div><div>§10 comparison</div>
+  </div>
+
+  <!-- §1 state machine -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§1</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">The state machine</h2></div>
+    <p style="font-size:15px;line-height:1.65;color:#8a93a2;margin:0 0 20px;text-wrap:pretty">A <em>detent</em> is the catch that holds a moving part at a fixed position until it is deliberately released — the click-stop on a dial, the notch on a ratchet. Detent holds each piece of work at a defined stop on your board and only lets it advance when a gate is cleared:</p>
+    <div style="border:1px solid #262b33;border-radius:6px;background:#101318;padding:20px 24px;font-family:'Geist Mono',monospace;font-size:13px;color:#8a93a2;overflow-x:auto;white-space:nowrap">Todo ──▶ In Progress ──<span style="color:#fbbf24">◃</span>── Human Review ──<span style="color:#fbbf24">◃</span>── Merging ──▶ <span style="color:#34d399">Done</span><br><span style="color:#5d6470">                          │</span><br><span style="color:#5d6470">                          └──▶ Rework (unresolved feedback) ──▶ back through the gate</span><br><br><span style="color:#5d6470">◃ = a gate you defined. nothing passes a gate on charm.</span></div>
+    <p style="font-size:13.5px;line-height:1.6;color:#808a97;margin:16px 0 0">The board can be a GitHub ProjectV2, an issue <span style="font-family:'Geist Mono',monospace;font-size:12.5px">Status</span> field, or repository labels — Detent supplies its own Kanban view either way. The lanes themselves are workflow-defined too — the six above are the defaults Detent runs on itself.</p>
+  </div>
+
+  <!-- §2 inversion -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§2</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">The inversion</h2></div>
+    <p style="font-size:15px;line-height:1.65;color:#8a93a2;margin:0 0 20px;text-wrap:pretty">Autonomy-first assistants keep memory and sessions, pick their own tools, and ask you to steer. Detent inverts the interaction model: you write the issue first — scope, acceptance criteria, tests, dependency order, review policy, merge rule — and the board state decides when it is eligible. <span style="color:#edf0f4">It is a system, not an agent.</span> The goal is not to replace engineers; it is to scale the judgment of engineers who already have a high bar.</p>
+    <table style="width:100%;border-collapse:collapse;font-size:13.5px;line-height:1.55">
+      <tr style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97"><td style="border:1px solid #262b33;padding:10px 14px;width:190px">“add OAuth token rotation”</td><td style="border:1px solid #262b33;padding:10px 14px">autonomy-first</td><td style="border:1px solid #262b33;padding:10px 14px">detent</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:10px 14px;font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97">starts as</td><td style="border:1px solid #262b33;padding:10px 14px">a prompt</td><td style="border:1px solid #262b33;padding:10px 14px;background:#14171c">an issue naming storage change, CLI behavior, migration, rollback, tests</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:10px 14px;font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97">your role</td><td style="border:1px solid #262b33;padding:10px 14px">supervision loop — review the plan, inspect partial edits, redirect on missed migrations and tests</td><td style="border:1px solid #262b33;padding:10px 14px;background:#14171c">read one reviewable PR</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:10px 14px;font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97">merges when</td><td style="border:1px solid #262b33;padding:10px 14px">you catch everything</td><td style="border:1px solid #262b33;padding:10px 14px;background:#14171c">the gates are green — not before</td></tr>
+    </table>
+  </div>
+
+  <!-- §3 how it works -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§3</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">How it works</h2></div>
+    <ol style="margin:0;padding-left:24px;font-size:15px;line-height:1.65;color:#8a93a2;display:flex;flex-direction:column;gap:14px">
+      <li><span style="color:#edf0f4">You write the contracts.</span> A checked-in <span style="font-family:'Geist Mono',monospace;font-size:13.5px;color:#edf0f4">detent.yaml</span> machine contract plus a portable <span style="font-family:'Geist Mono',monospace;font-size:13.5px;color:#edf0f4">WORKFLOW.md</span> agent contract. Gitignored <span style="font-family:'Geist Mono',monospace;font-size:13.5px">*.local</span> variants carry machine-specific overrides.</li>
+      <li><span style="color:#edf0f4">You mark an issue Todo.</span> Detent claims it, creates an isolated worktree from your checkout, dispatches a Codex agent, moves the issue to In Progress.</li>
+      <li><span style="color:#edf0f4">The agent works</span> in its own branch, runs your validation gate, opens or updates a PR.</li>
+      <li><span style="color:#edf0f4">Gates decide.</span> Human Review, in-lane wait, current-head automated review, or linked PR + green CI + quiet time. Unresolved feedback → Rework.</li>
+      <li><span style="color:#edf0f4">The merge train is serialized</span> — one rebase, CI-watch, merge at a time. Then Done.</li>
+      <li><span style="color:#edf0f4">One host, many repos.</span> <span style="font-family:'Geist Mono',monospace;font-size:13.5px;color:#edf0f4">global.yaml</span>: weights, priority, pause, fair scheduling.</li>
+      <li><span style="color:#edf0f4">Bugs close the loop.</span> Detent can log the bugs it finds as issues, gate them like any other work, and ship the fix — hands-off when project config allows it.</li>
+    </ol>
+  </div>
+
+  <!-- §4 merge train -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§4</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">The merge train</h2></div>
+    <p style="font-size:15px;line-height:1.65;color:#8a93a2;margin:0 0 16px;text-wrap:pretty">Will it merge garbage? No — and not because we promise. Merging is serialized: one rebase, one CI-watch, one merge at a time, so concurrent candidates never invalidate each other's CI. What lands is always green.</p>
+    <div style="border:1px solid #262b33;border-radius:6px;background:#101318;padding:16px 24px;font-family:'Geist Mono',monospace;font-size:13px;color:#8a93a2;overflow-x:auto;white-space:nowrap">[PR #204] [PR #199] wait ──▶ <span style="color:#60a5fa">rebase #193</span> ──▶ <span style="color:#fbbf24">ci-watch 4/6</span> ──▶ <span style="color:#34d399">merge ✓</span> ──▶ next</div>
+  </div>
+
+  <!-- §5 operator surface -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§5</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">The operator surface</h2></div>
+    <img src="assets/dashboard-dark.png" alt="Detent dashboard" style="width:100%;display:block;border:1px solid #262b33;border-radius:6px">
+    <div style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#808a97;margin-top:10px">fig. 1 — the live board: lanes, running agents, token / budget / rate-limit state, board flow. a TUI ships too; “in progress” means an agent is actually working.</div>
+  </div>
+
+  <!-- §6 contracts -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§6</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">Contracts</h2></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div style="background:#101318;border:1px solid #262b33;border-radius:6px;overflow:hidden"><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#808a97;padding:9px 14px;border-bottom:1px solid #262b33">detent.yaml</div><pre style="margin:0;padding:14px 16px;font-family:'Geist Mono',monospace;font-size:12px;line-height:1.65;color:#8a93a2;overflow-x:auto"><span style="color:#60a5fa">tracker</span>: { <span style="color:#60a5fa">mode</span>: projectv2 }
+<span style="color:#60a5fa">gates</span>:
+  <span style="color:#60a5fa">validate</span>: make check
+  <span style="color:#60a5fa">review</span>: automated
+  <span style="color:#60a5fa">merge</span>: ci_green + quiet 10m
+<span style="color:#60a5fa">scheduling</span>:
+  <span style="color:#60a5fa">parallel</span>: 4
+  <span style="color:#60a5fa">lease</span>: 30m</pre></div>
+      <div style="background:#101318;border:1px solid #262b33;border-radius:6px;overflow:hidden"><div style="font-family:'Geist Mono',monospace;font-size:11px;color:#808a97;padding:9px 14px;border-bottom:1px solid #262b33">WORKFLOW.md</div><pre style="margin:0;padding:14px 16px;font-family:'Geist Mono',monospace;font-size:12px;line-height:1.65;color:#8a93a2;overflow-x:auto">1. The issue is the spec.
+   Do not exceed it.
+2. Stay in your worktree.
+3. `make check` before push.
+4. Unresolved feedback → Rework.
+5. Never merge. The train merges.</pre></div>
+    </div>
+    <p style="font-size:13.5px;color:#808a97;line-height:1.6;margin:14px 0 0">You can keep reading by hand too; nobody will revoke your keyboard.</p>
+  </div>
+
+  <!-- §7 builds itself -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§7</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">It builds itself</h2></div>
+    <div style="border:1px solid #262b33;border-left:2px solid #818CF8;border-radius:6px;background:#14171c;padding:20px 24px">
+      <p style="font-size:15px;line-height:1.65;color:#8a93a2;margin:0"><a href="https://github.com/digitaldrywood/detent-orchestration" style="font-family:'Geist Mono',monospace;font-size:13.5px">digitaldrywood/detent-orchestration</a> is Detent's own production config, and it dispatches the agents that build Detent. It is copyable as a template. This is the whole credibility argument, and it is literally true.</p>
+    </div>
+  </div>
+
+  <!-- §8 fleet -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§8</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">One host, many repos</h2></div>
+    <p style="font-size:15px;line-height:1.65;color:#8a93a2;margin:0 0 16px">Multi-project and multi-instance fleet governance from one host. Budget and cost caps; token / budget / rate-limit state live on the dashboard.</p>
+    <div style="border:1px solid #262b33;border-radius:6px;background:#101318;padding:14px 20px;font-family:'Geist Mono',monospace;font-size:12.5px;line-height:2;color:#8a93a2"><span style="color:#5d6470"># global.yaml</span><br>projects: [detent: {weight: 3, priority: high}, pyroapex: {weight: 2},<br>           hostlet: {weight: 1}, ghostreel: {weight: 1, paused: true}]<br>budget: {cap: $25/day}</div>
+  </div>
+
+  <!-- §9 install -->
+  <div style="padding-top:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§9</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">Install</h2></div>
+    <div style="border:1px solid #262b33;border-radius:6px;background:#101318;padding:16px 20px;font-family:'Geist Mono',monospace;font-size:13px;line-height:2.1;color:#edf0f4">
+      <div><span style="color:#808a97">$</span> brew install digitaldrywood/tap/detent  <span style="color:#5d6470"># macOS</span></div>
+      <div><span style="color:#808a97">$</span> go install github.com/digitaldrywood/detent@latest  <span style="color:#5d6470"># Go 1.26+</span></div>
+      <div><span style="color:#808a97">$</span> winget install detent · scoop install detent · .deb · .rpm</div>
+      <div><span style="color:#808a97">$</span> detent doctor  <span style="color:#5d6470"># preflight: gh present, codex signed in, token scope</span></div>
+    </div>
+    <p style="font-size:13.5px;color:#808a97;line-height:1.6;margin:14px 0 0">Requirements: Codex CLI signed in to your ChatGPT plan; <span style="font-family:'Geist Mono',monospace;font-size:12.5px">gh</span> assumed; a GitHub token scoped to your tracker mode. Explicit backend routing — including Claude Code — is configurable per role.</p>
+  </div>
+
+  <!-- §10 comparison & lineage -->
+  <div style="padding-top:72px;padding-bottom:72px">
+    <div style="display:flex;align-items:baseline;gap:14px;border-bottom:1px solid #262b33;padding-bottom:10px;margin-bottom:20px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#818CF8">§10</span><h2 style="font-size:22px;letter-spacing:-.015em;font-weight:600;margin:0">Comparison</h2></div>
+    <table style="width:100%;border-collapse:collapse;font-size:12.5px;font-family:'Geist Mono',monospace">
+      <tr style="color:#808a97;font-size:11px"><td style="border:1px solid #262b33;padding:8px 12px"></td><td style="border:1px solid #262b33;padding:8px 12px;color:#edf0f4">detent</td><td style="border:1px solid #262b33;padding:8px 12px">Copilot agent</td><td style="border:1px solid #262b33;padding:8px 12px">Cursor</td><td style="border:1px solid #262b33;padding:8px 12px">Hermes</td><td style="border:1px solid #262b33;padding:8px 12px">OpenClaw</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:8px 12px;color:#808a97">interaction model</td><td style="border:1px solid #262b33;padding:8px 12px;background:#14171c;color:#edf0f4">contract-first</td><td style="border:1px solid #262b33;padding:8px 12px">autonomy</td><td style="border:1px solid #262b33;padding:8px 12px">editor</td><td style="border:1px solid #262b33;padding:8px 12px">autonomy</td><td style="border:1px solid #262b33;padding:8px 12px">autonomy</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:8px 12px;color:#808a97">serialized merge train</td><td style="border:1px solid #262b33;padding:8px 12px;background:#14171c;color:#34d399">yes</td><td style="border:1px solid #262b33;padding:8px 12px">—</td><td style="border:1px solid #262b33;padding:8px 12px">—</td><td style="border:1px solid #262b33;padding:8px 12px">—</td><td style="border:1px solid #262b33;padding:8px 12px">—</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:8px 12px;color:#808a97">self-hosted, air-gappable</td><td style="border:1px solid #262b33;padding:8px 12px;background:#14171c;color:#34d399">yes</td><td style="border:1px solid #262b33;padding:8px 12px">—</td><td style="border:1px solid #262b33;padding:8px 12px">—</td><td style="border:1px solid #262b33;padding:8px 12px">partial</td><td style="border:1px solid #262b33;padding:8px 12px">yes</td></tr>
+      <tr style="color:#8a93a2"><td style="border:1px solid #262b33;padding:8px 12px;color:#808a97">license / cost</td><td style="border:1px solid #262b33;padding:8px 12px;background:#14171c;color:#edf0f4">MIT · free</td><td style="border:1px solid #262b33;padding:8px 12px">per-seat</td><td style="border:1px solid #262b33;padding:8px 12px">per-seat</td><td style="border:1px solid #262b33;padding:8px 12px">per-seat</td><td style="border:1px solid #262b33;padding:8px 12px">OSS</td></tr>
+    </table>
+    <p style="font-size:13.5px;color:#808a97;line-height:1.65;margin:16px 0 0;text-wrap:pretty">Why Codex? Detent dispatches agents non-interactively, headless, many at once — scripted <span style="font-family:'Geist Mono',monospace;font-size:12.5px">codex exec</span> runs against a ChatGPT plan you already pay for; Claude Code moved headless usage to separate Agent SDK credits (June 2026). Backend routing per role, including Claude Code, remains explicit config. Why GitHub Projects? One ID space: the Project is the board, issues are the work items, PRs are the deliverables, reviews are the conversation. Detent is the orchestrator; your config and workflow are the intelligence.</p>
+  </div>
+</div>
+
+<!-- footer -->
+<div style="border-top:1px solid #262b33">
+  <div style="max-width:880px;margin:0 auto;padding:20px 32px 32px;display:flex;justify-content:space-between;font-family:'Geist Mono',monospace;font-size:12px;color:#808a97">
+    <span>detent.build · MIT · no signup, no demo call, no pricing table — it's free and self-hosted</span>
+    <span><a href="https://github.com/digitaldrywood/detent">github</a> · <a href="#">releases</a> · <a href="#">docs</a></span>
+  </div>
+</div>
+</div>
+</x-dc>
+</body>
+</html>
