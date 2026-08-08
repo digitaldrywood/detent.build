@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: dev build test lint generate css css-watch setup clean run check help
+.PHONY: dev build test lint generate docs-sync css css-watch setup clean run check help
 
 BINARY_NAME=detent.build
 
@@ -24,6 +24,9 @@ lint:
 
 generate:
 	templ generate
+
+docs-sync:
+	go run ./cmd/docs-sync
 
 css:
 	npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --minify
@@ -58,6 +61,7 @@ help:
 	@echo "  test       - Run tests"
 	@echo "  lint       - Run golangci-lint and templ fmt"
 	@echo "  generate   - Generate templ code"
+	@echo "  docs-sync  - Verify and vendor the pinned Detent documentation"
 	@echo "  css        - Build Tailwind CSS"
 	@echo "  css-watch  - Watch and rebuild Tailwind CSS"
 	@echo "  check      - Full validation gate: generate, vet, test, lint"

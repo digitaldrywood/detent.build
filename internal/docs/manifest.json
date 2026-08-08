@@ -1,0 +1,182 @@
+{
+  "schema": 1,
+  "repository": "https://github.com/digitaldrywood/detent",
+  "tag": "v0.57.0",
+  "tag_object_sha": "10c9b2a531089e8bac7a3fcd42593b257863ec8d",
+  "commit_sha": "1543929187369eca2703abd2a655cf86e9e5d83e",
+  "synced_at": "2026-08-08T19:38:02Z",
+  "files": [
+    {
+      "path": "ONBOARDING.md",
+      "sha256": "f76aa97a84c0989393a94a2b6df7596449f16993fda8abfb3ecb0847fe767584"
+    },
+    {
+      "path": "admission.md",
+      "sha256": "4825d9da25787f08af126c81d478cfea61acc7904048cadcd42c342c772acfe4"
+    },
+    {
+      "path": "bootstrap.md",
+      "sha256": "526118abb07356336986cff703a8f50b67935c4c0226164b2033633cb1cc4bcf"
+    },
+    {
+      "path": "brand/detent-mark-mono.svg",
+      "sha256": "1127acfa9d7e3e143d9d4ae04ef87fff91d1e7e7cb27ecdb68cab141719a37de"
+    },
+    {
+      "path": "brand/detent-mark.svg",
+      "sha256": "7aa1db5ff04dfde2da96084c45197a8d0fae5b3702a6f865385cae7e20b31c9d"
+    },
+    {
+      "path": "cli.md",
+      "sha256": "700c0c24c47115f1208210ca3100223857007249136424475af9a6fd91870568"
+    },
+    {
+      "path": "comparison.md",
+      "sha256": "4cc26089c6c148104039fbd9d77381b4018bcad380fd3b0c90c2d547ef9f6bf3"
+    },
+    {
+      "path": "concepts.md",
+      "sha256": "af71deba3c4627e761a5ddb1c0977ac4f34b678332c9aa04a9d85eaf699127ce"
+    },
+    {
+      "path": "config.md",
+      "sha256": "8c37a16800fadef53c4f8313c9328273fd33eb4fc6db3327f7c76956f7763128"
+    },
+    {
+      "path": "dashboard-api.md",
+      "sha256": "08f9fffee81d70eb2aee7e30fd7992b083cc50fa46d5e9711b4f013aebe182f0"
+    },
+    {
+      "path": "dependency-workflows.md",
+      "sha256": "9398935b28176b0b53ec60c0e62805d62c51cdad04840eb6d7637e7adee19f42"
+    },
+    {
+      "path": "development.md",
+      "sha256": "9d7be99c64d2e881d87c897069f1a39596a50d77a3a79fd7efc1039470809d43"
+    },
+    {
+      "path": "examples/non-code-artifact/README.md",
+      "sha256": "a34338a699915d3d39833e808f95d056c4e570dd7585f8a85c251a3cfdc205a9"
+    },
+    {
+      "path": "examples/non-code-artifact/WORKFLOW.md",
+      "sha256": "cbf54634ca0e8abdf86ba8915a44081cc731a05ff2e012a4d5bf320001f096fc"
+    },
+    {
+      "path": "examples/non-code-artifact/output/package-approved-newsletter/manifest.json",
+      "sha256": "d1ada60775c43957197b8e99818f6cf71f267c3b3c67dce83cb61e74f6fe1306"
+    },
+    {
+      "path": "examples/non-code-artifact/seed/01-research-brief.json",
+      "sha256": "521c7323ddbde8722e5ed58c4df791959781485c022e2915bd9bea49415c2788"
+    },
+    {
+      "path": "examples/non-code-artifact/seed/02-review-package.json",
+      "sha256": "a692943a895fa5155a4c0bcb2d3e011ffe6039854d28696ab1383555eaede124"
+    },
+    {
+      "path": "execution-seams.md",
+      "sha256": "8dc1f27c1b9a32cd97fa6c8a4ac17e7aea70b8700439c986d8cadd8c12db593c"
+    },
+    {
+      "path": "getting-started.md",
+      "sha256": "f2e575ab5bda00478f10913867a41ded8557c460e178ce9baf25c9e92079da3a"
+    },
+    {
+      "path": "local-models-ollama.md",
+      "sha256": "4cf651e97b09d3f2c21d3cd79f4d797df691343bb0ffd443d38a56e5dfc61930"
+    },
+    {
+      "path": "merge-train.md",
+      "sha256": "2bfb0a2df03050350e1f60209e194df2fc1215b08ab690d75081aee2ff063418"
+    },
+    {
+      "path": "multi-project.md",
+      "sha256": "07cbb027a6b92c621272dccfe5ad6f920a9e28aae1e5bbd726221740b508ec57"
+    },
+    {
+      "path": "parity-audit.md",
+      "sha256": "093a615d550b7829d8013bf3be51499e2e01fa00439c129b1deff697bd71c0e5"
+    },
+    {
+      "path": "redesign-contrast.md",
+      "sha256": "9d01e401cab5ec60ead2539424dcbeab068ad39f3c841e4704c025520f63cc71"
+    },
+    {
+      "path": "release.md",
+      "sha256": "534cd299126f2347741f5f31b30086a26519fd85c419d17104d96f9f5e3e515e"
+    },
+    {
+      "path": "retrospection.md",
+      "sha256": "c8e066ac7d716ae0bef8d14639bd3caea0e4fbac60f919b609e653bc87c2eee3"
+    },
+    {
+      "path": "scheduled-routines.md",
+      "sha256": "22e43fb9306570aed47840f903916ff0dc25b1c2c4cc4a6d491cd52fd238cf05"
+    },
+    {
+      "path": "structured-workpad-signaling-migration.md",
+      "sha256": "b80d6b09db626e44769d9b019e8c07ec7c5527dea16a261ff5fa1eef55bfe3e5"
+    },
+    {
+      "path": "templates/WORKFLOW.github_local.md",
+      "sha256": "e52eef46dd1cfc20464c26a40741ab61e431d2985d562149077cc64a2e7472df"
+    },
+    {
+      "path": "templates/WORKFLOW.issue_field.md",
+      "sha256": "8e7f7033233d8795c18301189ce2a6e8bb399986e1a34523c775b12e6ec8de2a"
+    },
+    {
+      "path": "templates/WORKFLOW.label.md",
+      "sha256": "8e7f7033233d8795c18301189ce2a6e8bb399986e1a34523c775b12e6ec8de2a"
+    },
+    {
+      "path": "templates/WORKFLOW.non_code_artifact.md",
+      "sha256": "8443225861765cfb6050c3d15d1f971cc5ff5f65ff60ca06d76516be7b29f358"
+    },
+    {
+      "path": "templates/WORKFLOW.project_v2.md",
+      "sha256": "8e7f7033233d8795c18301189ce2a6e8bb399986e1a34523c775b12e6ec8de2a"
+    },
+    {
+      "path": "templates/detent.github_local.yaml",
+      "sha256": "ab7db1513adbeea98a4f282f529cc3cd237e74fc6eaa536acf8ac606ec3b8d4c"
+    },
+    {
+      "path": "templates/detent.issue_field.yaml",
+      "sha256": "499daeb88e12d3c945dd45e6c223dfcf786e8db6cf0ec4ab322be3446176cad0"
+    },
+    {
+      "path": "templates/detent.label.yaml",
+      "sha256": "6cbecdbbd4faa52a018140aed62d751ed5b9ded32f018f6baf0cd0e771024da7"
+    },
+    {
+      "path": "templates/detent.non_code_artifact.yaml",
+      "sha256": "a38a60ee5d160e911830220b7589f161f664b3c14c1ada2147502efe0c591020"
+    },
+    {
+      "path": "templates/detent.project_v2.yaml",
+      "sha256": "c38bbe16392799ffbf40242d601e9a46708ea91c83f5343443e628dea56660ea"
+    },
+    {
+      "path": "templates/templates.go",
+      "sha256": "1e45ce751996fe34eea4e19f37388aba69b3a73aea3ed1da74cbc2734297e152"
+    },
+    {
+      "path": "thread-resume-spike.md",
+      "sha256": "22688d9beed8e4034c02879c28639fdcd8f68a75481550388aaa5f42bae55ef8"
+    },
+    {
+      "path": "webhook-freshness.md",
+      "sha256": "d3efcb1b097d70d3e617d864cdb7c80f0f80283b2f07e97b2648ddb5bf132a0b"
+    },
+    {
+      "path": "workflow-layout-migration.md",
+      "sha256": "eab80a49d3cffc683c7a204c44ac6401791099ee9e18ec3a75271a0f6e9666d6"
+    },
+    {
+      "path": "workflow-overlays.md",
+      "sha256": "144aa6b5eaed069bdfa5e0227f4db3c4231266f74d83bdecfc4513b4a60777fb"
+    }
+  ]
+}
