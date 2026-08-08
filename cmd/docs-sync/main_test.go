@@ -150,6 +150,45 @@ func TestRecoverInterruptedPublication(t *testing.T) {
 	}
 }
 
+func TestRecoverInterruptedCleanupKeepsPublishedSnapshot(t *testing.T) {
+	docsDir := t.TempDir()
+	writeSnapshot(t, docsDir, "new")
+	cleanupRoot := filepath.Join(docsDir, ".docs-cleanup-test")
+	writeSnapshot(t, cleanupRoot, "old")
+
+	if err := recoverInterruptedPublications(docsDir); err != nil {
+		t.Fatalf("recoverInterruptedPublications() error = %v", err)
+	}
+	assertSnapshot(t, docsDir, "new")
+	if _, err := os.Stat(cleanupRoot); !os.IsNotExist(err) {
+		t.Errorf("cleanup journal still exists after recovery: %v", err)
+	}
+}
+
+func TestAcquireFileLockRejectsOverlap(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "docs-sync.lock")
+	first, err := acquireFileLock(path)
+	if err != nil {
+		t.Fatalf("acquire first lock: %v", err)
+	}
+	t.Cleanup(func() { _ = first.Close() })
+
+	if second, err := acquireFileLock(path); err == nil {
+		_ = second.Close()
+		t.Fatal("acquireFileLock() allowed an overlapping lock")
+	}
+	if err := first.Close(); err != nil {
+		t.Fatalf("release first lock: %v", err)
+	}
+	third, err := acquireFileLock(path)
+	if err != nil {
+		t.Fatalf("reacquire lock: %v", err)
+	}
+	if err := third.Close(); err != nil {
+		t.Fatalf("release reacquired lock: %v", err)
+	}
+}
+
 func writeSnapshot(t *testing.T, root, value string) {
 	t.Helper()
 	vendorDir := filepath.Join(root, "vendor")

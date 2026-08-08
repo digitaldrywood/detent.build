@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -51,6 +52,10 @@ type publicationState struct {
 	HadManifest bool `json:"had_manifest"`
 }
 
+type syncLock struct {
+	file *os.File
+}
+
 func main() {
 	if err := syncDocs(); err != nil {
 		_, _ = fmt.Fprintf(os.Stderr, "docs sync failed: %v\n", err)
@@ -63,6 +68,11 @@ func syncDocs() error {
 	if err != nil {
 		return fmt.Errorf("resolve repository root: %w", err)
 	}
+	lock, err := acquireSyncLock(root)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = lock.Close() }()
 	docsDir := filepath.Join(root, "internal", "docs")
 	if err := recoverInterruptedPublications(docsDir); err != nil {
 		return err
@@ -264,10 +274,12 @@ func publishSnapshotWithRename(docsDir, stagedRoot string, rename func(string, s
 	if err := rename(filepath.Join(stagedRoot, "manifest.json"), manifestPath); err != nil {
 		return rollback(fmt.Errorf("publish manifest: %w", err))
 	}
-	if err := os.WriteFile(filepath.Join(backupRoot, "committed"), nil, 0o644); err != nil {
+	cleanupName := strings.Replace(filepath.Base(backupRoot), ".docs-backup-", ".docs-cleanup-", 1)
+	cleanupRoot := filepath.Join(docsDir, cleanupName)
+	if err := rename(backupRoot, cleanupRoot); err != nil {
 		return rollback(fmt.Errorf("commit publication: %w", err))
 	}
-	if err := os.RemoveAll(backupRoot); err != nil {
+	if err := os.RemoveAll(cleanupRoot); err != nil {
 		return fmt.Errorf("remove publication backup: %w", err)
 	}
 	return nil
@@ -279,21 +291,20 @@ func recoverInterruptedPublications(docsDir string) error {
 		return fmt.Errorf("inspect documentation directory: %w", err)
 	}
 	for _, entry := range entries {
-		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), ".docs-backup-") {
+		if !entry.IsDir() {
 			continue
 		}
-		backupRoot := filepath.Join(docsDir, entry.Name())
-		committed, err := pathExists(filepath.Join(backupRoot, "committed"))
-		if err != nil {
-			return fmt.Errorf("inspect publication marker: %w", err)
-		}
-		if committed {
-			if err := os.RemoveAll(backupRoot); err != nil {
+		journalRoot := filepath.Join(docsDir, entry.Name())
+		if strings.HasPrefix(entry.Name(), ".docs-cleanup-") {
+			if err := os.RemoveAll(journalRoot); err != nil {
 				return fmt.Errorf("remove committed publication backup: %w", err)
 			}
 			continue
 		}
-		stateBytes, err := os.ReadFile(filepath.Join(backupRoot, "state.json"))
+		if !strings.HasPrefix(entry.Name(), ".docs-backup-") {
+			continue
+		}
+		stateBytes, err := os.ReadFile(filepath.Join(journalRoot, "state.json"))
 		if err != nil {
 			return fmt.Errorf("read interrupted publication state: %w", err)
 		}
@@ -301,10 +312,10 @@ func recoverInterruptedPublications(docsDir string) error {
 		if err := json.Unmarshal(stateBytes, &state); err != nil {
 			return fmt.Errorf("decode interrupted publication state: %w", err)
 		}
-		if err := rollbackPublication(docsDir, backupRoot, state, os.Rename); err != nil {
+		if err := rollbackPublication(docsDir, journalRoot, state, os.Rename); err != nil {
 			return fmt.Errorf("recover interrupted publication: %w", err)
 		}
-		if err := os.RemoveAll(backupRoot); err != nil {
+		if err := os.RemoveAll(journalRoot); err != nil {
 			return fmt.Errorf("remove recovered publication backup: %w", err)
 		}
 	}
@@ -353,6 +364,38 @@ func pathExists(path string) (bool, error) {
 		return false, nil
 	}
 	return false, err
+}
+
+func acquireSyncLock(root string) (*syncLock, error) {
+	lockPath, err := gitText(root, nil, "rev-parse", "--git-path", "detent-docs-sync.lock")
+	if err != nil {
+		return nil, fmt.Errorf("resolve docs sync lock: %w", err)
+	}
+	if !filepath.IsAbs(lockPath) {
+		lockPath = filepath.Join(root, lockPath)
+	}
+	lock, err := acquireFileLock(lockPath)
+	if err != nil {
+		return nil, fmt.Errorf("acquire docs sync lock: %w", err)
+	}
+	return lock, nil
+}
+
+func acquireFileLock(path string) (*syncLock, error) {
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+	if err != nil {
+		return nil, err
+	}
+	if err := syscall.Flock(int(file.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
+		_ = file.Close()
+		return nil, err
+	}
+	return &syncLock{file: file}, nil
+}
+
+func (l *syncLock) Close() error {
+	unlockErr := syscall.Flock(int(l.file.Fd()), syscall.LOCK_UN)
+	return errors.Join(unlockErr, l.file.Close())
 }
 
 func parseTree(raw []byte) ([]treeEntry, error) {
