@@ -165,6 +165,30 @@ func TestRecoverInterruptedCleanupKeepsPublishedSnapshot(t *testing.T) {
 	}
 }
 
+func TestRecoverRemovesInactiveSyncDirectories(t *testing.T) {
+	docsDir := t.TempDir()
+	writeSnapshot(t, docsDir, "current")
+	stale := []string{
+		filepath.Join(docsDir, ".docs-preparing-test"),
+		filepath.Join(docsDir, ".docs-staging-test"),
+	}
+	for _, path := range stale {
+		if err := os.Mkdir(path, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := recoverInterruptedPublications(docsDir); err != nil {
+		t.Fatalf("recoverInterruptedPublications() error = %v", err)
+	}
+	assertSnapshot(t, docsDir, "current")
+	for _, path := range stale {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Errorf("inactive directory still exists after recovery: %s: %v", path, err)
+		}
+	}
+}
+
 func TestAcquireFileLockRejectsOverlap(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "docs-sync.lock")
 	first, err := acquireFileLock(path)

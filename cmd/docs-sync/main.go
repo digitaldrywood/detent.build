@@ -233,18 +233,24 @@ func publishSnapshotWithRename(docsDir, stagedRoot string, rename func(string, s
 		HadVendor:   hadVendor,
 		HadManifest: hadManifest,
 	}
-	backupRoot, err := os.MkdirTemp(docsDir, ".docs-backup-")
+	preparingRoot, err := os.MkdirTemp(docsDir, ".docs-preparing-")
 	if err != nil {
-		return fmt.Errorf("create publication backup: %w", err)
+		return fmt.Errorf("create publication journal: %w", err)
 	}
 	stateBytes, err := json.Marshal(state)
 	if err != nil {
-		_ = os.RemoveAll(backupRoot)
+		_ = os.RemoveAll(preparingRoot)
 		return fmt.Errorf("encode publication state: %w", err)
 	}
-	if err := os.WriteFile(filepath.Join(backupRoot, "state.json"), stateBytes, 0o644); err != nil {
-		_ = os.RemoveAll(backupRoot)
+	if err := os.WriteFile(filepath.Join(preparingRoot, "state.json"), stateBytes, 0o644); err != nil {
+		_ = os.RemoveAll(preparingRoot)
 		return fmt.Errorf("write publication state: %w", err)
+	}
+	backupName := strings.Replace(filepath.Base(preparingRoot), ".docs-preparing-", ".docs-backup-", 1)
+	backupRoot := filepath.Join(docsDir, backupName)
+	if err := rename(preparingRoot, backupRoot); err != nil {
+		_ = os.RemoveAll(preparingRoot)
+		return fmt.Errorf("activate publication journal: %w", err)
 	}
 
 	rollback := func(cause error) error {
@@ -295,6 +301,13 @@ func recoverInterruptedPublications(docsDir string) error {
 			continue
 		}
 		journalRoot := filepath.Join(docsDir, entry.Name())
+		if strings.HasPrefix(entry.Name(), ".docs-preparing-") ||
+			strings.HasPrefix(entry.Name(), ".docs-staging-") {
+			if err := os.RemoveAll(journalRoot); err != nil {
+				return fmt.Errorf("remove inactive sync directory: %w", err)
+			}
+			continue
+		}
 		if strings.HasPrefix(entry.Name(), ".docs-cleanup-") {
 			if err := os.RemoveAll(journalRoot); err != nil {
 				return fmt.Errorf("remove committed publication backup: %w", err)
