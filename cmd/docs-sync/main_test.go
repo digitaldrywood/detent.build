@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -99,5 +100,79 @@ func TestPreservedSyncTime(t *testing.T) {
 	current.Files[0].SHA256 = "changed"
 	if got := preservedSyncTime(path, current); got == previous.SyncedAt {
 		t.Errorf("preservedSyncTime() reused %q for changed content", got)
+	}
+}
+
+func TestPublishSnapshotRollsBackOnRenameFailure(t *testing.T) {
+	docsDir := t.TempDir()
+	writeSnapshot(t, docsDir, "old")
+	stagedRoot := filepath.Join(docsDir, ".docs-staging-test")
+	writeSnapshot(t, stagedRoot, "new")
+
+	failPath := filepath.Join(stagedRoot, "manifest.json")
+	rename := func(oldPath, newPath string) error {
+		if oldPath == failPath {
+			return errors.New("injected rename failure")
+		}
+		return os.Rename(oldPath, newPath)
+	}
+
+	if err := publishSnapshotWithRename(docsDir, stagedRoot, rename); err == nil {
+		t.Fatal("publishSnapshotWithRename() succeeded despite the injected failure")
+	}
+	assertSnapshot(t, docsDir, "old")
+}
+
+func TestRecoverInterruptedPublication(t *testing.T) {
+	docsDir := t.TempDir()
+	backupRoot := filepath.Join(docsDir, ".docs-backup-test")
+	writeSnapshot(t, backupRoot, "old")
+	stateBytes, err := json.Marshal(publicationState{HadVendor: true, HadManifest: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(backupRoot, "state.json"), stateBytes, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(docsDir, "vendor"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(docsDir, "vendor", "doc.md"), []byte("partial"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := recoverInterruptedPublications(docsDir); err != nil {
+		t.Fatalf("recoverInterruptedPublications() error = %v", err)
+	}
+	assertSnapshot(t, docsDir, "old")
+	if _, err := os.Stat(backupRoot); !os.IsNotExist(err) {
+		t.Errorf("backup still exists after recovery: %v", err)
+	}
+}
+
+func writeSnapshot(t *testing.T, root, value string) {
+	t.Helper()
+	vendorDir := filepath.Join(root, "vendor")
+	if err := os.MkdirAll(vendorDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(vendorDir, "doc.md"), []byte(value), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "manifest.json"), []byte(value), 0o644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func assertSnapshot(t *testing.T, root, want string) {
+	t.Helper()
+	for _, path := range []string{"vendor/doc.md", "manifest.json"} {
+		contents, err := os.ReadFile(filepath.Join(root, path))
+		if err != nil {
+			t.Fatalf("read %s: %v", path, err)
+		}
+		if got := string(contents); got != want {
+			t.Errorf("%s = %q, want %q", path, got, want)
+		}
 	}
 }

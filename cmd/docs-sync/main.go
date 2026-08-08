@@ -46,9 +46,14 @@ type manifestFile struct {
 	SHA256 string `json:"sha256"`
 }
 
+type publicationState struct {
+	HadVendor   bool `json:"had_vendor"`
+	HadManifest bool `json:"had_manifest"`
+}
+
 func main() {
 	if err := syncDocs(); err != nil {
-		fmt.Fprintf(os.Stderr, "docs sync failed: %v\n", err)
+		_, _ = fmt.Fprintf(os.Stderr, "docs sync failed: %v\n", err)
 		os.Exit(1)
 	}
 }
@@ -57,6 +62,10 @@ func syncDocs() error {
 	root, err := gitText("", nil, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return fmt.Errorf("resolve repository root: %w", err)
+	}
+	docsDir := filepath.Join(root, "internal", "docs")
+	if err := recoverInterruptedPublications(docsDir); err != nil {
+		return err
 	}
 
 	temporary, err := os.MkdirTemp("", "detent-docs-sync-")
@@ -111,12 +120,15 @@ func syncDocs() error {
 		return errors.New("upstream documentation tree is empty")
 	}
 
-	docsDir := filepath.Join(root, "internal", "docs")
-	stagedVendor, err := os.MkdirTemp(docsDir, ".vendor-")
+	stagedRoot, err := os.MkdirTemp(docsDir, ".docs-staging-")
 	if err != nil {
+		return fmt.Errorf("create staging directory: %w", err)
+	}
+	defer func() { _ = os.RemoveAll(stagedRoot) }()
+	stagedVendor := filepath.Join(stagedRoot, "vendor")
+	if err := os.Mkdir(stagedVendor, 0o755); err != nil {
 		return fmt.Errorf("create staged vendor directory: %w", err)
 	}
-	defer func() { _ = os.RemoveAll(stagedVendor) }()
 
 	files := make([]manifestFile, 0, len(entries))
 	seen := make(map[string]struct{}, len(entries))
@@ -180,24 +192,167 @@ func syncDocs() error {
 		return fmt.Errorf("encode manifest: %w", err)
 	}
 	manifestBytes = append(manifestBytes, '\n')
-	stagedManifest := filepath.Join(temporary, "manifest.json")
+	stagedManifest := filepath.Join(stagedRoot, "manifest.json")
 	if err := os.WriteFile(stagedManifest, manifestBytes, 0o644); err != nil {
 		return fmt.Errorf("stage manifest: %w", err)
 	}
-
-	vendorDir := filepath.Join(docsDir, "vendor")
-	if err := os.RemoveAll(vendorDir); err != nil {
-		return fmt.Errorf("remove previous vendor tree: %w", err)
-	}
-	if err := os.Rename(stagedVendor, vendorDir); err != nil {
-		return fmt.Errorf("publish vendor tree: %w", err)
-	}
-	if err := os.Rename(stagedManifest, manifestPath); err != nil {
-		return fmt.Errorf("publish manifest: %w", err)
+	if err := publishSnapshot(docsDir, stagedRoot); err != nil {
+		return err
 	}
 
-	fmt.Printf("vendored %d files from %s at %s (%s)\n", len(files), sourceRepository, releaseTag, resolvedCommit)
+	_, _ = fmt.Printf("vendored %d files from %s at %s (%s)\n", len(files), sourceRepository, releaseTag, resolvedCommit)
 	return nil
+}
+
+func publishSnapshot(docsDir, stagedRoot string) error {
+	return publishSnapshotWithRename(docsDir, stagedRoot, os.Rename)
+}
+
+func publishSnapshotWithRename(docsDir, stagedRoot string, rename func(string, string) error) error {
+	vendorDir := filepath.Join(docsDir, "vendor")
+	manifestPath := filepath.Join(docsDir, "manifest.json")
+	hadVendor, err := pathExists(vendorDir)
+	if err != nil {
+		return fmt.Errorf("inspect vendor tree: %w", err)
+	}
+	hadManifest, err := pathExists(manifestPath)
+	if err != nil {
+		return fmt.Errorf("inspect manifest: %w", err)
+	}
+	state := publicationState{
+		HadVendor:   hadVendor,
+		HadManifest: hadManifest,
+	}
+	backupRoot, err := os.MkdirTemp(docsDir, ".docs-backup-")
+	if err != nil {
+		return fmt.Errorf("create publication backup: %w", err)
+	}
+	stateBytes, err := json.Marshal(state)
+	if err != nil {
+		_ = os.RemoveAll(backupRoot)
+		return fmt.Errorf("encode publication state: %w", err)
+	}
+	if err := os.WriteFile(filepath.Join(backupRoot, "state.json"), stateBytes, 0o644); err != nil {
+		_ = os.RemoveAll(backupRoot)
+		return fmt.Errorf("write publication state: %w", err)
+	}
+
+	rollback := func(cause error) error {
+		rollbackErr := rollbackPublication(docsDir, backupRoot, state, rename)
+		if rollbackErr != nil {
+			return errors.Join(cause, fmt.Errorf("rollback publication: %w", rollbackErr))
+		}
+		if cleanupErr := os.RemoveAll(backupRoot); cleanupErr != nil {
+			return errors.Join(cause, fmt.Errorf("remove publication backup: %w", cleanupErr))
+		}
+		return cause
+	}
+
+	if state.HadVendor {
+		if err := rename(vendorDir, filepath.Join(backupRoot, "vendor")); err != nil {
+			return rollback(fmt.Errorf("back up vendor tree: %w", err))
+		}
+	}
+	if state.HadManifest {
+		if err := rename(manifestPath, filepath.Join(backupRoot, "manifest.json")); err != nil {
+			return rollback(fmt.Errorf("back up manifest: %w", err))
+		}
+	}
+	if err := rename(filepath.Join(stagedRoot, "vendor"), vendorDir); err != nil {
+		return rollback(fmt.Errorf("publish vendor tree: %w", err))
+	}
+	if err := rename(filepath.Join(stagedRoot, "manifest.json"), manifestPath); err != nil {
+		return rollback(fmt.Errorf("publish manifest: %w", err))
+	}
+	if err := os.WriteFile(filepath.Join(backupRoot, "committed"), nil, 0o644); err != nil {
+		return rollback(fmt.Errorf("commit publication: %w", err))
+	}
+	if err := os.RemoveAll(backupRoot); err != nil {
+		return fmt.Errorf("remove publication backup: %w", err)
+	}
+	return nil
+}
+
+func recoverInterruptedPublications(docsDir string) error {
+	entries, err := os.ReadDir(docsDir)
+	if err != nil {
+		return fmt.Errorf("inspect documentation directory: %w", err)
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() || !strings.HasPrefix(entry.Name(), ".docs-backup-") {
+			continue
+		}
+		backupRoot := filepath.Join(docsDir, entry.Name())
+		committed, err := pathExists(filepath.Join(backupRoot, "committed"))
+		if err != nil {
+			return fmt.Errorf("inspect publication marker: %w", err)
+		}
+		if committed {
+			if err := os.RemoveAll(backupRoot); err != nil {
+				return fmt.Errorf("remove committed publication backup: %w", err)
+			}
+			continue
+		}
+		stateBytes, err := os.ReadFile(filepath.Join(backupRoot, "state.json"))
+		if err != nil {
+			return fmt.Errorf("read interrupted publication state: %w", err)
+		}
+		var state publicationState
+		if err := json.Unmarshal(stateBytes, &state); err != nil {
+			return fmt.Errorf("decode interrupted publication state: %w", err)
+		}
+		if err := rollbackPublication(docsDir, backupRoot, state, os.Rename); err != nil {
+			return fmt.Errorf("recover interrupted publication: %w", err)
+		}
+		if err := os.RemoveAll(backupRoot); err != nil {
+			return fmt.Errorf("remove recovered publication backup: %w", err)
+		}
+	}
+	return nil
+}
+
+func rollbackPublication(docsDir, backupRoot string, state publicationState, rename func(string, string) error) error {
+	artifacts := []struct {
+		name string
+		had  bool
+	}{
+		{name: "vendor", had: state.HadVendor},
+		{name: "manifest.json", had: state.HadManifest},
+	}
+	for _, artifact := range artifacts {
+		target := filepath.Join(docsDir, artifact.name)
+		backup := filepath.Join(backupRoot, artifact.name)
+		backupExists, err := pathExists(backup)
+		if err != nil {
+			return fmt.Errorf("inspect backup %s: %w", artifact.name, err)
+		}
+		if backupExists {
+			if err := os.RemoveAll(target); err != nil {
+				return fmt.Errorf("remove partial %s: %w", artifact.name, err)
+			}
+			if err := rename(backup, target); err != nil {
+				return fmt.Errorf("restore %s: %w", artifact.name, err)
+			}
+			continue
+		}
+		if !artifact.had {
+			if err := os.RemoveAll(target); err != nil {
+				return fmt.Errorf("remove new %s: %w", artifact.name, err)
+			}
+		}
+	}
+	return nil
+}
+
+func pathExists(path string) (bool, error) {
+	_, err := os.Lstat(path)
+	if err == nil {
+		return true, nil
+	}
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return false, err
 }
 
 func parseTree(raw []byte) ([]treeEntry, error) {
