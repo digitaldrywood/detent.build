@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"html"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -74,6 +75,52 @@ func TestPagesRender(t *testing.T) {
 			}
 			if !strings.Contains(rec.Body.String(), tt.want) {
 				t.Errorf("body does not contain %q", tt.want)
+			}
+		})
+	}
+}
+
+func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
+	e := newTestServer(t)
+
+	tests := []struct {
+		path      string
+		want      []string
+		forbidden []string
+	}{
+		{
+			path: "/",
+			want: []string{
+				html.EscapeString(content.BoardCaption),
+				content.NonCodeWorkflowURL,
+				`content="` + content.OpenGraphDefaultImageAlt + `"`,
+			},
+			forbidden: []string{"one item at every stop", "The six board lanes", "the gates decide when it lands. The six"},
+		},
+		{
+			path:      "/dashboard",
+			want:      []string{html.EscapeString(content.DashboardLaneHeading), content.NonCodeWorkflowURL},
+			forbidden: []string{"The same six stops, live."},
+		},
+		{
+			path:      "/how-it-works",
+			want:      []string{content.HowItWorksStateHeading, html.EscapeString(content.HowItWorksStateDetail)},
+			forbidden: []string{"Six stops, and the catches between them."},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.path, func(t *testing.T) {
+			body := get(t, e, tt.path, nil).Body.String()
+			for _, want := range tt.want {
+				if !strings.Contains(body, want) {
+					t.Errorf("body does not contain %q", want)
+				}
+			}
+			for _, forbidden := range tt.forbidden {
+				if strings.Contains(body, forbidden) {
+					t.Errorf("body contains fixed-state wording %q", forbidden)
+				}
 			}
 		})
 	}

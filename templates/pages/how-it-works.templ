@@ -15,8 +15,7 @@ templ HowItWorks() {
 			"The mechanism, stop by stop.",
 			"Configured GitHub status is the state machine. Everything below is behavior the runtime actually implements — the state table and connector model live in the repository's Concepts document, and each step here links to it.",
 		)
-		@components.FirstSection("01", "The state machine", "Six stops, and the catches between them.",
-			"Lanes are workflow-defined. These six are the delivery path — a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done.") {
+		@components.FirstSection("01", "The state machine", content.HowItWorksStateHeading, content.HowItWorksStateDetail) {
 			@components.LaneRail()
 			<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				for _, lane := range content.Lanes {

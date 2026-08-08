@@ -13,15 +13,16 @@ import (
 )
 
 const (
-	RepoURL          = "https://github.com/digitaldrywood/detent"
-	OrchestrationURL = "https://github.com/digitaldrywood/detent-orchestration"
-	ReleasesURL      = "https://github.com/digitaldrywood/detent/releases"
-	LicenseURL       = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
-	IssuesURL        = "https://github.com/digitaldrywood/detent/issues"
-	ContributingURL  = "https://github.com/digitaldrywood/detent/blob/main/CONTRIBUTING.md"
-	CIURL            = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
-	SymphonyURL      = "https://github.com/openai/symphony"
-	CodexCLIURL      = "https://github.com/openai/codex"
+	RepoURL            = "https://github.com/digitaldrywood/detent"
+	OrchestrationURL   = "https://github.com/digitaldrywood/detent-orchestration"
+	ReleasesURL        = "https://github.com/digitaldrywood/detent/releases"
+	LicenseURL         = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
+	IssuesURL          = "https://github.com/digitaldrywood/detent/issues"
+	ContributingURL    = "https://github.com/digitaldrywood/detent/blob/main/CONTRIBUTING.md"
+	CIURL              = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
+	SymphonyURL        = "https://github.com/openai/symphony"
+	CodexCLIURL        = "https://github.com/openai/codex"
+	NonCodeWorkflowURL = RepoURL + "/blob/main/docs/examples/non-code-artifact/README.md"
 
 	DocsBase = RepoURL + "/blob/main/docs/"
 
@@ -47,15 +48,14 @@ func VersionFromCtx(ctx context.Context) string {
 	return Version
 }
 
-// Lane is one stop on the board. The six lanes below are the workflow Detent
-// ships in its own production config; lanes are workflow-defined, not fixed.
+// Lane is one configured state on the board.
 type Lane struct {
 	Name  string
 	Slug  string
 	Blurb string
 }
 
-// Lanes is the state machine spine: Todo through Done.
+// Lanes is the delivery path in Detent's own production workflow.
 var Lanes = []Lane{
 	{"Todo", "todo", "Claimed by the scheduler when capacity and dependencies allow."},
 	{"In Progress", "in-progress", "A Codex agent is working in an isolated worktree on its own branch."},
@@ -379,12 +379,12 @@ type BoardColumn struct {
 	Overflow string
 }
 
-// Board is the hero visual: Detent's six lanes with real work in them.
+// Board is the hero visual: Detent's production delivery path with real work.
 //
 // Every issue number and title below is real, merged work from
 // digitaldrywood/detent that Detent's own agents produced. The arrangement
-// across lanes is composed to show one item at each stop at once — a live
-// board only ever shows one instant. BoardCaption says so on the page.
+// across the displayed delivery path is composed — a live board only ever
+// shows one instant. BoardCaption says so on the page.
 var Board = []BoardColumn{
 	{
 		Lane:  Lanes[0],
@@ -453,10 +453,18 @@ const MergedPRs = "722"
 // difference between an illustration and a false claim.
 const BoardLabel = "composed snapshot"
 
+const (
+	DashboardLaneHeading     = "Detent's configured delivery path."
+	HowItWorksStateHeading   = "A configured path, and the catches between states."
+	HowItWorksStateDetail    = "Lanes are workflow-defined. These six are the delivery path — a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done."
+	OpenGraphDefaultImageAlt = "A composed Detent board showing a configured delivery path with Human Review held at a gate."
+)
+
 // BoardCaption is the honesty note printed under the hero board.
-const BoardCaption = "Not a live board. The issue numbers, titles, and lanes are real work from " +
-	"digitaldrywood/detent, arranged to show one item at every stop at once — a running board only " +
-	"ever shows one instant. The counts describe this illustration; " + MergedPRs +
+const BoardCaption = "The six lanes shown come from Detent's own production configuration, not a fixed " +
+	"product state model; each workflow defines its own states. This is not a live board: the issue numbers and " +
+	"titles come from real merged work in digitaldrywood/detent, composed across the path for this " +
+	"illustration. The counts describe the illustration; " + MergedPRs +
 	" is the all-time landed pull requests on that repository."
 
 // MergeTrainStage is one step in the serialized merge train diagram.
