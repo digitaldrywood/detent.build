@@ -246,6 +246,40 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 	}
 }
 
+func TestSitemapIncludesEveryIndexablePageRoute(t *testing.T) {
+	e := newTestServer(t)
+	body := get(t, e, "/sitemap.xml", nil).Body.String()
+
+	nonIndexableRoutes := map[string]struct{}{
+		// Health is a machine-readable availability endpoint, not a page.
+		"/health": {},
+		// Robots directives are crawler configuration, not page content.
+		"/robots.txt": {},
+		// The sitemap describes pages but is not itself an indexable page.
+		"/sitemap.xml": {},
+		// Install platform routes are HTMX partials canonicalized to /install.
+		"/install/:platform": {},
+		// Static files support pages but are not independently indexable pages.
+		"/static*": {},
+		// templUI assets support interactions but are not page content.
+		"/assets*": {},
+	}
+
+	for _, route := range e.Routes() {
+		if route.Method != http.MethodGet {
+			continue
+		}
+		if _, excluded := nonIndexableRoutes[route.Path]; excluded {
+			continue
+		}
+
+		want := "<loc>https://detent.build" + route.Path + "</loc>"
+		if !strings.Contains(body, want) {
+			t.Errorf("registered page route %q is missing from the sitemap", route.Path)
+		}
+	}
+}
+
 // The site URL is configured with no trailing slash in production, but a
 // stray one must not corrupt the sitemap.
 func TestSitemapTolerantOfTrailingSlashConfig(t *testing.T) {
