@@ -243,5 +243,144 @@
   .htmx-request.htmx-indicator {
     display: inline-flex;
   }
-}
 
+  .docs-prose {
+    color: var(--color-sec);
+    font-size: 14px;
+    line-height: 1.75;
+  }
+
+  .docs-prose h1,
+  .docs-prose h2,
+  .docs-prose h3,
+  .docs-prose h4 {
+    scroll-margin-top: 96px;
+    color: var(--color-text);
+    font-weight: 650;
+  }
+
+  .docs-prose h1 {
+    margin-bottom: 24px;
+    font-size: 32px;
+    line-height: 1.1;
+  }
+
+  .docs-prose h2 {
+    margin-top: 48px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--color-line);
+    padding-bottom: 8px;
+    font-size: 22px;
+    line-height: 1.2;
+  }
+
+  .docs-prose h3 {
+    margin-top: 32px;
+    margin-bottom: 12px;
+    font-size: 18px;
+    line-height: 1.35;
+  }
+
+  .docs-prose h4 {
+    margin-top: 24px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .docs-prose p,
+  .docs-prose ul,
+  .docs-prose ol,
+  .docs-prose blockquote,
+  .docs-prose pre,
+  .docs-prose table {
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .docs-prose ul,
+  .docs-prose ol {
+    padding-left: 24px;
+  }
+
+  .docs-prose ul {
+    list-style: disc;
+  }
+
+  .docs-prose ol {
+    list-style: decimal;
+  }
+
+  .docs-prose li + li {
+    margin-top: 4px;
+  }
+
+  .docs-prose a {
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .docs-prose strong {
+    color: var(--color-text);
+    font-weight: 650;
+  }
+
+  .docs-prose code {
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-chip);
+    background: var(--color-elev);
+    padding: 2px 4px;
+    color: var(--color-text);
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  .docs-prose pre {
+    overflow-x: auto;
+    border: 1px solid var(--color-line);
+    border-radius: var(--radius-card);
+    background: var(--color-page);
+    padding: 16px;
+  }
+
+  .docs-prose pre code {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+
+  .docs-prose blockquote {
+    border-left: 1px solid var(--color-line);
+    padding-left: 16px;
+    color: var(--color-dim);
+  }
+
+  .docs-prose table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+
+  .docs-prose th,
+  .docs-prose td {
+    border: 1px solid var(--color-line);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .docs-prose th {
+    background: var(--color-elev);
+    color: var(--color-text);
+    font-weight: 650;
+  }
+
+  .docs-prose hr {
+    margin: 32px 0;
+    border: 0;
+    border-top: 1px solid var(--color-line);
+  }
+}

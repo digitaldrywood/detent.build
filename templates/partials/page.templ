@@ -1,9 +1,6 @@
 package partials
 
-import (
-	"detent.build/internal/content"
-	"detent.build/ui/components"
-)
+import "detent.build/ui/components"
 
 // PageHeader is the masthead every interior page opens with.
 templ PageHeader(eyebrow string, heading string, lede string) {
@@ -31,6 +28,7 @@ var allNextSteps = []nextStep{
 	{"why-detent", "Why Detent", "/why-detent", "The interaction-model argument, the default choices, and the comparison matrix."},
 	{"dashboard", "Dashboard", "/dashboard", "The operator surface: lanes, agent activity, budget and rate-limit state, and the TUI."},
 	{"install", "Install", "/install", "Platform-tabbed install commands, requirements, and the first run."},
+	{"docs", "Documentation", "/docs", "The curated operator reference, mirrored from a pinned Detent release."},
 	{"open-source", "Open source", "/open-source", "MIT, the repository, releases, contributing, and the self-hosting proof."},
 }
 
@@ -61,17 +59,5 @@ templ SiteLinks(current string) {
 				</a>
 			}
 		}
-		<a
-			href={ templ.SafeURL(content.RepoURL + "#documentation") }
-			class="group rounded-card border border-line bg-surface p-5 transition-colors hover:border-accent"
-		>
-			<div class="font-mono text-xs text-text transition-colors group-hover:text-accent">
-				Documentation &#8599;
-			</div>
-			<p class="mt-2 text-sm leading-relaxed text-sec">
-				The real docs live in the repository, next to the code they describe. This site does not
-				pretend to have documentation it has not written.
-			</p>
-		</a>
 	</div>
 }

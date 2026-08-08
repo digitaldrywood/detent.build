@@ -10,10 +10,11 @@ import (
 	"context"
 
 	"detent.build/internal/ctxkeys"
+	"detent.build/internal/docs"
 )
 
 const (
-	RepoURL            = "https://github.com/digitaldrywood/detent"
+	RepoURL            = docs.SourceRepository
 	OrchestrationURL   = "https://github.com/digitaldrywood/detent-orchestration"
 	ReleasesURL        = "https://github.com/digitaldrywood/detent/releases"
 	LicenseURL         = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
@@ -22,9 +23,9 @@ const (
 	CIURL              = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
 	SymphonyURL        = "https://github.com/openai/symphony"
 	CodexCLIURL        = "https://github.com/openai/codex"
-	NonCodeWorkflowURL = RepoURL + "/blob/main/docs/examples/non-code-artifact/README.md"
+	NonCodeWorkflowURL = RepoURL + "/blob/" + docs.CommitSHA + "/docs/examples/non-code-artifact/README.md"
 
-	DocsBase = RepoURL + "/blob/main/docs/"
+	DocsBase = RepoURL + "/blob/" + docs.CommitSHA + "/docs/"
 
 	// Version is hand-maintained and will rot. It should come from the
 	// releases API or a build flag; until then TestVersionMatchesBare keeps the
@@ -35,7 +36,12 @@ const (
 )
 
 // Doc returns a link to a document in the Detent repository.
-func Doc(path string) string { return DocsBase + path }
+func Doc(sourcePath string) string {
+	if publicPath, ok := docs.PublicPath(sourcePath); ok {
+		return publicPath
+	}
+	return DocsBase + sourcePath
+}
 
 // VersionFromCtx returns the release tag for this request. A background
 // watcher refreshes it from the GitHub releases API; when that is disabled or

@@ -11,6 +11,7 @@ require (
 	github.com/labstack/echo/v4 v4.14.0
 	github.com/lmittmann/tint v1.1.2
 	github.com/templui/templui v1.13.0
+	github.com/yuin/goldmark v1.8.5
 )
 
 require (
