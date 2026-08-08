@@ -453,6 +453,13 @@ const MergedPRs = "722"
 // difference between an illustration and a false claim.
 const BoardLabel = "composed snapshot"
 
+const (
+	DashboardLaneHeading     = "Detent's configured delivery path."
+	HowItWorksStateHeading   = "A configured path, and the catches between states."
+	HowItWorksStateDetail    = "Lanes are workflow-defined. These six are the delivery path — a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done."
+	OpenGraphDefaultImageAlt = "A composed Detent board showing a configured delivery path with Human Review held at a gate."
+)
+
 // BoardCaption is the honesty note printed under the hero board.
 const BoardCaption = "The six lanes shown come from Detent's own production configuration, not a fixed " +
 	"product state model; each workflow defines its own states. This is not a live board: the issue numbers and " +

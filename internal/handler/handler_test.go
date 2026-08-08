@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"html"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -90,20 +91,20 @@ func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
 		{
 			path: "/",
 			want: []string{
-				"The six lanes shown come from Detent&#39;s own production configuration, not a fixed product state model; each workflow defines its own states.",
+				html.EscapeString(content.BoardCaption),
 				content.NonCodeWorkflowURL,
-				`content="A composed Detent board showing a configured delivery path with Human Review held at a gate."`,
+				`content="` + content.OpenGraphDefaultImageAlt + `"`,
 			},
 			forbidden: []string{"one item at every stop", "The six board lanes", "the gates decide when it lands. The six"},
 		},
 		{
 			path:      "/dashboard",
-			want:      []string{"Detent&#39;s configured delivery path.", content.NonCodeWorkflowURL},
+			want:      []string{html.EscapeString(content.DashboardLaneHeading), content.NonCodeWorkflowURL},
 			forbidden: []string{"The same six stops, live."},
 		},
 		{
 			path:      "/how-it-works",
-			want:      []string{"A configured path, and the catches between states."},
+			want:      []string{content.HowItWorksStateHeading, html.EscapeString(content.HowItWorksStateDetail)},
 			forbidden: []string{"Six stops, and the catches between them."},
 		},
 	}
