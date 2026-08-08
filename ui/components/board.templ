@@ -2,7 +2,7 @@ package components
 
 import "detent.build/internal/content"
 
-// Board is the hero visual: Detent's six lanes with real work sitting in them
+// Board is the hero visual: Detent's production delivery path with real work
 // and exactly one card held at a gate. It is the product's most recognizable
 // surface, so the marketing site leads with the thing itself rather than a
 // screenshot of it.
@@ -81,7 +81,7 @@ templ BoardCard(card content.Card) {
 	</article>
 }
 
-// LaneRail draws the six states as a horizontal run with the gates marked
+// LaneRail draws Detent's production delivery path with the gates marked
 // between them. A gate is a catch, so it is drawn as one: a notch, not an
 // arrow.
 templ LaneRail() {

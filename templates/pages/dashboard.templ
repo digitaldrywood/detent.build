@@ -44,11 +44,12 @@ templ Dashboard() {
 				<a href={ templ.SafeURL(content.Doc("dashboard-api.md")) } class="text-accent hover:underline">Dashboard and APIs &#8594;</a>
 			</p>
 		}
-		@components.Section("02", "The lanes", "The same six stops, live.",
+		@components.Section("02", "The lanes", "Detent's configured delivery path.",
 			"A ProjectV2 board, a boardless issue Status field, or repository status labels all render into this view.") {
 			@components.Board(content.Board)
 			<p class="mt-3 max-w-[840px] font-mono text-2xs leading-relaxed text-dim">
 				{ content.BoardCaption }
+				<a href={ templ.SafeURL(content.NonCodeWorkflowURL) } class="text-accent hover:underline">Non-code workflow example &#8594;</a>
 			</p>
 		}
 		@components.Section("03", "The terminal UI", "For people who live in tmux.",
