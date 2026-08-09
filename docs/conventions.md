@@ -109,6 +109,35 @@ Interior pages number their sections from 01. Partials shared across pages
 parameter, because the same block sits at a different position on each page.
 If you reorder sections, renumber the whole page.
 
+## Upstream documentation renames and deletions
+
+`make docs-sync` compares the committed manifest with the incoming release and
+prints every added path, deleted path, and probable rename. An identical digest
+at a new path is reported as a probable rename automatically. A rename whose
+contents also changed can be paired explicitly by an inventory decision.
+
+The sync does not publish a changed inventory until every item has a matching
+release-pair decision in `internal/docsregistry/registry.go`:
+
+- Added files are either `published` with a matching page entry or
+  `unpublished`.
+- Deleted files are either `tombstone` with a registered public path or
+  `unpublished`.
+- Probable renames are `stable`, `alias`, or `unpublished`. `stable` is the
+  default for a published page: change its source path while keeping its public
+  path. `alias` registers the retired public path as a 200 page whose canonical
+  is the new public path.
+
+Alias and tombstone entries are persistent public URL policy, separate from
+the upstream source path. Aliases and tombstones are not listed in the sitemap.
+A tombstone answers 410. Neither behavior uses a 3xx response because Traefik
+owns redirects in production.
+
+After updating the release pin, run `make docs-sync`, record the reported
+decisions and route policy in the registry, then run it again. The sync also
+rejects any published page whose source is absent from the incoming vendored
+tree, so a registry entry cannot silently outlive its upstream document.
+
 ## Note
 
 `CLAUDE.md` mirrors this document locally for agent sessions. It is covered by

@@ -61,6 +61,10 @@ func (h *Handler) DocPage(page docs.Page) echo.HandlerFunc {
 	}
 }
 
+func (h *Handler) DocTombstone(_ echo.Context) error {
+	return echo.NewHTTPError(http.StatusGone)
+}
+
 func findTarget(key string) (content.InstallTarget, bool) {
 	for _, t := range content.InstallTargets {
 		if t.Key == key {

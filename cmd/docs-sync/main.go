@@ -14,6 +14,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"detent.build/internal/docsregistry"
 )
 
 const (
@@ -45,6 +47,12 @@ type manifest struct {
 type manifestFile struct {
 	Path   string `json:"path"`
 	SHA256 string `json:"sha256"`
+}
+
+type inventoryChange struct {
+	Kind         docsregistry.ChangeKind
+	PreviousPath string
+	CurrentPath  string
 }
 
 type publicationState struct {
@@ -188,6 +196,26 @@ func syncDocs() error {
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 
 	manifestPath := filepath.Join(docsDir, "manifest.json")
+	previous, hasPrevious, err := readManifest(manifestPath)
+	if err != nil {
+		return err
+	}
+	if err := validatePublishedSources(files, docsregistry.Current); err != nil {
+		return err
+	}
+	if hasPrevious {
+		decisions := decisionsFor(previous.CommitSHA, resolvedCommit, docsregistry.Current.Inventory)
+		changes, classifyErr := inventoryChanges(previous.Files, files, decisions)
+		printInventoryChanges(changes)
+		if classifyErr != nil {
+			return classifyErr
+		}
+		if err := validateInventoryChanges(changes, decisions, docsregistry.Current); err != nil {
+			return err
+		}
+	} else {
+		_, _ = fmt.Println("documentation inventory: initial snapshot")
+	}
 	result := manifest{
 		Schema:       1,
 		Repository:   sourceRepository,
@@ -456,6 +484,288 @@ func fileMode(mode string) (os.FileMode, error) {
 		return 0o755, nil
 	default:
 		return 0, fmt.Errorf("unsupported git file mode %s", mode)
+	}
+}
+
+func readManifest(path string) (manifest, bool, error) {
+	contents, err := os.ReadFile(path)
+	if os.IsNotExist(err) {
+		return manifest{}, false, nil
+	}
+	if err != nil {
+		return manifest{}, false, fmt.Errorf("read previous manifest: %w", err)
+	}
+	var result manifest
+	if err := json.Unmarshal(contents, &result); err != nil {
+		return manifest{}, false, fmt.Errorf("decode previous manifest: %w", err)
+	}
+	return result, true, nil
+}
+
+func decisionsFor(fromCommit, toCommit string, decisions []docsregistry.InventoryDecision) []docsregistry.InventoryDecision {
+	var result []docsregistry.InventoryDecision
+	for _, decision := range decisions {
+		if decision.FromCommit == fromCommit && decision.ToCommit == toCommit {
+			result = append(result, decision)
+		}
+	}
+	return result
+}
+
+func inventoryChanges(previous, current []manifestFile, decisions []docsregistry.InventoryDecision) ([]inventoryChange, error) {
+	removed := make(map[string]manifestFile, len(previous))
+	added := make(map[string]manifestFile, len(current))
+	currentPaths := make(map[string]struct{}, len(current))
+	for _, file := range current {
+		currentPaths[file.Path] = struct{}{}
+	}
+	for _, file := range previous {
+		if _, exists := currentPaths[file.Path]; !exists {
+			removed[file.Path] = file
+		}
+	}
+	previousPaths := make(map[string]struct{}, len(previous))
+	for _, file := range previous {
+		previousPaths[file.Path] = struct{}{}
+	}
+	for _, file := range current {
+		if _, exists := previousPaths[file.Path]; !exists {
+			added[file.Path] = file
+		}
+	}
+
+	var changes []inventoryChange
+	for _, decision := range decisions {
+		if decision.Kind != docsregistry.ChangeProbableRename {
+			continue
+		}
+		if _, exists := removed[decision.PreviousPath]; !exists {
+			return nil, fmt.Errorf("probable rename decision references unchanged or unknown previous path %q", decision.PreviousPath)
+		}
+		if _, exists := added[decision.CurrentPath]; !exists {
+			return nil, fmt.Errorf("probable rename decision references unchanged or unknown current path %q", decision.CurrentPath)
+		}
+		delete(removed, decision.PreviousPath)
+		delete(added, decision.CurrentPath)
+		changes = append(changes, inventoryChange{
+			Kind:         docsregistry.ChangeProbableRename,
+			PreviousPath: decision.PreviousPath,
+			CurrentPath:  decision.CurrentPath,
+		})
+	}
+
+	removedByHash := make(map[string][]string)
+	for filePath, file := range removed {
+		removedByHash[file.SHA256] = append(removedByHash[file.SHA256], filePath)
+	}
+	addedByHash := make(map[string][]string)
+	for filePath, file := range added {
+		addedByHash[file.SHA256] = append(addedByHash[file.SHA256], filePath)
+	}
+	for digest, previousPaths := range removedByHash {
+		currentPaths := addedByHash[digest]
+		if len(previousPaths) != 1 || len(currentPaths) != 1 {
+			continue
+		}
+		previousPath := previousPaths[0]
+		currentPath := currentPaths[0]
+		delete(removed, previousPath)
+		delete(added, currentPath)
+		changes = append(changes, inventoryChange{
+			Kind:         docsregistry.ChangeProbableRename,
+			PreviousPath: previousPath,
+			CurrentPath:  currentPath,
+		})
+	}
+	for filePath := range removed {
+		changes = append(changes, inventoryChange{Kind: docsregistry.ChangeDeleted, PreviousPath: filePath})
+	}
+	for filePath := range added {
+		changes = append(changes, inventoryChange{Kind: docsregistry.ChangeAdded, CurrentPath: filePath})
+	}
+	sort.Slice(changes, func(i, j int) bool {
+		left := string(changes[i].Kind) + "\x00" + changes[i].PreviousPath + "\x00" + changes[i].CurrentPath
+		right := string(changes[j].Kind) + "\x00" + changes[j].PreviousPath + "\x00" + changes[j].CurrentPath
+		return left < right
+	})
+	return changes, nil
+}
+
+func printInventoryChanges(changes []inventoryChange) {
+	if len(changes) == 0 {
+		_, _ = fmt.Println("documentation inventory: no changes")
+		return
+	}
+	_, _ = fmt.Println("documentation inventory diff:")
+	for _, change := range changes {
+		switch change.Kind {
+		case docsregistry.ChangeAdded:
+			_, _ = fmt.Printf("  added: %s\n", change.CurrentPath)
+		case docsregistry.ChangeDeleted:
+			_, _ = fmt.Printf("  deleted: %s\n", change.PreviousPath)
+		case docsregistry.ChangeProbableRename:
+			_, _ = fmt.Printf("  probable-rename: %s -> %s\n", change.PreviousPath, change.CurrentPath)
+		}
+	}
+}
+
+func validatePublishedSources(files []manifestFile, registry docsregistry.Registry) error {
+	available := make(map[string]struct{}, len(files))
+	for _, file := range files {
+		available[file.Path] = struct{}{}
+	}
+	for _, page := range registry.Pages {
+		if page.Origin != docsregistry.OriginUpstream {
+			continue
+		}
+		if _, exists := available[page.SourcePath]; !exists {
+			return fmt.Errorf("published documentation path %q has no incoming vendored source %q", page.PublicPath, page.SourcePath)
+		}
+	}
+	return nil
+}
+
+func validateInventoryChanges(changes []inventoryChange, decisions []docsregistry.InventoryDecision, registry docsregistry.Registry) error {
+	decisionByChange := make(map[string]docsregistry.InventoryDecision, len(decisions))
+	for _, decision := range decisions {
+		key := inventoryKey(decision.Kind, decision.PreviousPath, decision.CurrentPath)
+		if _, exists := decisionByChange[key]; exists {
+			return fmt.Errorf("duplicate documentation inventory decision for %s", describeInventory(decision.Kind, decision.PreviousPath, decision.CurrentPath))
+		}
+		if err := validateInventoryDecision(decision, registry); err != nil {
+			return err
+		}
+		decisionByChange[key] = decision
+	}
+
+	var unclassified []string
+	for _, change := range changes {
+		key := inventoryKey(change.Kind, change.PreviousPath, change.CurrentPath)
+		if _, exists := decisionByChange[key]; !exists {
+			unclassified = append(unclassified, describeInventory(change.Kind, change.PreviousPath, change.CurrentPath))
+			continue
+		}
+		delete(decisionByChange, key)
+	}
+	if len(unclassified) > 0 {
+		return fmt.Errorf("unclassified documentation inventory changes: %s", strings.Join(unclassified, ", "))
+	}
+	if len(decisionByChange) > 0 {
+		var stale []string
+		for _, decision := range decisionByChange {
+			stale = append(stale, describeInventory(decision.Kind, decision.PreviousPath, decision.CurrentPath))
+		}
+		sort.Strings(stale)
+		return fmt.Errorf("documentation inventory decisions do not match the incoming tree: %s", strings.Join(stale, ", "))
+	}
+	return nil
+}
+
+func validateInventoryDecision(decision docsregistry.InventoryDecision, registry docsregistry.Registry) error {
+	pageBySource := make(map[string]docsregistry.Page, len(registry.Pages))
+	for _, page := range registry.Pages {
+		if page.Origin != docsregistry.OriginUpstream {
+			continue
+		}
+		pageBySource[page.SourcePath] = page
+	}
+	aliasExists := func(publicPath, canonicalPath string) bool {
+		for _, alias := range registry.Aliases {
+			if alias.PublicPath == publicPath && alias.CanonicalPath == canonicalPath {
+				return true
+			}
+		}
+		return false
+	}
+	tombstoneExists := func(publicPath string) bool {
+		for _, tombstone := range registry.Tombstones {
+			if tombstone.PublicPath == publicPath {
+				return true
+			}
+		}
+		return false
+	}
+	invalid := func(message string) error {
+		return fmt.Errorf("invalid documentation inventory decision for %s: %s", describeInventory(decision.Kind, decision.PreviousPath, decision.CurrentPath), message)
+	}
+
+	switch decision.Kind {
+	case docsregistry.ChangeAdded:
+		if decision.PreviousPath != "" || decision.CurrentPath == "" {
+			return invalid("added changes require only current_path")
+		}
+		switch decision.Resolution {
+		case docsregistry.ResolutionPublished:
+			page, exists := pageBySource[decision.CurrentPath]
+			if !exists || decision.PublicPath == "" || page.PublicPath != decision.PublicPath || decision.CanonicalPath != "" {
+				return invalid("published additions must name the matching page public path")
+			}
+		case docsregistry.ResolutionUnpublished:
+			if _, exists := pageBySource[decision.CurrentPath]; exists || decision.PublicPath != "" || decision.CanonicalPath != "" {
+				return invalid("unpublished additions cannot have a page or public path")
+			}
+		default:
+			return invalid("added changes require a published or unpublished resolution")
+		}
+	case docsregistry.ChangeDeleted:
+		if decision.PreviousPath == "" || decision.CurrentPath != "" {
+			return invalid("deleted changes require only previous_path")
+		}
+		switch decision.Resolution {
+		case docsregistry.ResolutionTombstone:
+			if decision.PublicPath == "" || !tombstoneExists(decision.PublicPath) || decision.CanonicalPath != "" {
+				return invalid("tombstone deletions must name a registered tombstone public path")
+			}
+		case docsregistry.ResolutionUnpublished:
+			if decision.PublicPath != "" || decision.CanonicalPath != "" {
+				return invalid("unpublished deletions cannot have a public path")
+			}
+		default:
+			return invalid("deleted changes require a tombstone or unpublished resolution")
+		}
+	case docsregistry.ChangeProbableRename:
+		if decision.PreviousPath == "" || decision.CurrentPath == "" {
+			return invalid("probable renames require previous_path and current_path")
+		}
+		switch decision.Resolution {
+		case docsregistry.ResolutionStable:
+			page, exists := pageBySource[decision.CurrentPath]
+			if !exists || decision.PublicPath == "" || page.PublicPath != decision.PublicPath || decision.CanonicalPath != "" {
+				return invalid("stable renames must keep the matching page public path")
+			}
+		case docsregistry.ResolutionAlias:
+			page, exists := pageBySource[decision.CurrentPath]
+			if !exists || decision.PublicPath == "" || decision.CanonicalPath == "" ||
+				page.PublicPath != decision.CanonicalPath || !aliasExists(decision.PublicPath, decision.CanonicalPath) {
+				return invalid("alias renames must name a registered alias and matching canonical page")
+			}
+		case docsregistry.ResolutionUnpublished:
+			if _, exists := pageBySource[decision.CurrentPath]; exists || decision.PublicPath != "" || decision.CanonicalPath != "" {
+				return invalid("unpublished renames cannot have a page or public path")
+			}
+		default:
+			return invalid("probable renames require a stable, alias, or unpublished resolution")
+		}
+	default:
+		return invalid("unknown change kind")
+	}
+	return nil
+}
+
+func inventoryKey(kind docsregistry.ChangeKind, previousPath, currentPath string) string {
+	return string(kind) + "\x00" + previousPath + "\x00" + currentPath
+}
+
+func describeInventory(kind docsregistry.ChangeKind, previousPath, currentPath string) string {
+	switch kind {
+	case docsregistry.ChangeAdded:
+		return fmt.Sprintf("added %q", currentPath)
+	case docsregistry.ChangeDeleted:
+		return fmt.Sprintf("deleted %q", previousPath)
+	case docsregistry.ChangeProbableRename:
+		return fmt.Sprintf("probable rename %q -> %q", previousPath, currentPath)
+	default:
+		return fmt.Sprintf("%s %q -> %q", kind, previousPath, currentPath)
 	}
 }
 
