@@ -11,6 +11,8 @@ import (
 	"testing"
 	"testing/fstest"
 	"time"
+
+	"detent.build/internal/docsregistry"
 )
 
 type provenanceManifest struct {
@@ -209,7 +211,7 @@ func TestMarkdownLinksResolveThroughRegistryOrPinnedRepository(t *testing.T) {
 }
 
 func TestSiteAuthoredDocumentationUsesDedicatedPrefix(t *testing.T) {
-	siteEntry := registration{
+	siteEntry := docsregistry.Page{
 		Group:      "Site",
 		Title:      "Guide",
 		SourcePath: "guide.md",
@@ -233,14 +235,58 @@ func TestSiteAuthoredDocumentationUsesDedicatedPrefix(t *testing.T) {
 }
 
 func TestCatalogLoadFailsWhenRegisteredSourceIsMissing(t *testing.T) {
-	_, err := loadCatalog(fstest.MapFS{}, []registration{{
+	_, err := loadCatalog(fstest.MapFS{}, docsregistry.Registry{Pages: []docsregistry.Page{{
 		Group:      "Get started",
 		Title:      "Missing",
 		SourcePath: "missing.md",
 		PublicPath: "/docs/missing",
 		Origin:     OriginUpstream,
-	}})
+	}}})
 	if err == nil {
 		t.Fatal("loadCatalog succeeded for a missing source")
+	}
+}
+
+func TestCatalogLoadsAliasAndTombstoneRoutes(t *testing.T) {
+	registry := docsregistry.Registry{
+		Pages: []docsregistry.Page{{
+			Group:      "Reference",
+			Title:      "Renamed",
+			SourcePath: "renamed.md",
+			PublicPath: "/docs/renamed",
+			Origin:     OriginUpstream,
+		}},
+		Aliases:    []docsregistry.Alias{{PublicPath: "/docs/old-name", CanonicalPath: "/docs/renamed"}},
+		Tombstones: []docsregistry.Tombstone{{PublicPath: "/docs/withdrawn"}},
+	}
+	catalog, err := loadCatalog(fstest.MapFS{
+		"renamed.md": {Data: []byte("# Renamed\n")},
+	}, registry)
+	if err != nil {
+		t.Fatalf("loadCatalog() error = %v", err)
+	}
+
+	aliases := catalog.Aliases()
+	if len(aliases) != 1 || aliases[0].PublicPath != "/docs/old-name" || aliases[0].Page.PublicPath != "/docs/renamed" {
+		t.Errorf("aliases = %#v", aliases)
+	}
+	tombstones := catalog.Tombstones()
+	if len(tombstones) != 1 || tombstones[0].PublicPath != "/docs/withdrawn" {
+		t.Errorf("tombstones = %#v", tombstones)
+	}
+	if page, ok := catalog.Page("/docs/old-name"); !ok || page.PublicPath != "/docs/renamed" {
+		t.Errorf("alias lookup = %#v, %v", page, ok)
+	}
+	if paths := catalog.Paths(); len(paths) != 1 || paths[0] != "/docs/renamed" {
+		t.Errorf("indexable paths = %#v", paths)
+	}
+}
+
+func TestCatalogRejectsAliasWithoutCanonicalPage(t *testing.T) {
+	_, err := loadCatalog(fstest.MapFS{}, docsregistry.Registry{
+		Aliases: []docsregistry.Alias{{PublicPath: "/docs/old-name", CanonicalPath: "/docs/missing"}},
+	})
+	if err == nil {
+		t.Fatal("loadCatalog succeeded for an alias without a canonical page")
 	}
 }

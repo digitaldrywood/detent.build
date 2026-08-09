@@ -10,6 +10,8 @@ import (
 	"path"
 	"strings"
 
+	"detent.build/internal/docsregistry"
+
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/extension"
@@ -30,12 +32,12 @@ var embedded embed.FS
 // Files contains the byte-identical documentation tree rooted at the pinned release's docs directory.
 var Files = mustSub(embedded, "vendor")
 
-type Origin string
+type Origin = docsregistry.Origin
 
 const (
-	OriginUpstream Origin = "upstream"
-	OriginSite     Origin = "site"
-	SitePathPrefix        = "/docs/site/"
+	OriginUpstream = docsregistry.OriginUpstream
+	OriginSite     = docsregistry.OriginSite
+	SitePathPrefix = "/docs/site/"
 )
 
 type Page struct {
@@ -58,39 +60,22 @@ type ExternalReference struct {
 	URL   string
 }
 
-type registration struct {
-	Group      string
-	Title      string
-	SourcePath string
+type Alias struct {
 	PublicPath string
-	Origin     Origin
+	Page       Page
+}
+
+type Tombstone struct {
+	PublicPath string
 }
 
 type Catalog struct {
-	groups   []Group
-	pages    []Page
-	byPath   map[string]Page
-	bySource map[string]string
-}
-
-var registry = []registration{
-	{"Get started", "Quick Start", "getting-started.md", "/docs/getting-started", OriginUpstream},
-	{"Get started", "Project Onboarding", "ONBOARDING.md", "/docs/project-onboarding", OriginUpstream},
-	{"Get started", "Bootstrap a new machine", "bootstrap.md", "/docs/bootstrap", OriginUpstream},
-	{"Get started", "Configuration", "config.md", "/docs/configuration", OriginUpstream},
-	{"Operate Detent", "Concepts", "concepts.md", "/docs/concepts", OriginUpstream},
-	{"Operate Detent", "Dependency workflows", "dependency-workflows.md", "/docs/dependency-workflows", OriginUpstream},
-	{"Operate Detent", "Merge train", "merge-train.md", "/docs/merge-train", OriginUpstream},
-	{"Operate Detent", "Multi-project operation", "multi-project.md", "/docs/multi-project", OriginUpstream},
-	{"Operate Detent", "Machine-local workflow overlays", "workflow-overlays.md", "/docs/workflow-overlays", OriginUpstream},
-	{"Operate Detent", "Webhook freshness", "webhook-freshness.md", "/docs/webhook-freshness", OriginUpstream},
-	{"Operate Detent", "Scheduled operations", "scheduled-routines.md", "/docs/scheduled-operations", OriginUpstream},
-	{"Operate Detent", "Admission criteria", "admission.md", "/docs/admission", OriginUpstream},
-	{"Operate Detent", "Efficiency retrospection", "retrospection.md", "/docs/retrospection", OriginUpstream},
-	{"Operate Detent", "Dashboard and APIs", "dashboard-api.md", "/docs/dashboard-api", OriginUpstream},
-	{"Reference and contribute", "CLI reference", "cli.md", "/docs/cli", OriginUpstream},
-	{"Reference and contribute", "Execution seams", "execution-seams.md", "/docs/execution-seams", OriginUpstream},
-	{"Reference and contribute", "Local models", "local-models-ollama.md", "/docs/local-models", OriginUpstream},
+	groups     []Group
+	pages      []Page
+	aliases    []Alias
+	tombstones []Tombstone
+	byPath     map[string]Page
+	bySource   map[string]string
 }
 
 var ExternalReferences = []ExternalReference{
@@ -100,7 +85,7 @@ var ExternalReferences = []ExternalReference{
 	{"Comparison", RepositoryBlobURL("docs/comparison.md")},
 }
 
-var Published = mustLoadCatalog(Files, registry)
+var Published = mustLoadCatalog(Files, docsregistry.Current)
 
 func (c *Catalog) Groups() []Group {
 	groups := make([]Group, len(c.groups))
@@ -112,6 +97,14 @@ func (c *Catalog) Groups() []Group {
 
 func (c *Catalog) Pages() []Page {
 	return append([]Page(nil), c.pages...)
+}
+
+func (c *Catalog) Aliases() []Alias {
+	return append([]Alias(nil), c.aliases...)
+}
+
+func (c *Catalog) Tombstones() []Tombstone {
+	return append([]Tombstone(nil), c.tombstones...)
 }
 
 func (c *Catalog) Page(publicPath string) (Page, bool) {
@@ -128,7 +121,7 @@ func (c *Catalog) Paths() []string {
 }
 
 func PublicPath(sourcePath string) (string, bool) {
-	for _, entry := range registry {
+	for _, entry := range docsregistry.Current.Pages {
 		if entry.SourcePath == sourcePath {
 			return entry.PublicPath, true
 		}
@@ -148,20 +141,24 @@ func ShortCommit() string {
 	return CommitSHA[:12]
 }
 
-func mustLoadCatalog(source fs.FS, entries []registration) *Catalog {
-	catalog, err := loadCatalog(source, entries)
+func NewCatalog(source fs.FS, registry docsregistry.Registry) (*Catalog, error) {
+	return loadCatalog(source, registry)
+}
+
+func mustLoadCatalog(source fs.FS, registry docsregistry.Registry) *Catalog {
+	catalog, err := loadCatalog(source, registry)
 	if err != nil {
 		panic(err)
 	}
 	return catalog
 }
 
-func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
+func loadCatalog(source fs.FS, registry docsregistry.Registry) (*Catalog, error) {
 	catalog := &Catalog{
-		byPath:   make(map[string]Page, len(entries)),
-		bySource: make(map[string]string, len(entries)),
+		byPath:   make(map[string]Page, len(registry.Pages)+len(registry.Aliases)),
+		bySource: make(map[string]string, len(registry.Pages)),
 	}
-	for _, entry := range entries {
+	for _, entry := range registry.Pages {
 		if err := validateRegistration(entry); err != nil {
 			return nil, err
 		}
@@ -177,7 +174,7 @@ func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
 
 	markdown := markdownRenderer()
 	groupIndex := make(map[string]int)
-	for _, entry := range entries {
+	for _, entry := range registry.Pages {
 		sourceBytes, err := fs.ReadFile(source, entry.SourcePath)
 		if err != nil {
 			return nil, fmt.Errorf("read documentation source %q: %w", entry.SourcePath, err)
@@ -205,6 +202,34 @@ func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
 		}
 		catalog.groups[index].Pages = append(catalog.groups[index].Pages, page)
 	}
+	for _, entry := range registry.Aliases {
+		if err := validateRetiredPath(entry.PublicPath); err != nil {
+			return nil, fmt.Errorf("invalid documentation alias: %w", err)
+		}
+		if _, exists := catalog.byPath[entry.PublicPath]; exists {
+			return nil, fmt.Errorf("duplicate documentation public path %q", entry.PublicPath)
+		}
+		page, exists := catalog.byPath[entry.CanonicalPath]
+		if !exists {
+			return nil, fmt.Errorf("documentation alias %q points to unknown canonical path %q", entry.PublicPath, entry.CanonicalPath)
+		}
+		catalog.aliases = append(catalog.aliases, Alias{PublicPath: entry.PublicPath, Page: page})
+		catalog.byPath[entry.PublicPath] = page
+	}
+	for _, entry := range registry.Tombstones {
+		if err := validateRetiredPath(entry.PublicPath); err != nil {
+			return nil, fmt.Errorf("invalid documentation tombstone: %w", err)
+		}
+		if _, exists := catalog.byPath[entry.PublicPath]; exists {
+			return nil, fmt.Errorf("duplicate documentation public path %q", entry.PublicPath)
+		}
+		for _, tombstone := range catalog.tombstones {
+			if tombstone.PublicPath == entry.PublicPath {
+				return nil, fmt.Errorf("duplicate documentation public path %q", entry.PublicPath)
+			}
+		}
+		catalog.tombstones = append(catalog.tombstones, Tombstone{PublicPath: entry.PublicPath})
+	}
 	return catalog, nil
 }
 
@@ -215,7 +240,7 @@ func markdownRenderer() goldmark.Markdown {
 	)
 }
 
-func validateRegistration(entry registration) error {
+func validateRegistration(entry docsregistry.Page) error {
 	if entry.Group == "" || entry.Title == "" {
 		return fmt.Errorf("documentation registration %q is missing a group or title", entry.SourcePath)
 	}
@@ -236,6 +261,13 @@ func validateRegistration(entry registration) error {
 	}
 	if entry.Origin != OriginSite && entry.Origin != OriginUpstream {
 		return fmt.Errorf("documentation source %q has invalid origin %q", entry.SourcePath, entry.Origin)
+	}
+	return nil
+}
+
+func validateRetiredPath(publicPath string) error {
+	if publicPath == "" || path.Clean(publicPath) != publicPath || !strings.HasPrefix(publicPath, "/docs/") {
+		return fmt.Errorf("invalid documentation public path %q", publicPath)
 	}
 	return nil
 }

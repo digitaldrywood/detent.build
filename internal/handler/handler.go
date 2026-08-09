@@ -41,6 +41,12 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	for _, page := range h.docs.Pages() {
 		e.GET(page.PublicPath, h.DocPage(page))
 	}
+	for _, alias := range h.docs.Aliases() {
+		e.GET(alias.PublicPath, h.DocPage(alias.Page))
+	}
+	for _, tombstone := range h.docs.Tombstones() {
+		e.GET(tombstone.PublicPath, h.DocTombstone)
+	}
 
 	// HTMX partial: swap the install commands for one platform without a
 	// page load. Falls back to the full page when JavaScript is off, because
