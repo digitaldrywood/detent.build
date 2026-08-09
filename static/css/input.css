@@ -327,6 +327,7 @@
   }
 
   .docs-prose code {
+    overflow-wrap: anywhere;
     border: 1px solid var(--color-line);
     border-radius: var(--radius-chip);
     background: var(--color-elev);
@@ -345,6 +346,7 @@
   }
 
   .docs-prose pre code {
+    overflow-wrap: normal;
     border: 0;
     border-radius: 0;
     background: transparent;
