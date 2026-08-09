@@ -162,6 +162,36 @@ func TestDocumentationAliasAndTombstoneRoutes(t *testing.T) {
 	assertSitemapIncludesEveryIndexablePageRoute(t, e, catalog)
 }
 
+func TestDocumentationVersionAvailabilityIsExplicitAndDistinctFromSourcePin(t *testing.T) {
+	e := newTestServer(t)
+
+	tests := []struct {
+		path      string
+		featureID string
+		prefix    string
+		version   string
+	}{
+		{"/docs/workflow-overlays", "machine-local-workflow-overlays", "Introduced in", "v0.43.0"},
+		{"/docs/scheduled-operations", "scheduled-maintenance-routines", "Introduced in", "v0.46.0"},
+		{"/docs/webhook-freshness", "per-project-github-webhook-freshness", "Available in", "v0.27.0"},
+	}
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			body := get(t, e, test.path, nil).Body.String()
+			for _, want := range []string{`data-version-feature="` + test.featureID + `"`, test.prefix, test.version, "Docs source", docs.ReleaseTag} {
+				if !strings.Contains(body, want) {
+					t.Errorf("body does not contain %q", want)
+				}
+			}
+		})
+	}
+
+	unrecorded := get(t, e, "/docs/configuration", nil).Body.String()
+	if strings.Contains(unrecorded, "data-version-feature=") {
+		t.Error("documentation without an explicit record rendered a version badge")
+	}
+}
+
 func TestUnregisteredDocumentationIsNotServed(t *testing.T) {
 	e := newTestServer(t)
 
