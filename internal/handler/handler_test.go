@@ -67,6 +67,7 @@ func TestPagesRender(t *testing.T) {
 		{"/open-source", "No control plane."},
 		{"/docs", "Documentation, pinned to the source."},
 		{"/docs/getting-started", "Quick Start"},
+		{"/docs/site/project-contracts", "Project contracts"},
 	}
 
 	for _, tt := range tests {
@@ -93,7 +94,13 @@ func TestPublishedDocumentationRoutesShowPinnedSource(t *testing.T) {
 			if rec.Code != http.StatusOK {
 				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 			}
-			for _, want := range []string{docs.ReleaseTag, docs.ShortCommit(), page.SourceURL, "Mirrored upstream"} {
+			wants := []string{page.SourceURL}
+			if page.Origin == docs.OriginSite {
+				wants = append(wants, "detent.build guide", "Hype Markdown", "Provenance")
+			} else {
+				wants = append(wants, docs.ReleaseTag, docs.ShortCommit(), "Mirrored upstream")
+			}
+			for _, want := range wants {
 				if !strings.Contains(body, want) {
 					t.Errorf("body does not contain %q", want)
 				}
@@ -110,6 +117,7 @@ func TestUnregisteredDocumentationIsNotServed(t *testing.T) {
 		"/docs/development",
 		"/docs/parity-audit",
 		"/docs/getting-started.md",
+		"/docs/site/missing",
 		"/docs/templates/detent.label.yaml",
 	} {
 		t.Run(path, func(t *testing.T) {
@@ -254,7 +262,7 @@ func TestHealth(t *testing.T) {
 func TestNoWWWAndNoPlainHTTPForProductionHost(t *testing.T) {
 	e := newTestServer(t)
 
-	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/docs", "/docs/getting-started", "/sitemap.xml"}
+	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/sitemap.xml"}
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
@@ -287,6 +295,7 @@ func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
 		{"/open-source", "https://detent.build/open-source"},
 		{"/docs", "https://detent.build/docs"},
 		{"/docs/getting-started", "https://detent.build/docs/getting-started"},
+		{"/docs/site/project-contracts", "https://detent.build/docs/site/project-contracts"},
 	}
 
 	for _, tt := range tests {
@@ -337,6 +346,7 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 		"<loc>https://detent.build/open-source</loc>",
 		"<loc>https://detent.build/docs</loc>",
 		"<loc>https://detent.build/docs/getting-started</loc>",
+		"<loc>https://detent.build/docs/site/project-contracts</loc>",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("sitemap is missing %s", want)
@@ -413,7 +423,7 @@ func TestCanonicalTolerantOfTrailingSlashConfig(t *testing.T) {
 func TestNoAppLevelRedirects(t *testing.T) {
 	e := newTestServer(t)
 
-	for _, path := range []string{"/", "/install", "/install/linux", "/docs", "/docs/getting-started", "/health", "/sitemap.xml"} {
+	for _, path := range []string{"/", "/install", "/install/linux", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/health", "/sitemap.xml"} {
 		t.Run(path, func(t *testing.T) {
 			if code := get(t, e, path, nil).Code; code >= 300 && code < 400 {
 				t.Errorf("status = %d; the app must not redirect, Traefik already does", code)

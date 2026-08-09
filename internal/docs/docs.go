@@ -19,16 +19,19 @@ import (
 
 const (
 	SourceRepository = "https://github.com/digitaldrywood/detent"
+	SiteRepository   = "https://github.com/digitaldrywood/detent.build"
 	ReleaseTag       = "v0.57.0"
 	TagObjectSHA     = "10c9b2a531089e8bac7a3fcd42593b257863ec8d"
 	CommitSHA        = "1543929187369eca2703abd2a655cf86e9e5d83e"
 )
 
-//go:embed vendor manifest.json
+//go:embed vendor site manifest.json
 var embedded embed.FS
 
 // Files contains the byte-identical documentation tree rooted at the pinned release's docs directory.
 var Files = mustSub(embedded, "vendor")
+
+var SiteFiles = mustSub(embedded, "site")
 
 type Origin string
 
@@ -74,6 +77,7 @@ type Catalog struct {
 }
 
 var registry = []registration{
+	{"detent.build guides", "Project contracts", "project-contracts.md", "/docs/site/project-contracts", OriginSite},
 	{"Get started", "Quick Start", "getting-started.md", "/docs/getting-started", OriginUpstream},
 	{"Get started", "Project Onboarding", "ONBOARDING.md", "/docs/project-onboarding", OriginUpstream},
 	{"Get started", "Bootstrap a new machine", "bootstrap.md", "/docs/bootstrap", OriginUpstream},
@@ -100,7 +104,7 @@ var ExternalReferences = []ExternalReference{
 	{"Comparison", RepositoryBlobURL("docs/comparison.md")},
 }
 
-var Published = mustLoadCatalog(Files, registry)
+var Published = mustLoadCatalog(Files, SiteFiles, registry)
 
 func (c *Catalog) Groups() []Group {
 	groups := make([]Group, len(c.groups))
@@ -148,15 +152,15 @@ func ShortCommit() string {
 	return CommitSHA[:12]
 }
 
-func mustLoadCatalog(source fs.FS, entries []registration) *Catalog {
-	catalog, err := loadCatalog(source, entries)
+func mustLoadCatalog(upstream, site fs.FS, entries []registration) *Catalog {
+	catalog, err := loadCatalog(upstream, site, entries)
 	if err != nil {
 		panic(err)
 	}
 	return catalog
 }
 
-func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
+func loadCatalog(upstream, site fs.FS, entries []registration) (*Catalog, error) {
 	catalog := &Catalog{
 		byPath:   make(map[string]Page, len(entries)),
 		bySource: make(map[string]string, len(entries)),
@@ -178,6 +182,10 @@ func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
 	markdown := markdownRenderer()
 	groupIndex := make(map[string]int)
 	for _, entry := range entries {
+		source := upstream
+		if entry.Origin == OriginSite {
+			source = site
+		}
 		sourceBytes, err := fs.ReadFile(source, entry.SourcePath)
 		if err != nil {
 			return nil, fmt.Errorf("read documentation source %q: %w", entry.SourcePath, err)
@@ -191,7 +199,7 @@ func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
 			Title:      entry.Title,
 			SourcePath: entry.SourcePath,
 			PublicPath: entry.PublicPath,
-			SourceURL:  RepositoryBlobURL(path.Join("docs", entry.SourcePath)),
+			SourceURL:  documentationSourceURL(entry),
 			Origin:     entry.Origin,
 			HTML:       rendered,
 		}
@@ -206,6 +214,13 @@ func loadCatalog(source fs.FS, entries []registration) (*Catalog, error) {
 		catalog.groups[index].Pages = append(catalog.groups[index].Pages, page)
 	}
 	return catalog, nil
+}
+
+func documentationSourceURL(entry registration) string {
+	if entry.Origin == OriginSite {
+		return SiteRepository + "/blob/main/" + path.Join("docs/site/hype", entry.SourcePath)
+	}
+	return RepositoryBlobURL(path.Join("docs", entry.SourcePath))
 }
 
 func markdownRenderer() goldmark.Markdown {

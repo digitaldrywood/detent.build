@@ -118,6 +118,7 @@ func TestPublishedRegistryMatchesCuratedInformationArchitecture(t *testing.T) {
 		title string
 		count int
 	}{
+		{"detent.build guides", 1},
 		{"Get started", 4},
 		{"Operate Detent", 10},
 		{"Reference and contribute", 3},
@@ -161,8 +162,11 @@ func TestPublishedPagesAreRenderedWithPinnedSources(t *testing.T) {
 			if !strings.Contains(page.HTML, "<h1") {
 				t.Error("rendered HTML does not contain the document heading")
 			}
-			if !strings.Contains(page.SourceURL, CommitSHA) {
-				t.Errorf("source URL %q does not contain commit %s", page.SourceURL, CommitSHA)
+			if page.Origin == OriginUpstream && !strings.Contains(page.SourceURL, CommitSHA) {
+				t.Errorf("upstream source URL %q does not contain commit %s", page.SourceURL, CommitSHA)
+			}
+			if page.Origin == OriginSite && !strings.HasPrefix(page.SourceURL, SiteRepository+"/blob/main/docs/site/hype/") {
+				t.Errorf("site source URL %q does not point to the Hype source", page.SourceURL)
 			}
 			if got, ok := Published.Page(page.PublicPath); !ok || got.SourcePath != page.SourcePath {
 				t.Errorf("public path %q does not resolve to %q", page.PublicPath, page.SourcePath)
@@ -233,7 +237,7 @@ func TestSiteAuthoredDocumentationUsesDedicatedPrefix(t *testing.T) {
 }
 
 func TestCatalogLoadFailsWhenRegisteredSourceIsMissing(t *testing.T) {
-	_, err := loadCatalog(fstest.MapFS{}, []registration{{
+	_, err := loadCatalog(fstest.MapFS{}, fstest.MapFS{}, []registration{{
 		Group:      "Get started",
 		Title:      "Missing",
 		SourcePath: "missing.md",
