@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"detent.build/internal/content"
+	"detent.build/internal/docs"
 	"detent.build/templates/pages"
 	"detent.build/templates/partials"
 
@@ -48,6 +49,16 @@ func (h *Handler) InstallPlatform(c echo.Context) error {
 
 func (h *Handler) OpenSource(c echo.Context) error {
 	return render(c, http.StatusOK, pages.OpenSource())
+}
+
+func (h *Handler) DocsIndex(c echo.Context) error {
+	return render(c, http.StatusOK, pages.DocsIndex(h.docs))
+}
+
+func (h *Handler) DocPage(page docs.Page) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		return render(c, http.StatusOK, pages.Doc(page, h.docs.Groups()))
+	}
 }
 
 func findTarget(key string) (content.InstallTarget, bool) {

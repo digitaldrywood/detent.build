@@ -1,0 +1,138 @@
+package pages
+
+import (
+	"fmt"
+
+	"detent.build/internal/docs"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+)
+
+templ DocsIndex(catalog *docs.Catalog) {
+	@layouts.Base(docsIndexMeta()) {
+		<section class="relative overflow-hidden border-b border-line">
+			<div class="pointer-events-none absolute inset-0 dt-grid opacity-25" aria-hidden="true"></div>
+			<div class="relative mx-auto max-w-[1280px] px-6 py-14 md:px-8 md:py-16">
+				<div class="inline-flex rounded-chip border border-line bg-surface px-2 py-1 font-mono text-2xs uppercase tracking-[0.06em] text-dim">
+					detent.build index
+				</div>
+				<h1 class="mt-3 max-w-[820px] text-2xl font-bold leading-tight text-text md:text-3xl">Documentation, pinned to the source.</h1>
+				<p class="mt-4 max-w-[720px] text-base leading-relaxed text-sec">
+					The operator reference is rendered from the vendored Detent documentation tree. The registry below is the complete published set.
+				</p>
+				@docsPin(docs.RepositoryTreeURL("docs"), "Open the pinned documentation tree")
+			</div>
+		</section>
+		<div class="mx-auto grid max-w-[1280px] gap-12 px-6 py-16 md:px-8 lg:grid-cols-[minmax(0,1fr)_280px]">
+			<div class="space-y-16">
+				for index, group := range catalog.Groups() {
+					<section aria-labelledby={ fmt.Sprintf("docs-group-%d", index) }>
+						<div class="font-mono text-2xs text-dim">{ fmt.Sprintf("%02d", index + 1) }</div>
+						<h2 id={ fmt.Sprintf("docs-group-%d", index) } class="mt-2 text-xl font-semibold text-text">{ group.Title }</h2>
+						<div class="mt-5 grid gap-3 md:grid-cols-2">
+							for _, page := range group.Pages {
+								<a href={ templ.SafeURL(page.PublicPath) } class="group rounded-card border border-line bg-surface p-5 transition-colors hover:border-accent">
+									<div class="text-sm font-semibold text-text transition-colors group-hover:text-accent">{ page.Title } &#8594;</div>
+									<div class="mt-2 font-mono text-2xs text-dim">{ page.SourcePath }</div>
+								</a>
+							}
+							if group.Title == "Reference and contribute" {
+								for _, reference := range docs.ExternalReferences {
+									<a href={ templ.SafeURL(reference.URL) } class="group rounded-card border border-line bg-page p-5 transition-colors hover:border-accent">
+										<div class="text-sm font-semibold text-text transition-colors group-hover:text-accent">{ reference.Title } &#8599;</div>
+										<div class="mt-2 font-mono text-2xs uppercase tracking-[0.06em] text-dim">GitHub only</div>
+									</a>
+								}
+							}
+						</div>
+					</section>
+				}
+			</div>
+			<aside class="h-fit rounded-card border border-line bg-surface p-5 lg:sticky lg:top-24">
+				<div class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">Publication boundary</div>
+				<p class="mt-3 text-sm leading-relaxed text-sec">
+					YAML, JSON, SVG, and unregistered Markdown stay on GitHub at the pinned commit. They are link targets, not page routes.
+				</p>
+				<div class="mt-5 border-t border-line pt-4 font-mono text-2xs leading-relaxed text-dim">
+					Site-authored guides use <span class="text-text">{ docs.SitePathPrefix }</span> and carry a <span class="text-text">detent.build guide</span> badge.
+				</div>
+			</aside>
+		</div>
+	}
+}
+
+templ Doc(page docs.Page, groups []docs.Group) {
+	@layouts.Base(docMeta(page)) {
+		<section class="border-b border-line bg-surface">
+			<div class="mx-auto flex max-w-[1280px] flex-col gap-4 px-6 py-6 md:px-8 lg:flex-row lg:items-center lg:justify-between">
+				<div>
+					<div class="flex flex-wrap items-center gap-2 font-mono text-2xs text-dim">
+						<a href="/docs" class="text-accent hover:underline">Docs</a>
+						<span aria-hidden="true">/</span>
+						<span>{ page.Group }</span>
+						<span class="rounded-chip border border-line bg-page px-2 py-1 uppercase tracking-[0.06em] text-sec">
+							if page.Origin == docs.OriginSite {
+								detent.build guide
+							} else {
+								Mirrored upstream
+							}
+						</span>
+					</div>
+					<div class="mt-2 font-mono text-xs text-dim">{ page.SourcePath }</div>
+				</div>
+				@docsPin(page.SourceURL, "View this file at the pinned commit")
+			</div>
+		</section>
+		<div class="mx-auto grid max-w-[1280px] gap-12 px-6 py-12 md:px-8 lg:grid-cols-[240px_minmax(0,760px)] xl:grid-cols-[260px_minmax(0,820px)]">
+			<nav class="h-fit rounded-card border border-line bg-surface p-4 lg:sticky lg:top-24" aria-label="Documentation">
+				for _, group := range groups {
+					<div class="mb-5 last:mb-0">
+						<div class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">{ group.Title }</div>
+						<div class="mt-2 flex flex-col gap-1">
+							for _, item := range group.Pages {
+								<a
+									href={ templ.SafeURL(item.PublicPath) }
+									class={ "rounded-chip px-2 py-1.5 text-xs transition-colors hover:text-accent",
+										templ.KV("bg-elev text-accent", item.PublicPath == page.PublicPath),
+										templ.KV("text-sec", item.PublicPath != page.PublicPath) }
+									if item.PublicPath == page.PublicPath {
+										aria-current="page"
+									}
+								>
+									{ item.Title }
+								</a>
+							}
+						</div>
+					</div>
+				}
+			</nav>
+			<article class="docs-prose min-w-0">
+				@templ.Raw(page.HTML)
+			</article>
+		</div>
+	}
+}
+
+templ docsPin(sourceURL string, label string) {
+	<div class="flex flex-wrap items-center gap-2 font-mono text-2xs text-dim">
+		<span class="rounded-chip border border-line bg-page px-2 py-1">{ docs.ReleaseTag }</span>
+		<span class="rounded-chip border border-line bg-page px-2 py-1" title={ docs.CommitSHA }>{ docs.ShortCommit() }</span>
+		<a href={ templ.SafeURL(sourceURL) } class="rounded-chip border border-line bg-page px-2 py-1 text-accent transition-colors hover:border-accent hover:underline">
+			{ label } &#8599;
+		</a>
+	</div>
+}
+
+func docsIndexMeta() meta.PageMeta {
+	return meta.New(
+		"Documentation",
+		"Curated Detent operator documentation rendered from a pinned upstream release.",
+	).WithNav("docs").WithPath("/docs")
+}
+
+func docMeta(page docs.Page) meta.PageMeta {
+	return meta.New(
+		page.Title,
+		"Detent documentation mirrored from the pinned "+docs.ReleaseTag+" source tree.",
+	).WithNav("docs").WithPath(page.PublicPath)
+}

@@ -4,17 +4,19 @@ import (
 	"net/http"
 
 	"detent.build/internal/config"
+	"detent.build/internal/docs"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
 )
 
 type Handler struct {
-	cfg *config.Config
+	cfg  *config.Config
+	docs *docs.Catalog
 }
 
 func New(cfg *config.Config) *Handler {
-	return &Handler{cfg: cfg}
+	return &Handler{cfg: cfg, docs: docs.Published}
 }
 
 func (h *Handler) RegisterRoutes(e *echo.Echo) {
@@ -35,6 +37,10 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	e.GET("/dashboard", h.Dashboard)
 	e.GET("/install", h.Install)
 	e.GET("/open-source", h.OpenSource)
+	e.GET("/docs", h.DocsIndex)
+	for _, page := range h.docs.Pages() {
+		e.GET(page.PublicPath, h.DocPage(page))
+	}
 
 	// HTMX partial: swap the install commands for one platform without a
 	// page load. Falls back to the full page when JavaScript is off, because

@@ -7,7 +7,9 @@ import (
 	"io/fs"
 	"path"
 	"sort"
+	"strings"
 	"testing"
+	"testing/fstest"
 	"time"
 )
 
@@ -107,5 +109,138 @@ func TestVendoredContentMatchesManifest(t *testing.T) {
 	}
 	for missing := range want {
 		t.Errorf("manifest file %q is missing from the vendored tree", missing)
+	}
+}
+
+func TestPublishedRegistryMatchesCuratedInformationArchitecture(t *testing.T) {
+	groups := Published.Groups()
+	wantGroups := []struct {
+		title string
+		count int
+	}{
+		{"Get started", 4},
+		{"Operate Detent", 10},
+		{"Reference and contribute", 3},
+	}
+	if len(groups) != len(wantGroups) {
+		t.Fatalf("group count = %d, want %d", len(groups), len(wantGroups))
+	}
+	for index, want := range wantGroups {
+		if groups[index].Title != want.title {
+			t.Errorf("group %d title = %q, want %q", index, groups[index].Title, want.title)
+		}
+		if len(groups[index].Pages) != want.count {
+			t.Errorf("group %q page count = %d, want %d", want.title, len(groups[index].Pages), want.count)
+		}
+	}
+
+	excluded := []string{
+		"comparison.md",
+		"development.md",
+		"parity-audit.md",
+		"redesign-contrast.md",
+		"release.md",
+		"structured-workpad-signaling-migration.md",
+		"thread-resume-spike.md",
+		"workflow-layout-migration.md",
+		"templates/detent.label.yaml",
+	}
+	for _, sourcePath := range excluded {
+		if publicPath, ok := PublicPath(sourcePath); ok {
+			t.Errorf("excluded source %q is published at %q", sourcePath, publicPath)
+		}
+	}
+}
+
+func TestPublishedPagesAreRenderedWithPinnedSources(t *testing.T) {
+	for _, page := range Published.Pages() {
+		t.Run(page.SourcePath, func(t *testing.T) {
+			if page.HTML == "" {
+				t.Error("rendered HTML is empty")
+			}
+			if !strings.Contains(page.HTML, "<h1") {
+				t.Error("rendered HTML does not contain the document heading")
+			}
+			if !strings.Contains(page.SourceURL, CommitSHA) {
+				t.Errorf("source URL %q does not contain commit %s", page.SourceURL, CommitSHA)
+			}
+			if got, ok := Published.Page(page.PublicPath); !ok || got.SourcePath != page.SourcePath {
+				t.Errorf("public path %q does not resolve to %q", page.PublicPath, page.SourcePath)
+			}
+		})
+	}
+}
+
+func TestMarkdownRenderingOmitsRawHTMLAndDangerousLinks(t *testing.T) {
+	source := []byte("# Safety\n\n<script>alert('unsafe')</script>\n\n[unsafe](javascript:alert('unsafe'))")
+	rendered, err := renderMarkdown(markdownRenderer(), source, "safety.md", map[string]string{})
+	if err != nil {
+		t.Fatalf("render Markdown: %v", err)
+	}
+	for _, forbidden := range []string{"<script", "javascript:", "alert('unsafe')"} {
+		if strings.Contains(rendered, forbidden) {
+			t.Errorf("rendered HTML contains unsafe content %q: %s", forbidden, rendered)
+		}
+	}
+}
+
+func TestMarkdownLinksResolveThroughRegistryOrPinnedRepository(t *testing.T) {
+	source := []byte(strings.Join([]string{
+		"[published](concepts.md#review-gates)",
+		"[excluded](workflow-layout-migration.md)",
+		"[root](../README.md#documentation)",
+		"[artifact](templates/detent.label.yaml)",
+	}, "\n\n"))
+	rendered, err := renderMarkdown(markdownRenderer(), source, "getting-started.md", Published.bySource)
+	if err != nil {
+		t.Fatalf("render Markdown: %v", err)
+	}
+	wants := []string{
+		`href="/docs/concepts#review-gates"`,
+		`href="` + RepositoryBlobURL("docs/workflow-layout-migration.md") + `"`,
+		`href="` + RepositoryBlobURL("README.md") + `#documentation"`,
+		`href="` + RepositoryBlobURL("docs/templates/detent.label.yaml") + `"`,
+	}
+	for _, want := range wants {
+		if !strings.Contains(rendered, want) {
+			t.Errorf("rendered HTML is missing %s: %s", want, rendered)
+		}
+	}
+}
+
+func TestSiteAuthoredDocumentationUsesDedicatedPrefix(t *testing.T) {
+	siteEntry := registration{
+		Group:      "Site",
+		Title:      "Guide",
+		SourcePath: "guide.md",
+		PublicPath: SitePathPrefix + "guide",
+		Origin:     OriginSite,
+	}
+	if err := validateRegistration(siteEntry); err != nil {
+		t.Fatalf("valid site registration: %v", err)
+	}
+	siteEntry.PublicPath = "/docs/guide"
+	if err := validateRegistration(siteEntry); err == nil {
+		t.Error("site registration outside the dedicated prefix passed validation")
+	}
+
+	upstreamEntry := siteEntry
+	upstreamEntry.PublicPath = SitePathPrefix + "upstream"
+	upstreamEntry.Origin = OriginUpstream
+	if err := validateRegistration(upstreamEntry); err == nil {
+		t.Error("upstream registration inside the site prefix passed validation")
+	}
+}
+
+func TestCatalogLoadFailsWhenRegisteredSourceIsMissing(t *testing.T) {
+	_, err := loadCatalog(fstest.MapFS{}, []registration{{
+		Group:      "Get started",
+		Title:      "Missing",
+		SourcePath: "missing.md",
+		PublicPath: "/docs/missing",
+		Origin:     OriginUpstream,
+	}})
+	if err == nil {
+		t.Fatal("loadCatalog succeeded for a missing source")
 	}
 }

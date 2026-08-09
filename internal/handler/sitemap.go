@@ -17,6 +17,7 @@ var sitemapPaths = []string{
 	"/dashboard",
 	"/install",
 	"/open-source",
+	"/docs",
 }
 
 // Sitemap emits the sitemap against the configured site URL. detent.build has
@@ -35,6 +36,12 @@ func (h *Handler) Sitemap(c echo.Context) error {
 		} else {
 			b.WriteString("/")
 		}
+		b.WriteString("</loc></url>\n")
+	}
+	for _, p := range h.docs.Paths() {
+		b.WriteString("  <url><loc>")
+		b.WriteString(base)
+		b.WriteString(p)
 		b.WriteString("</loc></url>\n")
 	}
 	b.WriteString("</urlset>\n")
