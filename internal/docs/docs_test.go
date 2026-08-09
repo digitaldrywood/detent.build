@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io/fs"
+	"net/url"
 	"path"
+	"regexp"
 	"sort"
 	"strings"
 	"testing"
@@ -173,7 +175,7 @@ func TestPublishedPagesAreRenderedWithPinnedSources(t *testing.T) {
 
 func TestMarkdownRenderingOmitsRawHTMLAndDangerousLinks(t *testing.T) {
 	source := []byte("# Safety\n\n<script>alert('unsafe')</script>\n\n[unsafe](javascript:alert('unsafe'))")
-	rendered, err := renderMarkdown(markdownRenderer(), source, "safety.md", map[string]string{})
+	rendered, err := renderMarkdown(markdownRenderer(), source, "safety.md", map[string]string{}, Files)
 	if err != nil {
 		t.Fatalf("render Markdown: %v", err)
 	}
@@ -184,27 +186,125 @@ func TestMarkdownRenderingOmitsRawHTMLAndDangerousLinks(t *testing.T) {
 	}
 }
 
-func TestMarkdownLinksResolveThroughRegistryOrPinnedRepository(t *testing.T) {
+func TestRelativeLinkDestinationsResolveFromSourceDocument(t *testing.T) {
+	tests := []struct {
+		name        string
+		sourcePath  string
+		destination string
+		publicPaths map[string]string
+		want        string
+	}{
+		{"published sibling with fragment", "getting-started.md", "concepts.md#review-gate", Published.bySource, "/docs/concepts#review-gate"},
+		{"published nested Markdown with query", "bootstrap.md", "examples/non-code-artifact/README.md?plain=1#run-the-demo", map[string]string{"examples/non-code-artifact/README.md": "/docs/non-code-artifact"}, "/docs/non-code-artifact?plain=1#run-the-demo"},
+		{"unpublished vendored Markdown", "getting-started.md", "workflow-layout-migration.md", Published.bySource, RepositoryBlobURL("docs/workflow-layout-migration.md")},
+		{"repository root Markdown", "getting-started.md", "../README.md#documentation", Published.bySource, RepositoryBlobURL("README.md") + "#documentation"},
+		{"repository root non-Markdown", "config.md", "../config.annotated.yaml", Published.bySource, RepositoryBlobURL("config.annotated.yaml")},
+		{"vendored directory", "bootstrap.md", "examples/non-code-artifact", Published.bySource, RepositoryTreeURL("docs/examples/non-code-artifact")},
+		{"vendored non-Markdown file", "getting-started.md", "templates/detent.label.yaml", Published.bySource, RepositoryBlobURL("docs/templates/detent.label.yaml")},
+		{"nested source sibling", "examples/non-code-artifact/README.md", "WORKFLOW.md", Published.bySource, RepositoryBlobURL("docs/examples/non-code-artifact/WORKFLOW.md")},
+		{"nested source ancestor", "examples/non-code-artifact/README.md", "../../concepts.md", Published.bySource, "/docs/concepts"},
+		{"percent-encoded published path", "getting-started.md", "workflow%2Doverlays.md#machine-local-workflow-overlays", Published.bySource, "/docs/workflow-overlays#machine-local-workflow-overlays"},
+		{"external URL", "getting-started.md", "https://example.com/guide.md?plain=1#top", Published.bySource, "https://example.com/guide.md?plain=1#top"},
+		{"absolute site path", "getting-started.md", "/docs/concepts", Published.bySource, "/docs/concepts"},
+		{"fragment only", "getting-started.md", "#quick-start", Published.bySource, "#quick-start"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveDestination(tt.sourcePath, tt.destination, tt.publicPaths, Files); got != tt.want {
+				t.Errorf("resolveDestination(%q, %q) = %q, want %q", tt.sourcePath, tt.destination, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMarkdownRewritesImagesAndPreservesAutolinks(t *testing.T) {
 	source := []byte(strings.Join([]string{
-		"[published](concepts.md#review-gates)",
-		"[excluded](workflow-layout-migration.md)",
-		"[root](../README.md#documentation)",
-		"[artifact](templates/detent.label.yaml)",
+		"![Detent mark](brand/detent-mark.svg?raw=1)",
+		"<https://example.com/guide.md?plain=1#top>",
 	}, "\n\n"))
-	rendered, err := renderMarkdown(markdownRenderer(), source, "getting-started.md", Published.bySource)
+	rendered, err := renderMarkdown(markdownRenderer(), source, "getting-started.md", Published.bySource, Files)
 	if err != nil {
 		t.Fatalf("render Markdown: %v", err)
 	}
-	wants := []string{
-		`href="/docs/concepts#review-gates"`,
-		`href="` + RepositoryBlobURL("docs/workflow-layout-migration.md") + `"`,
-		`href="` + RepositoryBlobURL("README.md") + `#documentation"`,
-		`href="` + RepositoryBlobURL("docs/templates/detent.label.yaml") + `"`,
-	}
-	for _, want := range wants {
+	for _, want := range []string{
+		`src="` + RepositoryBlobURL("docs/brand/detent-mark.svg") + `?raw=1"`,
+		`href="https://example.com/guide.md?plain=1#top"`,
+	} {
 		if !strings.Contains(rendered, want) {
 			t.Errorf("rendered HTML is missing %s: %s", want, rendered)
 		}
+	}
+}
+
+func TestHeadingIDsMatchInboundGitHubFragments(t *testing.T) {
+	tests := []struct {
+		sourcePath string
+		fragment   string
+	}{
+		{"bootstrap.md", "bootstrap-on-a-new-machine-humans-and-ai-agents"},
+		{"getting-started.md", "quick-start"},
+		{"multi-project.md", "running-multiple-instances"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.sourcePath+"#"+tt.fragment, func(t *testing.T) {
+			source, err := fs.ReadFile(Files, tt.sourcePath)
+			if err != nil {
+				t.Fatalf("read source: %v", err)
+			}
+			rendered, err := renderMarkdown(markdownRenderer(), source, tt.sourcePath, Published.bySource, Files)
+			if err != nil {
+				t.Fatalf("render Markdown: %v", err)
+			}
+			if !strings.Contains(rendered, `id="`+tt.fragment+`"`) {
+				t.Errorf("rendered heading does not contain inbound GitHub fragment %q", tt.fragment)
+			}
+		})
+	}
+
+	repeatedRealHeading := []byte("# Quick Start\n\n## Quick Start\n")
+	rendered, err := renderMarkdown(markdownRenderer(), repeatedRealHeading, "getting-started.md", Published.bySource, Files)
+	if err != nil {
+		t.Fatalf("render duplicate headings: %v", err)
+	}
+	for _, id := range []string{"quick-start", "quick-start-1"} {
+		if !strings.Contains(rendered, `id="`+id+`"`) {
+			t.Errorf("duplicate heading is missing GitHub-compatible ID %q", id)
+		}
+	}
+}
+
+func TestPublishedDocumentationHasNoUnresolvedRelativeLinks(t *testing.T) {
+	attribute := regexp.MustCompile(`(?:href|src)="([^"]+)"`)
+
+	for _, page := range Published.Pages() {
+		t.Run(page.SourcePath, func(t *testing.T) {
+			for _, match := range attribute.FindAllStringSubmatch(page.HTML, -1) {
+				destination := match[1]
+				parsed, err := url.Parse(destination)
+				if err != nil {
+					t.Errorf("parse rendered destination %q: %v", destination, err)
+					continue
+				}
+				if !parsed.IsAbs() && !strings.HasPrefix(parsed.Path, "/") && path.Ext(parsed.Path) == ".md" {
+					t.Errorf("rendered documentation contains unresolved relative Markdown link %q", destination)
+				}
+				if strings.HasPrefix(destination, SourceRepository+"/") {
+					if !strings.Contains(destination, "/"+CommitSHA+"/") {
+						t.Errorf("GitHub destination is not pinned to commit %s: %q", CommitSHA, destination)
+					}
+					if strings.Contains(destination, "/main/") {
+						t.Errorf("GitHub destination points at main: %q", destination)
+					}
+				}
+			}
+			for _, forbidden := range []string{"www.detent.build", "http://detent.build"} {
+				if strings.Contains(page.HTML, forbidden) {
+					t.Errorf("rendered documentation contains forbidden URL %q", forbidden)
+				}
+			}
+		})
 	}
 }
 
