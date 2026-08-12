@@ -63,6 +63,7 @@ type Registry struct {
 var Current = Registry{
 	Pages: []Page{
 		{"detent.build guides", "Project contracts", "project-contracts.md", "/docs/site/project-contracts", OriginSite},
+		{"detent.build guides", "The working-checkout merge-gate trap", "working-checkout-merge-gate.md", "/docs/site/working-checkout-merge-gate", OriginSite},
 		{"Get started", "Quick Start", "getting-started.md", "/docs/getting-started", OriginUpstream},
 		{"Get started", "Project Onboarding", "ONBOARDING.md", "/docs/project-onboarding", OriginUpstream},
 		{"Get started", "Bootstrap a new machine", "bootstrap.md", "/docs/bootstrap", OriginUpstream},

@@ -42,6 +42,7 @@ type sourcePolicy struct {
 
 var documents = []document{
 	{Source: "project-contracts.md", Output: "project-contracts.md"},
+	{Source: "working-checkout-merge-gate.md", Output: "working-checkout-merge-gate.md"},
 }
 
 var policy = sourcePolicy{

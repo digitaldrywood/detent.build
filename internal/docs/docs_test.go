@@ -122,7 +122,7 @@ func TestPublishedRegistryMatchesCuratedInformationArchitecture(t *testing.T) {
 		title string
 		count int
 	}{
-		{"detent.build guides", 1},
+		{"detent.build guides", 2},
 		{"Get started", 4},
 		{"Operate Detent", 10},
 		{"Reference and contribute", 3},
