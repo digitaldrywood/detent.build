@@ -157,7 +157,31 @@ server:
   kanban:
     mode: integration
 budget:
-  billing_mode: metered
+  # billing_mode is subscription and must stay subscription on every project on
+  # every host. This fleet authenticates with a flat Codex subscription, so USD
+  # figures are notional -- token counts repriced through a compiled table that
+  # internal/budget/pricing.go:28 itself calls notional. Enforcing them brakes
+  # dispatch over money that was never spent.
+  #
+  # metered here cost 69 hours of fleet downtime (2026-08-09 through 08-12).
+  # Two independent USD brakes fired and neither could clear itself:
+  #   - per_issue_max_usd held #15/#16/#18 in In Progress permanently. The
+  #     scheduler reported wait_reason budget_cooldown, but a per-issue refusal
+  #     is a hard hold with no automatic reset -- refusal_cooldown_seconds is
+  #     never consulted on that path (dispatch_planner.go:398, budget.go:192).
+  #     #16 spent $9.49 in ONE 13.1M-token session against a $5 cap: the check
+  #     is preflight-only against a P90 estimate, so a session can overshoot
+  #     and then lock its own issue out forever.
+  #   - agent.no_progress_spend_limit_usd (3, above) parked #6 and #17 into
+  #     Blocked at 4.8M and 16.8M tokens -- far under the 25M token limit that
+  #     was the brake actually meant to catch them.
+  #
+  # subscription makes every USD path inert: orchestrator/config.go:289 keys
+  # subscriptionBilling off billing_mode ALONE and never reads budget.enabled,
+  # which is why setting enabled: false is NOT a sufficient fix. The USD caps
+  # below stay declared but inert, so re-declaring metered would revive them.
+  # The real brake remains agent.no_progress_token_limit (25M).
+  billing_mode: subscription
   enabled: true
   per_day_max_usd: 50
   per_issue_max_usd: 5
