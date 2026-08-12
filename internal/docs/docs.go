@@ -190,7 +190,7 @@ func loadCatalog(upstream, site fs.FS, entries []registration) (*Catalog, error)
 		if err != nil {
 			return nil, fmt.Errorf("read documentation source %q: %w", entry.SourcePath, err)
 		}
-		rendered, err := renderMarkdown(markdown, sourceBytes, entry.SourcePath, catalog.bySource)
+		rendered, err := renderMarkdown(markdown, sourceBytes, entry.SourcePath, catalog.bySource, source)
 		if err != nil {
 			return nil, fmt.Errorf("render documentation source %q: %w", entry.SourcePath, err)
 		}
@@ -255,10 +255,10 @@ func validateRegistration(entry registration) error {
 	return nil
 }
 
-func renderMarkdown(markdown goldmark.Markdown, source []byte, sourcePath string, publicPaths map[string]string) (string, error) {
+func renderMarkdown(markdown goldmark.Markdown, source []byte, sourcePath string, publicPaths map[string]string, files fs.FS) (string, error) {
 	reader := text.NewReader(source)
 	document := markdown.Parser().Parse(reader)
-	if err := rewriteLinks(document, sourcePath, publicPaths); err != nil {
+	if err := rewriteLinks(document, sourcePath, publicPaths, files); err != nil {
 		return "", err
 	}
 	var output bytes.Buffer
@@ -268,22 +268,22 @@ func renderMarkdown(markdown goldmark.Markdown, source []byte, sourcePath string
 	return output.String(), nil
 }
 
-func rewriteLinks(document ast.Node, sourcePath string, publicPaths map[string]string) error {
+func rewriteLinks(document ast.Node, sourcePath string, publicPaths map[string]string, files fs.FS) error {
 	return ast.Walk(document, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
 		if !entering {
 			return ast.WalkContinue, nil
 		}
 		switch link := node.(type) {
 		case *ast.Link:
-			link.Destination = []byte(resolveDestination(sourcePath, string(link.Destination), publicPaths))
+			link.Destination = []byte(resolveDestination(sourcePath, string(link.Destination), publicPaths, files))
 		case *ast.Image:
-			link.Destination = []byte(resolveDestination(sourcePath, string(link.Destination), publicPaths))
+			link.Destination = []byte(resolveDestination(sourcePath, string(link.Destination), publicPaths, files))
 		}
 		return ast.WalkContinue, nil
 	})
 }
 
-func resolveDestination(sourcePath, destination string, publicPaths map[string]string) string {
+func resolveDestination(sourcePath, destination string, publicPaths map[string]string, files fs.FS) string {
 	parsed, err := url.Parse(destination)
 	if err != nil || parsed.IsAbs() || parsed.Host != "" || parsed.Path == "" || strings.HasPrefix(destination, "/") {
 		return destination
@@ -293,8 +293,12 @@ func resolveDestination(sourcePath, destination string, publicPaths map[string]s
 		return destination
 	}
 	if strings.HasPrefix(target, "docs/") {
-		if publicPath, ok := publicPaths[strings.TrimPrefix(target, "docs/")]; ok {
+		vendoredPath := strings.TrimPrefix(target, "docs/")
+		if publicPath, ok := publicPaths[vendoredPath]; ok {
 			return withURLSuffix(publicPath, parsed)
+		}
+		if info, statErr := fs.Stat(files, vendoredPath); statErr == nil && info.IsDir() {
+			return withURLSuffix(RepositoryTreeURL(target), parsed)
 		}
 	}
 	return withURLSuffix(RepositoryBlobURL(target), parsed)
@@ -305,7 +309,7 @@ func withURLSuffix(base string, parsed *url.URL) string {
 		base += "?" + parsed.RawQuery
 	}
 	if parsed.Fragment != "" {
-		base += "#" + parsed.Fragment
+		base += "#" + parsed.EscapedFragment()
 	}
 	return base
 }
