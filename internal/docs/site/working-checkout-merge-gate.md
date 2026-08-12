@@ -4,7 +4,7 @@
 
 # The working-checkout merge-gate trap
 
-> Verified against Detent [v0.57.0 at `154392918736`](https://github.com/digitaldrywood/detent/tree/1543929187369eca2703abd2a655cf86e9e5d83e).
+> Verified against Detent [v0.57.0 at `154392918736`](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/README.md).
 
 Detent can take a pull request through successful CI and still refuse to promote it because the merge gate is asking for a check that no longer exists. The policy may not come from the branch under test.
 
