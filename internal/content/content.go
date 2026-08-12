@@ -30,8 +30,8 @@ const (
 	// Version is hand-maintained and will rot. It should come from the
 	// releases API or a build flag; until then TestVersionMatchesBare keeps the
 	// two spellings in sync, and nothing else.
-	Version     = "v0.55.0"
-	VersionBare = "0.55.0"
+	Version     = "v0.61.0"
+	VersionBare = "0.61.0"
 	License     = "MIT"
 )
 
@@ -357,11 +357,12 @@ var Fleet = []FleetProject{
 	{"detent", "1", "0"},
 	{"gopher-ai", "1", "3"},
 	{"gopher-corp", "1", "3"},
+	{"detent.build", "1", "3"},
 }
 
 // FleetNote explains what the table above is.
 const FleetNote = "The projects block of Detent's own global.yaml. That file also sets " +
-	"max_concurrent_agents: 5, strict scheduling, and a 1h fair-share half-life."
+	"max_concurrent_agents: 10, strict scheduling, and a 1h fair-share half-life."
 
 // Card is one work item sitting in a lane on the hero board.
 type Card struct {
@@ -452,7 +453,7 @@ var Board = []BoardColumn{
 // Squash merges put the PR reference in the commit subject, so this counts
 // landed pull requests rather than raw commits. Hand-updated; see the note on
 // Version about the same staleness problem.
-const MergedPRs = "722"
+const MergedPRs = "785"
 
 // BoardLabel replaces a "live" indicator. The board is a composition, and
 // saying so in the header rather than in a caption underneath is the whole
