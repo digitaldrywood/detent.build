@@ -1,8 +1,15 @@
 SHELL := /bin/bash
 
-.PHONY: dev build test lint generate docs-sync css css-watch setup clean run check help
+.PHONY: dev build test lint generate docs-sync docs-build docs-check css css-watch setup clean run check help
 
 BINARY_NAME=detent.build
+DETENT_TEMP_ROOT=$(or $(TMPDIR),$(TMP),$(TEMP),/tmp)
+HYPE_VERSION=$(shell tr -d '[:space:]' < docs/site/hype.version)
+HYPE_BIN_DIR=$(DETENT_TEMP_ROOT)/detent-build-tools/hype-$(HYPE_VERSION)
+HYPE_BIN=$(HYPE_BIN_DIR)/hype
+HYPE_GOPATH=$(DETENT_TEMP_ROOT)/go-path
+HYPE_GOMODCACHE=$(DETENT_TEMP_ROOT)/go-mod
+HYPE_GOCACHE=$(DETENT_TEMP_ROOT)/go-build
 
 dev:
 	@mkdir -p tmp
@@ -28,13 +35,23 @@ generate:
 docs-sync:
 	go run ./cmd/docs-sync
 
+$(HYPE_BIN): docs/site/hype.version
+	@mkdir -p $(HYPE_BIN_DIR) $(HYPE_GOPATH) $(HYPE_GOMODCACHE) $(HYPE_GOCACHE)
+	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) GOBIN=$(HYPE_BIN_DIR) go install github.com/gopherguides/hype/cmd/hype@$(HYPE_VERSION)
+
+docs-build: $(HYPE_BIN)
+	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) go run ./cmd/docs-build -hype $(HYPE_BIN)
+
+docs-check: $(HYPE_BIN)
+	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) go run ./cmd/docs-build -check -hype $(HYPE_BIN)
+
 css:
 	npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --minify
 
 css-watch:
 	npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --watch
 
-check: generate css
+check: docs-check generate css
 	go vet ./...
 	go test -race ./...
 	golangci-lint run
@@ -62,6 +79,8 @@ help:
 	@echo "  lint       - Run golangci-lint and templ fmt"
 	@echo "  generate   - Generate templ code"
 	@echo "  docs-sync  - Verify and vendor the pinned Detent documentation"
+	@echo "  docs-build - Generate committed site-authored Markdown with pinned Hype"
+	@echo "  docs-check - Verify site-authored Markdown is current"
 	@echo "  css        - Build Tailwind CSS"
 	@echo "  css-watch  - Watch and rebuild Tailwind CSS"
 	@echo "  check      - Full validation gate: generate, vet, test, lint"

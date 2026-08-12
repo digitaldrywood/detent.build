@@ -66,6 +66,32 @@ The install platform tabs are HTMX rather than templUI's `tabs` component on
 purpose: every tab is a real URL, so it works with JavaScript off, and the
 swap replaces the whole tab strip so the selected state stays truthful.
 
+## Site-authored documentation
+
+Hype sources live under `docs/site/hype/` and generate committed Markdown in
+`internal/docs/site/`. The generated Markdown goes through the same Goldmark
+and templ path as mirrored documentation; Hype HTML and themes are never
+published.
+
+Hype recursively parses includes, so every source is executable input rather
+than inert Markdown. The docs builder stages only allowlisted site-owned files,
+rejects every other `src`, and refuses paths that resolve into
+`internal/docs/vendor/`. The current `<cmd>` and `<go>` allowlist is empty.
+Adding a command requires an exact allowlist entry and a deterministic,
+version-pinned executable before a Hype source may invoke it.
+
+The Hype subprocess receives an empty home, an empty `PATH`, fixed locale and
+timezone values, disabled Go module networking, blocked standard proxy paths,
+and no ambient credentials. Remote sources are rejected and link checking is
+not enabled. The version in `docs/site/hype.version` is verified against the
+compiled Hype binary and written into each generated file's provenance header.
+
+Vendored upstream Markdown is never copied into the Hype staging tree and must
+never be included from a Hype source. A verified upstream checksum proves
+where executable syntax came from; it does not make executing that syntax
+safe. Relative links in included Hype documents are also avoided because Hype
+adjusts `src` attributes across includes but not Markdown `href` targets.
+
 ## templ gotchas hit while building this
 
 - A prose line that **begins** with `for`, `if`, or `switch` is parsed as a
