@@ -86,25 +86,47 @@ templ BoardCard(card content.Card) {
 // arrow.
 templ LaneRail() {
 	<div class="overflow-x-auto rounded-card border border-line bg-page p-5">
-		<div class="flex min-w-max items-center gap-0 font-mono text-xs">
-			for i, lane := range content.Lanes {
-				if i > 0 {
-					@railJoin(hasGate(i))
+		<div class="grid min-w-max grid-cols-[max-content_2rem_max-content_2rem_max-content_2rem_max-content_2rem_max-content] items-center font-mono text-xs">
+			<div class="contents" data-lane-rail-path="forward">
+				for _, lane := range content.Lanes {
+					if lane.Slug != "rework" {
+						if lane.Slug != "todo" {
+							@railJoin(hasGate(lane.Slug))
+						}
+						@railLane(lane)
+					}
 				}
-				<span
-					class={ "whitespace-nowrap rounded-chip border px-3 py-1.5",
-						templ.KV("border-ok/40 text-ok", lane.Slug == "done"),
-						templ.KV("border-line bg-elev text-text", lane.Slug != "done") }
-				>
-					{ lane.Name }
-				</span>
-			}
+			</div>
+			<div
+				class="col-start-3 col-end-6 row-start-2 flex items-center pt-2 text-dim"
+				data-lane-rail-path="return"
+				role="img"
+				aria-label="Human Review returns through Rework to In Progress"
+			>
+				<span class="grow whitespace-nowrap text-right" aria-hidden="true">&#8624;&#8212;&#8212;&#8212;&#8212;</span>
+				for _, lane := range content.Lanes {
+					if lane.Slug == "rework" {
+						@railLane(lane)
+					}
+				}
+				<span class="grow whitespace-nowrap" aria-hidden="true">&#9666;&#8212;&#8212;&#8212;&#8212;&#9496;</span>
+			</div>
 		</div>
 		<p class="mt-4 font-mono text-2xs leading-relaxed text-dim">
 			The notch marks a gate you defined. Lanes are workflow-defined: this is the delivery path.
 			Detent&#39;s own board also configures Backlog, Blocked, and Cancelled.
 		</p>
 	</div>
+}
+
+templ railLane(lane content.Lane) {
+	<span
+		class={ "whitespace-nowrap rounded-chip border px-3 py-1.5",
+			templ.KV("border-ok/40 text-ok", lane.Slug == "done"),
+			templ.KV("border-line bg-elev text-text", lane.Slug != "done") }
+	>
+		{ lane.Name }
+	</span>
 }
 
 templ railJoin(gate bool) {
@@ -115,8 +137,7 @@ templ railJoin(gate bool) {
 	}
 }
 
-// hasGate reports whether a gate sits before the lane at index i. Gates guard
-// entry to Human Review, Merging, and Done.
-func hasGate(i int) bool {
-	return i == 2 || i == 4 || i == 5
+// hasGate reports whether a gate guards entry to the lane.
+func hasGate(slug string) bool {
+	return slug == "human-review" || slug == "merging" || slug == "done"
 }
