@@ -6,10 +6,12 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"testing/fstest"
 
 	"detent.build/internal/config"
 	"detent.build/internal/content"
 	"detent.build/internal/docs"
+	"detent.build/internal/docsregistry"
 	"detent.build/internal/middleware"
 
 	"github.com/labstack/echo/v4"
@@ -107,6 +109,57 @@ func TestPublishedDocumentationRoutesShowPinnedSource(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestDocumentationAliasAndTombstoneRoutes(t *testing.T) {
+	catalog, err := docs.NewCatalog(fstest.MapFS{
+		"renamed.md": {Data: []byte("# Renamed documentation\n")},
+	}, docsregistry.Registry{
+		Pages: []docsregistry.Page{{
+			Group:      "Reference",
+			Title:      "Renamed documentation",
+			SourcePath: "renamed.md",
+			PublicPath: "/docs/renamed",
+			Origin:     docsregistry.OriginUpstream,
+		}},
+		Aliases:    []docsregistry.Alias{{PublicPath: "/docs/old-name", CanonicalPath: "/docs/renamed"}},
+		Tombstones: []docsregistry.Tombstone{{PublicPath: "/docs/withdrawn"}},
+	})
+	if err != nil {
+		t.Fatalf("build documentation catalog: %v", err)
+	}
+
+	t.Setenv("ENV", "test")
+	t.Setenv("SITE_URL", "https://detent.build")
+	cfg := config.Load()
+	e := echo.New()
+	middleware.Setup(e, cfg, nil)
+	h := New(cfg)
+	h.docs = catalog
+	h.RegisterRoutes(e)
+
+	alias := get(t, e, "/docs/old-name", nil)
+	if alias.Code != http.StatusOK {
+		t.Fatalf("alias status = %d, want %d", alias.Code, http.StatusOK)
+	}
+	if want := `<link rel="canonical" href="https://detent.build/docs/renamed">`; !strings.Contains(alias.Body.String(), want) {
+		t.Errorf("alias is missing canonical %s", want)
+	}
+	if code := get(t, e, "/docs/withdrawn", nil).Code; code != http.StatusGone {
+		t.Errorf("tombstone status = %d, want %d", code, http.StatusGone)
+	}
+	for _, code := range []int{alias.Code, get(t, e, "/docs/withdrawn", nil).Code} {
+		if code >= 300 && code < 400 {
+			t.Errorf("retired documentation route redirected with status %d", code)
+		}
+	}
+	sitemap := get(t, e, "/sitemap.xml", nil).Body.String()
+	for _, retired := range []string{"/docs/old-name", "/docs/withdrawn"} {
+		if strings.Contains(sitemap, retired) {
+			t.Errorf("sitemap includes retired path %q", retired)
+		}
+	}
+	assertSitemapIncludesEveryIndexablePageRoute(t, e, catalog)
 }
 
 func TestUnregisteredDocumentationIsNotServed(t *testing.T) {
@@ -359,6 +412,11 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 
 func TestSitemapIncludesEveryIndexablePageRoute(t *testing.T) {
 	e := newTestServer(t)
+	assertSitemapIncludesEveryIndexablePageRoute(t, e, docs.Published)
+}
+
+func assertSitemapIncludesEveryIndexablePageRoute(t *testing.T, e *echo.Echo, catalog *docs.Catalog) {
+	t.Helper()
 	body := get(t, e, "/sitemap.xml", nil).Body.String()
 
 	nonIndexableRoutes := map[string]struct{}{
@@ -374,6 +432,12 @@ func TestSitemapIncludesEveryIndexablePageRoute(t *testing.T) {
 		"/static*": {},
 		// templUI assets support interactions but are not page content.
 		"/assets*": {},
+	}
+	for _, alias := range catalog.Aliases() {
+		nonIndexableRoutes[alias.PublicPath] = struct{}{}
+	}
+	for _, tombstone := range catalog.Tombstones() {
+		nonIndexableRoutes[tombstone.PublicPath] = struct{}{}
 	}
 
 	for _, route := range e.Routes() {

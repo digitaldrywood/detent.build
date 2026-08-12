@@ -5,7 +5,10 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
+
+	"detent.build/internal/docsregistry"
 )
 
 func TestParseTree(t *testing.T) {
@@ -210,6 +213,128 @@ func TestAcquireFileLockRejectsOverlap(t *testing.T) {
 	}
 	if err := third.Close(); err != nil {
 		t.Fatalf("release reacquired lock: %v", err)
+	}
+}
+
+func TestInventoryChangesClassifiesAddDeleteAndProbableRename(t *testing.T) {
+	previous := []manifestFile{
+		{Path: "removed.md", SHA256: "removed"},
+		{Path: "old-name.md", SHA256: "same"},
+		{Path: "unchanged.md", SHA256: "unchanged"},
+	}
+	current := []manifestFile{
+		{Path: "added.md", SHA256: "added"},
+		{Path: "new-name.md", SHA256: "same"},
+		{Path: "unchanged.md", SHA256: "changed-in-place"},
+	}
+
+	changes, err := inventoryChanges(previous, current, nil)
+	if err != nil {
+		t.Fatalf("inventoryChanges() error = %v", err)
+	}
+	want := map[string]struct{}{
+		inventoryKey(docsregistry.ChangeAdded, "", "added.md"):                        {},
+		inventoryKey(docsregistry.ChangeDeleted, "removed.md", ""):                    {},
+		inventoryKey(docsregistry.ChangeProbableRename, "old-name.md", "new-name.md"): {},
+	}
+	if len(changes) != len(want) {
+		t.Fatalf("changes = %#v", changes)
+	}
+	for _, change := range changes {
+		key := inventoryKey(change.Kind, change.PreviousPath, change.CurrentPath)
+		if _, exists := want[key]; !exists {
+			t.Errorf("unexpected change %#v", change)
+		}
+	}
+}
+
+func TestInventoryChangesUsesOperatorRenameClassification(t *testing.T) {
+	decision := docsregistry.InventoryDecision{
+		Kind:         docsregistry.ChangeProbableRename,
+		PreviousPath: "old-name.md",
+		CurrentPath:  "new-name.md",
+	}
+	changes, err := inventoryChanges(
+		[]manifestFile{{Path: "old-name.md", SHA256: "old"}},
+		[]manifestFile{{Path: "new-name.md", SHA256: "new"}},
+		[]docsregistry.InventoryDecision{decision},
+	)
+	if err != nil {
+		t.Fatalf("inventoryChanges() error = %v", err)
+	}
+	if len(changes) != 1 || changes[0].Kind != docsregistry.ChangeProbableRename {
+		t.Errorf("changes = %#v", changes)
+	}
+}
+
+func TestValidateInventoryChangesRejectsUnclassifiedChange(t *testing.T) {
+	err := validateInventoryChanges([]inventoryChange{{
+		Kind:        docsregistry.ChangeAdded,
+		CurrentPath: "added.md",
+	}}, nil, docsregistry.Registry{})
+	if err == nil || !strings.Contains(err.Error(), "unclassified") {
+		t.Fatalf("validateInventoryChanges() error = %v, want unclassified change", err)
+	}
+}
+
+func TestValidateInventoryDecisionRoutePolicies(t *testing.T) {
+	registry := docsregistry.Registry{
+		Pages: []docsregistry.Page{
+			{SourcePath: "stable-new.md", PublicPath: "/docs/stable", Origin: docsregistry.OriginUpstream},
+			{SourcePath: "alias-new.md", PublicPath: "/docs/new", Origin: docsregistry.OriginUpstream},
+		},
+		Aliases:    []docsregistry.Alias{{PublicPath: "/docs/old", CanonicalPath: "/docs/new"}},
+		Tombstones: []docsregistry.Tombstone{{PublicPath: "/docs/removed"}},
+	}
+	decisions := []docsregistry.InventoryDecision{
+		{
+			Kind:         docsregistry.ChangeProbableRename,
+			PreviousPath: "stable-old.md",
+			CurrentPath:  "stable-new.md",
+			Resolution:   docsregistry.ResolutionStable,
+			PublicPath:   "/docs/stable",
+		},
+		{
+			Kind:          docsregistry.ChangeProbableRename,
+			PreviousPath:  "alias-old.md",
+			CurrentPath:   "alias-new.md",
+			Resolution:    docsregistry.ResolutionAlias,
+			PublicPath:    "/docs/old",
+			CanonicalPath: "/docs/new",
+		},
+		{
+			Kind:         docsregistry.ChangeDeleted,
+			PreviousPath: "removed.md",
+			Resolution:   docsregistry.ResolutionTombstone,
+			PublicPath:   "/docs/removed",
+		},
+	}
+	for _, decision := range decisions {
+		if err := validateInventoryDecision(decision, registry); err != nil {
+			t.Errorf("validateInventoryDecision(%s) error = %v", decision.Resolution, err)
+		}
+	}
+}
+
+func TestValidatePublishedSourcesRejectsOrphanedPage(t *testing.T) {
+	err := validatePublishedSources(nil, docsregistry.Registry{Pages: []docsregistry.Page{{
+		SourcePath: "missing.md",
+		PublicPath: "/docs/missing",
+		Origin:     docsregistry.OriginUpstream,
+	}}})
+	if err == nil || !strings.Contains(err.Error(), "no incoming vendored source") {
+		t.Fatalf("validatePublishedSources() error = %v", err)
+	}
+}
+
+func TestValidatePublishedSourcesIgnoresSiteAuthoredPage(t *testing.T) {
+	err := validatePublishedSources(nil, docsregistry.Registry{Pages: []docsregistry.Page{{
+		SourcePath: "site.md",
+		PublicPath: "/docs/site/guide",
+		Origin:     docsregistry.OriginSite,
+	}}})
+	if err != nil {
+		t.Fatalf("validatePublishedSources() error = %v", err)
 	}
 }
 
