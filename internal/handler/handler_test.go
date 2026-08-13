@@ -70,6 +70,7 @@ func TestPagesRender(t *testing.T) {
 		{"/docs", "Documentation, pinned to the source."},
 		{"/docs/getting-started", "Quick Start"},
 		{"/docs/site/project-contracts", "Project contracts"},
+		{"/docs/site/working-checkout-merge-gate", "The working-checkout merge-gate trap"},
 	}
 
 	for _, tt := range tests {
@@ -381,7 +382,7 @@ func TestHealth(t *testing.T) {
 func TestNoWWWAndNoPlainHTTPForProductionHost(t *testing.T) {
 	e := newTestServer(t)
 
-	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/sitemap.xml"}
+	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/sitemap.xml"}
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
@@ -415,6 +416,7 @@ func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
 		{"/docs", "https://detent.build/docs"},
 		{"/docs/getting-started", "https://detent.build/docs/getting-started"},
 		{"/docs/site/project-contracts", "https://detent.build/docs/site/project-contracts"},
+		{"/docs/site/working-checkout-merge-gate", "https://detent.build/docs/site/working-checkout-merge-gate"},
 	}
 
 	for _, tt := range tests {
@@ -466,6 +468,7 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 		"<loc>https://detent.build/docs</loc>",
 		"<loc>https://detent.build/docs/getting-started</loc>",
 		"<loc>https://detent.build/docs/site/project-contracts</loc>",
+		"<loc>https://detent.build/docs/site/working-checkout-merge-gate</loc>",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("sitemap is missing %s", want)
@@ -553,7 +556,7 @@ func TestCanonicalTolerantOfTrailingSlashConfig(t *testing.T) {
 func TestNoAppLevelRedirects(t *testing.T) {
 	e := newTestServer(t)
 
-	for _, path := range []string{"/", "/install", "/install/linux", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/health", "/sitemap.xml"} {
+	for _, path := range []string{"/", "/install", "/install/linux", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/health", "/sitemap.xml"} {
 		t.Run(path, func(t *testing.T) {
 			if code := get(t, e, path, nil).Code; code >= 300 && code < 400 {
 				t.Errorf("status = %d; the app must not redirect, Traefik already does", code)
