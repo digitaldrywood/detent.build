@@ -267,6 +267,42 @@ func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
 	}
 }
 
+func TestLaneRailDrawsReworkAsReturnLoop(t *testing.T) {
+	body := get(t, newTestServer(t), "/how-it-works", nil).Body.String()
+	forwardStart := strings.Index(body, `data-lane-rail-path="forward"`)
+	returnStart := strings.Index(body, `data-lane-rail-path="return"`)
+	captionStart := strings.Index(body, "The notch marks a gate")
+
+	if forwardStart == -1 || returnStart == -1 || captionStart == -1 || forwardStart >= returnStart || returnStart >= captionStart {
+		t.Fatal("lane rail paths are missing or out of order")
+	}
+
+	forwardPath := body[forwardStart:returnStart]
+	returnPath := body[returnStart:captionStart]
+	if strings.Contains(forwardPath, "Rework") {
+		t.Error("forward lane rail contains Rework")
+	}
+
+	previous := -1
+	for _, lane := range []string{"Todo", "In Progress", "Human Review", "Merging", "Done"} {
+		position := strings.Index(forwardPath, lane)
+		if position == -1 {
+			t.Errorf("forward lane rail does not contain %q", lane)
+		}
+		if position <= previous {
+			t.Errorf("%q is out of order in the forward lane rail", lane)
+		}
+		previous = position
+	}
+
+	if !strings.Contains(returnPath, "Rework") {
+		t.Error("return path does not contain Rework")
+	}
+	if !strings.Contains(returnPath, `aria-label="Human Review returns through Rework to In Progress"`) {
+		t.Error("return path does not describe the Rework loop")
+	}
+}
+
 func TestInstallPlatforms(t *testing.T) {
 	e := newTestServer(t)
 
