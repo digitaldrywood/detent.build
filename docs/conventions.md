@@ -27,6 +27,27 @@ Specifically:
 - No signup form, no "book a demo", no pricing table. The product is free and
   self-hosted; any of those would misrepresent it.
 
+## Product version availability is curated evidence
+
+Documentation version badges describe Detent product releases, not the tag and
+commit used to pin the mirrored docs tree and not the latest release displayed
+elsewhere on the site. Each record must carry a stable feature id, an
+introducing pull request or commit, a version where the behavior was verified,
+the verification method, and a confidence level.
+
+- Use **Available in vX.Y.Z** when a tagged tree or a focused test at that tag
+  proves the behavior is present.
+- Use **Introduced in vX.Y.Z** only when the implementation history and release
+  boundary are unambiguous.
+- Use **Present by vX.Y.Z** when presence is proven but first availability is
+  not.
+- Render no badge when confidence is insufficient or no explicit record exists.
+
+History searches may propose candidates, but they do not publish claims. Verify
+the implementation, tests, tag boundary, and backport history before recording
+a badge; never derive one directly from file names, heading text, tag ordering,
+or commit reachability.
+
 ## The design system is the product's, imported not approximated
 
 The `@theme` block in `static/css/input.css` is copied from

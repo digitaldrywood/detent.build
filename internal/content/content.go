@@ -35,6 +35,39 @@ const (
 	License     = "MIT"
 )
 
+var versionAvailability = []VersionAvailability{
+	{
+		FeatureID:       "machine-local-workflow-overlays",
+		FeatureName:     "Machine-local workflow overlays",
+		SourcePath:      "workflow-overlays.md",
+		IntroducedBy:    RepoURL + "/pull/1366",
+		VerifiedVersion: "v0.43.0",
+		VerificationMethod: "PR #1366 adds the implementation and focused tests; the parent commit lacks overlay handling, " +
+			"and the affected config and project tests pass at v0.43.0.",
+		Confidence: VersionAvailabilityIntroduced,
+	},
+	{
+		FeatureID:       "scheduled-maintenance-routines",
+		FeatureName:     "Scheduled maintenance routines",
+		SourcePath:      "scheduled-routines.md",
+		IntroducedBy:    RepoURL + "/pull/1409",
+		VerifiedVersion: "v0.46.0",
+		VerificationMethod: "PR #1409 adds the routine implementation and focused tests; the parent commit lacks the routine package, " +
+			"and the affected config and routine tests pass at v0.46.0.",
+		Confidence: VersionAvailabilityIntroduced,
+	},
+	{
+		FeatureID:       "per-project-github-webhook-freshness",
+		FeatureName:     "Per-project GitHub webhook freshness",
+		SourcePath:      "webhook-freshness.md",
+		IntroducedBy:    RepoURL + "/pull/1145",
+		VerifiedVersion: "v0.27.0",
+		VerificationMethod: "PR #1145 carries the per-project routing behavior, and the focused GitHub webhook tests pass " +
+			"against the v0.27.0 tagged tree.",
+		Confidence: VersionAvailabilityAvailable,
+	},
+}
+
 // Doc returns a link to a document in the Detent repository.
 func Doc(sourcePath string) string {
 	if publicPath, ok := docs.PublicPath(sourcePath); ok {
