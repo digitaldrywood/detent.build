@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"encoding/xml"
 	"html"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -161,6 +163,7 @@ func TestDocumentationAliasAndTombstoneRoutes(t *testing.T) {
 		}
 	}
 	assertSitemapIncludesEveryIndexablePageRoute(t, e, catalog)
+	assertSitemapContainsOnlyIndexablePageRoutes(t, e, catalog)
 }
 
 func TestDocumentationVersionAvailabilityIsExplicitAndDistinctFromSourcePin(t *testing.T) {
@@ -488,6 +491,31 @@ func assertSitemapIncludesEveryIndexablePageRoute(t *testing.T, e *echo.Echo, ca
 	t.Helper()
 	body := get(t, e, "/sitemap.xml", nil).Body.String()
 
+	for path := range registeredIndexablePageRoutes(e, catalog) {
+		want := "<loc>https://detent.build" + path + "</loc>"
+		if !strings.Contains(body, want) {
+			t.Errorf("registered page route %q is missing from the sitemap", path)
+		}
+	}
+}
+
+func TestSitemapContainsOnlyIndexablePageRoutes(t *testing.T) {
+	e := newTestServer(t)
+	assertSitemapContainsOnlyIndexablePageRoutes(t, e, docs.Published)
+}
+
+func assertSitemapContainsOnlyIndexablePageRoutes(t *testing.T, e *echo.Echo, catalog *docs.Catalog) {
+	t.Helper()
+	registered := registeredIndexablePageRoutes(e, catalog)
+
+	for _, path := range renderedSitemapPaths(t, e) {
+		if _, ok := registered[path]; !ok {
+			t.Errorf("sitemap path %q has no registered indexable GET route", path)
+		}
+	}
+}
+
+func registeredIndexablePageRoutes(e *echo.Echo, catalog *docs.Catalog) map[string]struct{} {
 	nonIndexableRoutes := map[string]struct{}{
 		// Health is a machine-readable availability endpoint, not a page.
 		"/health": {},
@@ -509,6 +537,7 @@ func assertSitemapIncludesEveryIndexablePageRoute(t *testing.T, e *echo.Echo, ca
 		nonIndexableRoutes[tombstone.PublicPath] = struct{}{}
 	}
 
+	registered := make(map[string]struct{})
 	for _, route := range e.Routes() {
 		if route.Method != http.MethodGet {
 			continue
@@ -516,12 +545,32 @@ func assertSitemapIncludesEveryIndexablePageRoute(t *testing.T, e *echo.Echo, ca
 		if _, excluded := nonIndexableRoutes[route.Path]; excluded {
 			continue
 		}
-
-		want := "<loc>https://detent.build" + route.Path + "</loc>"
-		if !strings.Contains(body, want) {
-			t.Errorf("registered page route %q is missing from the sitemap", route.Path)
-		}
+		registered[route.Path] = struct{}{}
 	}
+	return registered
+}
+
+func renderedSitemapPaths(t *testing.T, e *echo.Echo) []string {
+	t.Helper()
+
+	var sitemap struct {
+		URLs []struct {
+			Location string `xml:"loc"`
+		} `xml:"url"`
+	}
+	if err := xml.Unmarshal(get(t, e, "/sitemap.xml", nil).Body.Bytes(), &sitemap); err != nil {
+		t.Fatalf("parse sitemap: %v", err)
+	}
+
+	paths := make([]string, 0, len(sitemap.URLs))
+	for _, entry := range sitemap.URLs {
+		location, err := url.Parse(entry.Location)
+		if err != nil {
+			t.Fatalf("parse sitemap URL %q: %v", entry.Location, err)
+		}
+		paths = append(paths, location.Path)
+	}
+	return paths
 }
 
 // The site URL is configured with no trailing slash in production, but a
