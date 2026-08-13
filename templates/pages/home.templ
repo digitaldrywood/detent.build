@@ -24,10 +24,8 @@ templ Home() {
 
 func homeMeta() meta.PageMeta {
 	return meta.New(
-		"Manage work, not agents",
-		"Detent is status-driven agentic work orchestration in a single Go binary. "+
-			"Mark an issue Todo; it moves between the states your workflow defines, holding wherever you put a gate. "+
-			"Self-hosted, MIT, no vendor control plane.",
+		content.HomeTitle,
+		content.HomeDescription,
 	).WithNav("home").WithPath("/")
 }
 
@@ -39,16 +37,13 @@ templ heroSection() {
 				<div class="max-w-[720px]">
 					@components.Eyebrow("", "Status-driven agentic orchestration · one Go binary")
 					<h1 class="mt-4 text-2xl font-bold leading-[1.06] text-text sm:text-3xl">
-						Manage work, not agents.
+						{ content.HomeHeadline }
 					</h1>
 					<p class="mt-5 max-w-[560px] text-lg text-sec">
-						You mark an issue <span class="font-mono text-base text-text">Todo</span>. Detent claims it,
-						runs it against the contract you checked in, and moves it between the states your workflow
-						defines, holding it wherever you put a gate. Every issue it manages sits at a named state
-						on the board.
+						{ content.HomeHeroDeckBeforeTodo }<span class="font-mono text-base text-text">Todo</span>{ content.HomeHeroDeckAfterTodo }
 					</p>
 					<p class="mt-4 max-w-[560px] text-sm text-dim">
-						You are not steering an agent; you are running your own engineering process at scale.
+						{ content.HomeHeroStatement }
 					</p>
 				</div>
 				<div class="flex w-full shrink-0 flex-col gap-2.5 lg:w-[420px]">

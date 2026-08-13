@@ -33,6 +33,17 @@ const (
 	Version     = "v0.61.0"
 	VersionBare = "0.61.0"
 	License     = "MIT"
+
+	HomeTitle       = "Manage work, not agents"
+	HomeHeadline    = HomeTitle + "."
+	HomeDescription = "Detent is status-driven agentic work orchestration in a single Go binary. " +
+		"Mark an issue Todo; it moves between the states your workflow defines, holding wherever you put a gate. " +
+		"Self-hosted, MIT, no vendor control plane."
+	HomeHeroDeckBeforeTodo = "You mark an issue "
+	HomeHeroDeckAfterTodo  = ". Detent claims it, runs it against the contract you checked in, and moves it between " +
+		"the states your workflow defines, holding it wherever you put a gate. Every issue it manages sits at a named " +
+		"state on the board."
+	HomeHeroStatement = "You are not steering an agent; you are running your own engineering process at scale."
 )
 
 var versionAvailability = []VersionAvailability{
