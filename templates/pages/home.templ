@@ -11,12 +11,13 @@ import (
 templ Home() {
 	@layouts.Base(homeMeta()) {
 		@heroSection()
-		@partials.Inversion("02", false)
+		@definiteStatesSection()
+		@partials.Inversion("03", false)
 		@partials.HowItWorksSummary()
-		@partials.MergeTrainSection("04")
+		@partials.MergeTrainSection("05")
 		@partials.OperatorSurface()
 		@partials.ContractsSection()
-		@partials.ShipsItself("07")
+		@partials.ShipsItself("08")
 		@partials.FleetSection()
 		@partials.InstallSection()
 	}
@@ -80,4 +81,37 @@ templ heroSection() {
 			</div>
 		</div>
 	</section>
+}
+
+templ definiteStatesSection() {
+	@components.Section("02", "Definite states", content.DefiniteStatesHeading, content.DefiniteStatesDefinition) {
+		<div class="grid gap-4 lg:grid-cols-3">
+			@definiteStateCard(content.DefiniteStatesWhereQuestion, content.DefiniteStatesWhereAutonomy, content.DefiniteStatesWhereDetent)
+			@definiteStateCard(content.DefiniteStatesWaitQuestion, content.DefiniteStatesWaitAutonomy, content.DefiniteStatesWaitDetent)
+			@definiteStateCard(content.DefiniteStatesMoveQuestion, content.DefiniteStatesMoveAutonomy, content.DefiniteStatesMoveDetent)
+		</div>
+		<p class="mt-6 max-w-[840px] text-sm leading-relaxed text-dim">
+			{ content.DefiniteStatesLaneRail }
+		</p>
+		<div class="mt-4 flex flex-wrap gap-x-5 gap-y-2 font-mono text-2xs">
+			<a href={ templ.SafeURL(content.DetentREADMEURL) } class="text-accent hover:underline">Why the name &#8599;</a>
+			<a href={ templ.SafeURL(content.Doc("concepts.md")) } class="text-accent hover:underline">Promotion conditions &#8594;</a>
+		</div>
+	}
+}
+
+templ definiteStateCard(question string, autonomyFirst string, detent string) {
+	@components.Card("flex flex-col p-5") {
+		<h3 class="text-base font-semibold text-text">{ question }</h3>
+		<dl class="mt-4 flex flex-1 flex-col">
+			<div class="pb-4">
+				<dt class="text-2xs font-semibold uppercase tracking-[0.06em] text-dim">Autonomy-first</dt>
+				<dd class="mt-2 text-sm leading-relaxed text-sec">{ autonomyFirst }</dd>
+			</div>
+			<div class="flex-1 border-t border-line pt-4">
+				<dt class="text-2xs font-semibold uppercase tracking-[0.06em] text-dim">Detent</dt>
+				<dd class="mt-2 text-sm leading-relaxed text-sec">{ detent }</dd>
+			</div>
+		</dl>
+	}
 }
