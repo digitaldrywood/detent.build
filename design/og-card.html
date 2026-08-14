@@ -4,25 +4,23 @@
     <meta charset="utf-8" />
     <title>detent.build — Open Graph card source</title>
     <!--
-      Source for static/images/og-default.png. Render at exactly 1200x630 and
-      screenshot. Uses the product's own tokens so the card is the same system
-      as the site: teal is interactivity, indigo is the mark, warn marks the
-      held stop, hairlines carry the structure.
+      Source for static/images/og-default.png. Render at exactly 1200x630 with
+      a device scale factor of 2 and screenshot. Uses the product's own tokens
+      so the card is the same system as the site: indigo is the mark, warn
+      marks the held stop, hairlines carry the structure.
 
-      Fonts resolve from the running site, so regenerate with the dev server up:
-        make dev
-      then open this file with a browser pointed at http://localhost:3000 for
-      /static/fonts, or inline the woff2 if you render it offline.
+      Fonts resolve from the repository's static directory so the source can
+      be rendered directly from this checkout.
     -->
     <style>
       @font-face {
         font-family: "Geist";
-        src: url("http://localhost:3000/static/fonts/Geist-Variable.woff2") format("woff2");
+        src: url("../static/fonts/Geist-Variable.woff2") format("woff2");
         font-weight: 100 900;
       }
       @font-face {
         font-family: "Geist Mono";
-        src: url("http://localhost:3000/static/fonts/GeistMono-Variable.woff2") format("woff2");
+        src: url("../static/fonts/GeistMono-Variable.woff2") format("woff2");
         font-weight: 100 900;
       }
       * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -35,7 +33,7 @@
         display: flex;
         flex-direction: column;
         justify-content: space-between;
-        padding: 64px;
+        padding: 56px 64px;
         overflow: hidden;
       }
       .grid {
@@ -48,22 +46,55 @@
         mask-image: radial-gradient(ellipse 70% 60% at 50% 0%, #000 10%, transparent 70%);
         opacity: .5;
       }
-      .row { position: relative; display: flex; align-items: center; gap: 14px; }
+      .row { position: relative; display: flex; align-items: center; gap: 12px; }
       .wordmark { font-family: "Geist Mono", monospace; font-size: 26px; font-weight: 600; letter-spacing: -.01em; }
-      .dot { color: #2dd4bf; }
       h1 {
         position: relative;
-        font-size: 66px; line-height: 1.04; letter-spacing: -.028em; font-weight: 700;
-        max-width: 940px;
+        font-size: 68px; line-height: 1.04; letter-spacing: -.032em; font-weight: 700;
       }
-      .lede { position: relative; margin-top: 20px; font-size: 24px; line-height: 1.45; color: #8a93a2; max-width: 860px; }
-      .rail { position: relative; display: flex; align-items: center; gap: 0; font-family: "Geist Mono", monospace; font-size: 17px; }
-      .stop { border: 1px solid #262b33; background: #1c2027; border-radius: 4px; padding: 9px 15px; white-space: nowrap; }
-      .stop.held { border-color: rgba(251,191,36,.55); color: #fbbf24; box-shadow: 0 0 0 4px rgba(251,191,36,.14); }
+      .lede { position: relative; margin-top: 16px; font-size: 24px; line-height: 1.4; color: #8a93a2; }
+      .workflow {
+        position: relative;
+        border: 1px solid #262b33;
+        border-radius: 6px;
+        background: #14171c;
+        padding: 16px 20px;
+      }
+      .workflow-label {
+        margin-bottom: 12px;
+        font-family: "Geist Mono", monospace;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #808a97;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+      }
+      .rail {
+        display: grid;
+        grid-template-columns: max-content 48px max-content 48px max-content 48px max-content 48px max-content;
+        align-items: center;
+        font-family: "Geist Mono", monospace;
+        font-size: 17px;
+      }
+      .forward { display: contents; }
+      .stop { border: 1px solid #262b33; background: #1c2027; border-radius: 4px; padding: 8px 16px; white-space: nowrap; }
+      .stop.held { border-color: rgba(251,191,36,.55); color: #fbbf24; outline: 4px solid rgba(251,191,36,.14); }
       .stop.done { border-color: rgba(52,211,153,.4); color: #34d399; }
-      .join { color: #808a97; padding: 0 9px; }
-      .gate { color: #fbbf24; padding: 0 7px; }
-      .meta { position: relative; display: flex; gap: 26px; font-family: "Geist Mono", monospace; font-size: 18px; color: #808a97; }
+      .join, .gate { text-align: center; }
+      .join { color: #808a97; }
+      .gate { color: #fbbf24; }
+      .return {
+        grid-column: 3 / 6;
+        grid-row: 2;
+        display: flex;
+        align-items: center;
+        padding-top: 8px;
+        color: #808a97;
+      }
+      .return-line { flex: 1; white-space: nowrap; }
+      .return-line:first-child { text-align: right; }
+      .return .stop { margin: 0 8px; color: #edf0f4; }
+      .meta { position: relative; display: flex; gap: 24px; font-family: "Geist Mono", monospace; font-size: 18px; color: #808a97; }
     </style>
   </head>
   <body>
@@ -75,24 +106,32 @@
           d="M22 15 H50 C73 15 87 31 87 50 C87 69 73 85 50 85 H22 Z M41 32 H50 C63 32 70 41 70 50 C70 59 63 68 50 68 H41 Z" />
         <circle cx="51.5" cy="55.5" r="7.4" fill="#818CF8" />
       </svg>
-      <span class="wordmark">detent<span class="dot">.</span>build</span>
+      <span class="wordmark">detent.build</span>
     </div>
 
     <div>
-      <h1>You write the issue.<br />The gates decide when it lands.</h1>
+      <h1>Manage work, not agents.</h1>
       <p class="lede">
-        Status-driven agentic work orchestration. One Go binary, self-hosted,
-        with a serialized merge train so what lands is always green.
+        Status-driven agentic work orchestration. One Go binary, self-hosted.
       </p>
     </div>
 
-    <div class="rail">
-      <span class="stop">Todo</span><span class="join">——</span>
-      <span class="stop">In&nbsp;Progress</span><span class="gate">—◄—</span>
-      <span class="stop held">Human&nbsp;Review</span><span class="join">——</span>
-      <span class="stop">Rework</span><span class="gate">—◄—</span>
-      <span class="stop">Merging</span><span class="gate">—◄—</span>
-      <span class="stop done">Done</span>
+    <div class="workflow">
+      <div class="workflow-label">Detent's configured delivery path · states are workflow-defined</div>
+      <div class="rail">
+        <div class="forward">
+          <span class="stop">Todo</span><span class="join">——</span>
+          <span class="stop">In&nbsp;Progress</span><span class="gate">—◄—</span>
+          <span class="stop held">Human&nbsp;Review</span><span class="gate">—◄—</span>
+          <span class="stop">Merging</span><span class="gate">—◄—</span>
+          <span class="stop done">Done</span>
+        </div>
+        <div class="return" role="img" aria-label="Human Review returns through Rework to In Progress">
+          <span class="return-line">↰————</span>
+          <span class="stop">Rework</span>
+          <span class="return-line">◄————┘</span>
+        </div>
+      </div>
     </div>
 
     <div class="meta">
