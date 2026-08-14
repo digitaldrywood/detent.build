@@ -63,7 +63,7 @@ func TestPagesRender(t *testing.T) {
 		path string
 		want string
 	}{
-		{"/", "The gates decide when it lands."},
+		{"/", "Manage work, not agents."},
 		{"/how-it-works", "The mechanism, stop by stop."},
 		{"/why-detent", "You are not steering an agent."},
 		{"/dashboard", "The board stays honest."},

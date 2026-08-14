@@ -24,9 +24,8 @@ templ Home() {
 
 func homeMeta() meta.PageMeta {
 	return meta.New(
-		"Hold the work until the gate clears",
-		"Detent is status-driven agentic work orchestration in a single Go binary. "+
-			"You write the issue; the gates decide when it lands. Self-hosted, MIT, no vendor control plane.",
+		content.HomeTitle,
+		content.HomeDescription,
 	).WithNav("home").WithPath("/")
 }
 
@@ -38,18 +37,13 @@ templ heroSection() {
 				<div class="max-w-[720px]">
 					@components.Eyebrow("", "Status-driven agentic orchestration · one Go binary")
 					<h1 class="mt-4 text-2xl font-bold leading-[1.06] text-text sm:text-3xl">
-						You write the issue.
-						<br/>
-						The gates decide when it lands.
+						{ content.HomeHeadline }
 					</h1>
 					<p class="mt-5 max-w-[560px] text-lg text-sec">
-						Mark an issue <span class="font-mono text-base text-text">Todo</span>. Detent claims it,
-						works it in an isolated Git worktree, runs your validation gate, opens a pull request,
-						and merges through a serialized train &#8212; only once the gates you wrote have cleared.
+						{ content.HomeHeroDeckBeforeTodo }<span class="font-mono text-base text-text">Todo</span>{ content.HomeHeroDeckAfterTodo }
 					</p>
 					<p class="mt-4 max-w-[560px] text-sm text-dim">
-						It is a system, not an agent. The intelligence stays in your spec; the runtime supplies
-						the discipline.
+						{ content.HomeHeroStatement }
 					</p>
 				</div>
 				<div class="flex w-full shrink-0 flex-col gap-2.5 lg:w-[420px]">
