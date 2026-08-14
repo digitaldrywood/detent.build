@@ -58,7 +58,41 @@ const (
 	DefiniteStatesMoveAutonomy  = "You, by talking to the agent."
 	DefiniteStatesMoveDetent     = "The runtime when the condition is met, or you by changing the state."
 	DefiniteStatesLaneRail       = "The board above and the lane rail below are the visible form of the claim: managed work sits at a state the workflow defines, rather than somewhere inside a session you have to read to locate."
+
+	LineageSummary = "\"Manage work, not agents\" is OpenAI Symphony's phrase. Detent grew out of that open spec " +
+		"and took the idea from spec to a shipped system."
+	LineageSymphony = "Symphony is an Apache-2.0 SPEC.md plus an Elixir reference implementation that polls a Linear board."
+	LineageHistory  = "Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2. " +
+		"It is now a ground-up Go rewrite; that earlier implementation is archived."
 )
+
+type lineageDivergence struct {
+	Title string
+	Body  string
+}
+
+var LineageDivergences = []lineageDivergence{
+	{
+		Title: "One binary",
+		Body:  "One CGO-free Go binary for macOS, Linux, and Windows, with no BEAM service to stand up.",
+	},
+	{
+		Title: "GitHub-native state",
+		Body:  "ProjectV2, boardless issue-field mode, boardless label mode, or the github_local hybrid mode keep the work in GitHub's issue and pull request ID space.",
+	},
+	{
+		Title: "Fleet scheduling",
+		Body:  "Multiple projects from one host, with weights, priority, pause, and fair scheduling.",
+	},
+	{
+		Title: "Configurable gates",
+		Body:  "Configurable gates plus a serialized merge train that validates the exact commit about to land.",
+	},
+	{
+		Title: "Operator surface",
+		Body:  "A dashboard, terminal UI, detent doctor, cross-platform config discovery, and a GoReleaser pipeline.",
+	},
+}
 
 var versionAvailability = []VersionAvailability{
 	{

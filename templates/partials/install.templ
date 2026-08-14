@@ -73,7 +73,7 @@ func sigilFor(shell string) string {
 // InstallSection is the home page's install block: the tabs, plus the first
 // run and the requirements underneath.
 templ InstallSection() {
-	@components.Section("10", "Install", "One CGO-free binary. No service to stand up.",
+	@components.Section("11", "Install", "One CGO-free binary. No service to stand up.",
 		"macOS, Linux, and Windows. Install it, run the preflight check, and point it at a repository.") {
 		<div class="grid gap-4 lg:grid-cols-[1fr_380px]">
 			@InstallTabs(content.InstallTargets[0])

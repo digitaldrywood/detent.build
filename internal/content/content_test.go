@@ -77,3 +77,26 @@ func TestPinnedDocumentationLinksUseVendoredCommit(t *testing.T) {
 		}
 	}
 }
+
+func TestLineageNamesGitHubStatusSources(t *testing.T) {
+	var lineage strings.Builder
+	lineage.WriteString(LineageSummary)
+	lineage.WriteString(LineageSymphony)
+	lineage.WriteString(LineageHistory)
+	for _, divergence := range LineageDivergences {
+		lineage.WriteString(divergence.Title)
+		lineage.WriteString(divergence.Body)
+	}
+
+	for _, want := range []string{
+		"GitHub-native",
+		"ProjectV2",
+		"boardless issue-field mode",
+		"boardless label mode",
+		"github_local",
+	} {
+		if !strings.Contains(lineage.String(), want) {
+			t.Errorf("lineage does not contain %q", want)
+		}
+	}
+}
