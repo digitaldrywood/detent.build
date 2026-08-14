@@ -11,15 +11,56 @@ import (
 templ Home() {
 	@layouts.Base(homeMeta()) {
 		@heroSection()
+		@lineageSection()
 		@definiteStatesSection()
-		@partials.Inversion("03", false)
+		@partials.Inversion("04", false)
 		@partials.HowItWorksSummary()
-		@partials.MergeTrainSection("05")
+		@partials.MergeTrainSection("06")
 		@partials.OperatorSurface()
 		@partials.ContractsSection()
-		@partials.ShipsItself("08")
+		@partials.ShipsItself("09")
 		@partials.FleetSection()
 		@partials.InstallSection()
+	}
+}
+
+templ lineageSection() {
+	@components.Section("02", "Lineage", content.LineageHeading, content.LineageSummary) {
+		<div class="grid gap-4 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+			@components.Card("p-6") {
+				<h3 class="text-base font-semibold text-text">What Symphony opened</h3>
+				<p class="mt-3 text-sm leading-relaxed text-sec">
+					@lineageText(content.LineageSymphony)
+				</p>
+				<a href={ templ.SafeURL(content.SymphonyURL) } class="mt-3 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
+					openai/symphony &#8599;
+				</a>
+			}
+			@components.Card("p-6") {
+				<h3 class="text-base font-semibold text-text">What Detent built from it</h3>
+				<ul class="mt-3 grid gap-3 text-sm leading-relaxed text-sec sm:grid-cols-2">
+					for _, divergence := range content.LineageDivergences {
+						<li>
+							<span class="font-semibold text-text">{ divergence.Title }.</span>
+							{ " " }@lineageText(divergence.Body)
+						</li>
+					}
+				</ul>
+			}
+		</div>
+		<p class="mt-4 max-w-[840px] text-xs leading-relaxed text-dim">
+			@lineageText(content.LineageHistory)
+		</p>
+	}
+}
+
+templ lineageText(fragments []content.LineageFragment) {
+	for _, fragment := range fragments {
+		if fragment.Mono {
+			<span class="font-mono text-xs">{ fragment.Text }</span>
+		} else {
+			{ fragment.Text }
+		}
 	}
 }
 
@@ -84,7 +125,7 @@ templ heroSection() {
 }
 
 templ definiteStatesSection() {
-	@components.Section("02", "Definite states", content.DefiniteStatesHeading, content.DefiniteStatesDefinition) {
+	@components.Section("03", "Definite states", content.DefiniteStatesHeading, content.DefiniteStatesDefinition) {
 		<div class="grid gap-4 lg:grid-cols-3">
 			@definiteStateCard(content.DefiniteStatesWhereQuestion, content.DefiniteStatesWhereAutonomy, content.DefiniteStatesWhereDetent)
 			@definiteStateCard(content.DefiniteStatesWaitQuestion, content.DefiniteStatesWaitAutonomy, content.DefiniteStatesWaitDetent)

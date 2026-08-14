@@ -58,7 +58,70 @@ const (
 	DefiniteStatesMoveAutonomy  = "You, by talking to the agent."
 	DefiniteStatesMoveDetent     = "The runtime when the condition is met, or you by changing the state."
 	DefiniteStatesLaneRail       = "The board above and the lane rail below are the visible form of the claim: managed work sits at a state the workflow defines, rather than somewhere inside a session you have to read to locate."
+
+	LineageHeading = "Symphony named the thesis. Detent shipped the system."
+	LineageSummary = "\"Manage work, not agents\" is OpenAI Symphony's phrase. Detent grew out of that open spec " +
+		"and took the idea from spec to a shipped system."
 )
+
+type LineageFragment struct {
+	Text string
+	Mono bool
+}
+
+type lineageDivergence struct {
+	Title string
+	Body  []LineageFragment
+}
+
+var LineageSymphony = []LineageFragment{
+	{Text: "Symphony is an Apache-2.0 "},
+	{Text: "SPEC.md", Mono: true},
+	{Text: " plus an Elixir reference implementation that polls a Linear board."},
+}
+
+var LineageHistory = []LineageFragment{
+	{Text: "Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2. "},
+	{Text: "It is now a ground-up Go rewrite; that earlier implementation is archived."},
+}
+
+var LineageDivergences = []lineageDivergence{
+	{
+		Title: "One binary",
+		Body: []LineageFragment{
+			{Text: "One CGO-free Go binary for macOS, Linux, and Windows, with no BEAM service to stand up."},
+		},
+	},
+	{
+		Title: "GitHub-native state",
+		Body: []LineageFragment{
+			{Text: "ProjectV2", Mono: true},
+			{Text: ", boardless issue-field mode, boardless label mode, or the "},
+			{Text: "github_local", Mono: true},
+			{Text: " hybrid mode keep the work in GitHub's issue and pull request ID space."},
+		},
+	},
+	{
+		Title: "Fleet scheduling",
+		Body: []LineageFragment{
+			{Text: "Multiple projects from one host, with weights, priority, pause, and fair scheduling."},
+		},
+	},
+	{
+		Title: "Configurable gates",
+		Body: []LineageFragment{
+			{Text: "Configurable gates plus a serialized merge train that validates the exact commit about to land."},
+		},
+	},
+	{
+		Title: "Operator surface",
+		Body: []LineageFragment{
+			{Text: "A dashboard, terminal UI, "},
+			{Text: "detent doctor", Mono: true},
+			{Text: ", cross-platform config discovery, and a GoReleaser pipeline."},
+		},
+	},
+}
 
 var versionAvailability = []VersionAvailability{
 	{
