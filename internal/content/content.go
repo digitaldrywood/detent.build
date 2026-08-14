@@ -508,7 +508,7 @@ const (
 	DashboardLaneHeading     = "Detent's configured delivery path."
 	HowItWorksStateHeading   = "A configured path, and the catches between states."
 	HowItWorksStateDetail    = "Lanes are workflow-defined. These six are the delivery path — a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done."
-	OpenGraphDefaultImageAlt = "A composed Detent board showing a configured delivery path with Human Review held at a gate."
+	OpenGraphDefaultImageAlt = "Detent social card headed Manage work, not agents, with Rework returning from Human Review to In Progress in a workflow-defined delivery path."
 )
 
 // BoardCaption is the honesty note printed under the hero board.
