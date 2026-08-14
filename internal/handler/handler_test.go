@@ -99,7 +99,9 @@ func TestHomeOwnsSymphonyLineage(t *testing.T) {
 	}
 	for _, want := range []string{
 		`"Manage work, not agents" is OpenAI Symphony's phrase.`,
-		"Symphony is an Apache-2.0 SPEC.md plus an Elixir reference implementation that polls a Linear board.",
+		"Symphony is an Apache-2.0 ",
+		"SPEC.md",
+		"plus an Elixir reference implementation that polls a Linear board.",
 		"GitHub-native state",
 		"boardless issue-field mode",
 		"boardless label mode",
@@ -116,6 +118,26 @@ func TestHomeOwnsSymphonyLineage(t *testing.T) {
 	inversionAt := strings.Index(body, "A system, not an agent")
 	if lineageAt < 0 || inversionAt < 0 || lineageAt >= inversionAt {
 		t.Errorf("lineage section must appear before the inversion: lineage=%d inversion=%d", lineageAt, inversionAt)
+	}
+}
+
+func TestLineageMachineLiteralsUseMono(t *testing.T) {
+	e := newTestServer(t)
+
+	for _, path := range []string{"/", "/open-source"} {
+		t.Run(path, func(t *testing.T) {
+			rec := get(t, e, path, nil)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+			}
+			for _, literal := range []string{"SPEC.md", "ProjectV2", "github_local", "detent doctor"} {
+				want := `<span class="font-mono text-xs">` + literal + `</span>`
+				if !strings.Contains(rec.Body.String(), want) {
+					t.Errorf("body does not contain %q", want)
+				}
+			}
+		})
 	}
 }
 

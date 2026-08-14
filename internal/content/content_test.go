@@ -80,12 +80,19 @@ func TestPinnedDocumentationLinksUseVendoredCommit(t *testing.T) {
 
 func TestLineageNamesGitHubStatusSources(t *testing.T) {
 	var lineage strings.Builder
+	lineage.WriteString(LineageHeading)
 	lineage.WriteString(LineageSummary)
-	lineage.WriteString(LineageSymphony)
-	lineage.WriteString(LineageHistory)
+	for _, fragment := range LineageSymphony {
+		lineage.WriteString(fragment.Text)
+	}
+	for _, fragment := range LineageHistory {
+		lineage.WriteString(fragment.Text)
+	}
 	for _, divergence := range LineageDivergences {
 		lineage.WriteString(divergence.Title)
-		lineage.WriteString(divergence.Body)
+		for _, fragment := range divergence.Body {
+			lineage.WriteString(fragment.Text)
+		}
 	}
 
 	for _, want := range []string{
