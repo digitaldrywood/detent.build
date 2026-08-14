@@ -44,6 +44,20 @@ const (
 		"the states your workflow defines, holding it wherever you put a gate. Every issue it manages sits at a named " +
 		"state on the board."
 	HomeHeroStatement = "You are not steering an agent; you are running your own engineering process at scale."
+
+	DetentREADMEURL              = RepoURL + "/blob/" + docs.CommitSHA + "/README.md"
+	DefiniteStatesHeading        = "A detent makes position definite."
+	DefiniteStatesDefinition     = "A detent is the catch that holds a moving part at a defined position until it is deliberately released: the click-stop on a dial, the notch on a ratchet. It does two things at once. It resists movement out of a position, and it makes the set of positions definite. Detent is named for the second one."
+	DefiniteStatesWhereQuestion  = "Where is it?"
+	DefiniteStatesWhereAutonomy = "You steer a session and course-correct when it drifts."
+	DefiniteStatesWhereDetent    = "At a state your workflow defines, on the board, in GitHub."
+	DefiniteStatesWaitQuestion   = "What is it waiting on?"
+	DefiniteStatesWaitAutonomy  = "Whatever you tell it next."
+	DefiniteStatesWaitDetent     = "The promotion condition you configured. That can require a linked open PR, green CI on the current head, an automated review, a quiet period, or a human approval label."
+	DefiniteStatesMoveQuestion   = "Who moves it?"
+	DefiniteStatesMoveAutonomy  = "You, by talking to the agent."
+	DefiniteStatesMoveDetent     = "The runtime when the condition is met, or you by changing the state."
+	DefiniteStatesLaneRail       = "The board above and the lane rail below are the visible form of the claim: managed work sits at a state the workflow defines, rather than somewhere inside a session you have to read to locate."
 )
 
 var versionAvailability = []VersionAvailability{

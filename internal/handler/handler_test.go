@@ -271,6 +271,55 @@ func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
 	}
 }
 
+func TestHomeExplainsDefiniteStatesBetweenHeroAndInversion(t *testing.T) {
+	body := get(t, newTestServer(t), "/", nil).Body.String()
+
+	previous := strings.Index(body, content.HomeHeadline)
+	for _, want := range []string{
+		content.DefiniteStatesHeading,
+		content.DefiniteStatesWhereQuestion,
+		content.DefiniteStatesWaitQuestion,
+		content.DefiniteStatesMoveQuestion,
+		content.DefiniteStatesLaneRail,
+		"A system, not an agent.",
+	} {
+		position := strings.Index(body, html.EscapeString(want))
+		if position == -1 {
+			t.Errorf("body does not contain %q", want)
+		}
+		if position <= previous {
+			t.Errorf("%q is out of order on the home page", want)
+		}
+		previous = position
+	}
+
+	for _, want := range []string{
+		content.DefiniteStatesWhereAutonomy,
+		content.DefiniteStatesWhereDetent,
+		content.DefiniteStatesWaitAutonomy,
+		content.DefiniteStatesWaitDetent,
+		content.DefiniteStatesMoveAutonomy,
+		content.DefiniteStatesMoveDetent,
+		content.DetentREADMEURL,
+		content.Doc("concepts.md"),
+	} {
+		if !strings.Contains(body, html.EscapeString(want)) {
+			t.Errorf("body does not contain %q", want)
+		}
+	}
+
+	previous = 0
+	for _, want := range []string{"02", "03", "04", "05", "06", "07", "08", "09", "10"} {
+		marker := `class="text-accent">` + want + `</span>`
+		position := strings.Index(body[previous:], marker)
+		if position == -1 {
+			t.Errorf("home page does not contain section number %s after the previous section", want)
+			continue
+		}
+		previous += position + len(marker)
+	}
+}
+
 func TestLaneRailDrawsReworkAsReturnLoop(t *testing.T) {
 	body := get(t, newTestServer(t), "/how-it-works", nil).Body.String()
 	forwardStart := strings.Index(body, `data-lane-rail-path="forward"`)

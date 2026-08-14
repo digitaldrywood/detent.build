@@ -64,7 +64,7 @@ templ inversionSection(num string, first bool) {
 // HowItWorksSummary is the home page's condensed mechanism: the lane rail plus
 // the six numbered steps.
 templ HowItWorksSummary() {
-	@components.Section("03", "How it works", "Your lanes. Your gates between them.",
+	@components.Section("04", "How it works", "Your lanes. Your gates between them.",
 		"Configured GitHub status is the state machine. A ProjectV2 board, a boardless issue Status field, or repository status labels all drive it.") {
 		@components.LaneRail()
 		<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -126,7 +126,7 @@ templ MergeTrainSection(num string) {
 // OperatorSurface shows the real dashboard, large. It is the highest-value
 // image the project has, and it is a screenshot of the running product.
 templ OperatorSurface() {
-	@components.Section("05", "The operator surface", "The board stays honest.",
+	@components.Section("06", "The operator surface", "The board stays honest.",
 		"Live counts, running agents, token / budget / rate-limit state, board flow, timelines. \"In progress\" means an agent is actually working right now.") {
 		<figure class="overflow-hidden rounded-card border border-line bg-page">
 			<img
@@ -161,7 +161,7 @@ templ OperatorSurface() {
 // ContractsSection shows the two checked-in files, because developers believe
 // config they can read.
 templ ContractsSection() {
-	@components.Section("06", "Contracts, shown", "Config you can read beats adjectives.",
+	@components.Section("07", "Contracts, shown", "Config you can read beats adjectives.",
 		"Two files, checked into your repository: the machine contract and the agent contract. Both are excerpted here from Detent's own production config.") {
 		<div class="grid gap-4 lg:grid-cols-2">
 			@components.CodeSurface("detent.yaml", "digitaldrywood/detent-orchestration") {
@@ -227,7 +227,7 @@ templ ShipsItself(num string) {
 
 // FleetSection is the multi-project story, using Detent's own global.yaml.
 templ FleetSection() {
-	@components.Section("08", "One host, many repos", "Fleet scheduling from a single binary.",
+	@components.Section("09", "One host, many repos", "Fleet scheduling from a single binary.",
 		"A global.yaml runs many projects with weights, priority, pause, and fair scheduling. Below is the projects block of Detent's own.") {
 		<div class="overflow-hidden rounded-card border border-line">
 			<div class="grid grid-cols-[2fr_1fr_1fr] gap-4 border-b border-line bg-page px-5 py-2.5 font-mono text-2xs uppercase tracking-[0.06em] text-dim">
