@@ -212,3 +212,9 @@ budget:
   pricing_path: priv/pricing/models.yaml
 hooks:
   timeout_ms: 60000
+
+worker:
+  # Ambient gh worker auth (v0.66.0, detent#1798): workers resolve gh auth token
+  # into their isolated environment. Shared-budget mode by design -- the
+  # reserved-headroom brake throttles workers before the orchestrator starves.
+  github_token: gh
