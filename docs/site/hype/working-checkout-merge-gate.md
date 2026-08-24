@@ -19,7 +19,7 @@ The configured working checkout for this site is explicit:
 
 Its gate is also explicit:
 
-<code src="detent.yaml" range="131:148"></code>
+<code src="detent.yaml" range="160:177"></code>
 
 This site sets `required_status_checks: []`, so it does **not** reproduce the failure. In a project with named required checks, Detent treats an absent name as `missing`, and missing, skipped, failed, cancelled, neutral, or running checks block promotion. [Source: required-check evaluation](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/internal/connector/github/pull_request_checks.go#L268-L310) and [gate contract](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/internal/gate/gate.go#L451-L456).
 
