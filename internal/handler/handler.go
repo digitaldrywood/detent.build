@@ -37,6 +37,7 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	e.GET("/dashboard", h.Dashboard)
 	e.GET("/install", h.Install)
 	e.GET("/open-source", h.OpenSource)
+	e.GET("/videos", h.Videos)
 	e.GET("/docs", h.DocsIndex)
 	for _, page := range h.docs.Pages() {
 		e.GET(page.PublicPath, h.DocPage(page))

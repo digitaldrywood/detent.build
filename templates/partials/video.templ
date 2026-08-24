@@ -1,0 +1,36 @@
+package partials
+
+import "detent.build/internal/videos"
+
+templ VideoCard(entry videos.Entry, compact bool) {
+	<article class="overflow-hidden rounded-card border border-line bg-surface">
+		<a href={ templ.SafeURL(entry.WatchURL) } class="group block border-b border-line bg-elev">
+			<div class={ "flex items-center justify-center overflow-hidden", templ.KV("h-44", compact), templ.KV("h-64", !compact) }>
+				<img
+					src={ entry.ThumbnailPath }
+					alt={ entry.Title + " video thumbnail" }
+					class="size-full object-contain transition-opacity group-hover:opacity-90"
+					loading="lazy"
+					decoding="async"
+				/>
+			</div>
+		</a>
+		<div class={ templ.KV("p-4", compact), templ.KV("p-5", !compact) }>
+			<div class="font-mono text-2xs text-dim">
+				{ entry.RecordedOn } &#183; { entry.DurationLabel() } &#183; Detent { entry.DemonstratedRevision }
+			</div>
+			<h3 class="mt-2 text-base font-semibold leading-snug text-text">{ entry.Title }</h3>
+			<p class="mt-2 text-sm leading-relaxed text-sec">{ entry.Summary }</p>
+			<div class="mt-4 font-mono text-2xs uppercase tracking-[0.06em] text-dim">Demonstrates</div>
+			<ul class="mt-2 space-y-2 text-xs leading-relaxed text-sec">
+				for _, claim := range entry.Claims {
+					<li class="border-l border-line pl-3">{ claim }</li>
+				}
+			</ul>
+			<div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 font-mono text-xs">
+				<a href={ templ.SafeURL(entry.WatchURL) } class="text-accent hover:underline">Watch on YouTube &#8599;</a>
+				<a href={ templ.SafeURL(entry.Transcript) } class="text-sec hover:text-accent hover:underline">Transcript &#8594;</a>
+			</div>
+		</div>
+	</article>
+}

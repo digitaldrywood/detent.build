@@ -6,7 +6,9 @@ import (
 	"detent.build/internal/content"
 	"detent.build/internal/docs"
 	"detent.build/internal/meta"
+	videocontent "detent.build/internal/videos"
 	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
 )
 
 templ DocsIndex(catalog *docs.Catalog) {
@@ -62,7 +64,7 @@ templ DocsIndex(catalog *docs.Catalog) {
 	}
 }
 
-templ Doc(page docs.Page, groups []docs.Group) {
+templ Doc(page docs.Page, groups []docs.Group, adjacentVideos []videocontent.Entry) {
 	@layouts.Base(docMeta(page)) {
 		<section class="border-b border-line bg-surface">
 			<div class="mx-auto flex max-w-[1280px] flex-col gap-4 px-6 py-6 md:px-8 lg:flex-row lg:items-center lg:justify-between">
@@ -93,7 +95,7 @@ templ Doc(page docs.Page, groups []docs.Group) {
 				}
 			</div>
 		</section>
-		<div class="mx-auto grid max-w-[1280px] gap-12 px-6 py-12 md:px-8 lg:grid-cols-[240px_minmax(0,760px)] xl:grid-cols-[260px_minmax(0,820px)]">
+		<div class={ "mx-auto grid max-w-[1280px] gap-12 px-6 py-12 md:px-8 lg:grid-cols-[240px_minmax(0,760px)]", templ.KV("xl:grid-cols-[220px_minmax(0,680px)_260px] xl:gap-8", len(adjacentVideos) > 0), templ.KV("xl:grid-cols-[260px_minmax(0,820px)]", len(adjacentVideos) == 0) }>
 			<nav class="h-fit rounded-card border border-line bg-surface p-4 lg:sticky lg:top-24" aria-label="Documentation">
 				for _, group := range groups {
 					<div class="mb-5 last:mb-0">
@@ -119,6 +121,14 @@ templ Doc(page docs.Page, groups []docs.Group) {
 			<article class="docs-prose min-w-0">
 				@templ.Raw(page.HTML)
 			</article>
+			if len(adjacentVideos) > 0 {
+				<aside class="space-y-4 xl:sticky xl:top-24 xl:h-fit" aria-label="Related walkthroughs">
+					<div class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">Related walkthrough</div>
+					for _, entry := range adjacentVideos {
+						@partials.VideoCard(entry, true)
+					}
+				</aside>
+			}
 		</div>
 	}
 }

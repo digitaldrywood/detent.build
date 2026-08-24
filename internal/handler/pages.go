@@ -5,6 +5,7 @@ import (
 
 	"detent.build/internal/content"
 	"detent.build/internal/docs"
+	"detent.build/internal/videos"
 	"detent.build/templates/pages"
 	"detent.build/templates/partials"
 
@@ -55,9 +56,13 @@ func (h *Handler) DocsIndex(c echo.Context) error {
 	return render(c, http.StatusOK, pages.DocsIndex(h.docs))
 }
 
+func (h *Handler) Videos(c echo.Context) error {
+	return render(c, http.StatusOK, pages.Videos(videos.Published.Entries()))
+}
+
 func (h *Handler) DocPage(page docs.Page) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return render(c, http.StatusOK, pages.Doc(page, h.docs.Groups()))
+		return render(c, http.StatusOK, pages.Doc(page, h.docs.Groups(), videos.Published.ForDocs(page.PublicPath)))
 	}
 }
 

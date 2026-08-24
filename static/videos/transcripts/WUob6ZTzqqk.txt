@@ -1,0 +1,27 @@
+Last night I opened seven GitHub issues for a single feature and walked away from my desk, and by the time I came back about four hours later, every one of them had been written, reviewed, and merged.
+
+For most of my career that would have been a terrible idea, because every issue you open is one more thing you have to track and prioritize and drag across the board yourself.
+
+I'm Cory LaNou, and I build real solutions for real developers.
+
+Most engineering teams would roll seven issues into a single epic, one giant parent ticket holding a checklist of child tasks that somebody has to keep current by hand.
+
+And that checklist starts drifting away from what's actually happening almost immediately, until you're spending more of your day grooming the tracker than you are shipping the work it's supposed to describe.
+
+I stopped writing epics altogether, and now every piece of work gets its own small issue with real requirements and acceptance criteria on it, plus a single label telling my system what state that work is in.
+
+That system is a tool I built called detent, and it watches those labels for me, handing anything sitting in to-do off to its own agent running in its own isolated copy of the code.
+
+When one of those issues can't start until another one is finished, I don't track that myself either, I just write depends on and the issue number down in the body.
+
+Detent reads that line and moves the issue straight into blocked, where it sits completely untouched, so no agent ever spins up for it and not one token gets spent while it waits.
+
+Then the moment the issue it was waiting on gets merged, detent moves it back into to-do on its own and an agent picks it straight up, without me ever touching the board.
+
+This is my actual board right now, thirty-eight cards running across five different projects, and everything sitting in that blocked lane is just work waiting its turn without costing me anything.
+
+Those seven issues added up to an API layer, a bulk import system, and an admin review screen, and the agents worked through that chain in the right order while my only real job was writing the requirements well enough to hand over.
+
+Now I want to know how you're doing this, because I think most people break a feature into far fewer issues than they should. Drop your number in the comments.
+
+Detent is open source and I've linked the full walkthrough below, and if this is the kind of real world content you wanna see more of, hit subscribe — two to three videos a week, real workflows, real tools, no fluff. I'll see you in the next one.
