@@ -1,0 +1,35 @@
+package pages
+
+import (
+	"detent.build/internal/meta"
+	videocontent "detent.build/internal/videos"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+	"detent.build/ui/components"
+)
+
+templ Videos(entries []videocontent.Entry) {
+	@layouts.Base(videosMeta()) {
+		@partials.PageHeader(
+			"Videos",
+			"Detent, moving through real work.",
+			"Reviewed recordings that demonstrate the product against real repositories and checked-in workflow contracts. Playback stays on YouTube; thumbnails and transcripts stay local to this site.",
+		)
+		<section class="mx-auto max-w-[1280px] px-6 pt-16 md:px-8">
+			@components.Eyebrow("01", "Recordings")
+			<div class="mt-5 grid gap-4 lg:grid-cols-2">
+				for _, entry := range entries {
+					@partials.VideoCard(entry, false)
+				}
+			</div>
+		</section>
+		@partials.NextSteps("videos")
+	}
+}
+
+func videosMeta() meta.PageMeta {
+	return meta.New(
+		"Videos",
+		"Reviewed Detent recordings with local thumbnails and sourced product claims.",
+	).WithNav("videos").WithPath("/videos")
+}

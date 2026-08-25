@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "youtube_channel_id": "UCfMcoKPPyPDYDIav3-aoYOA",
+  "entries": [
+    {
+      "video_id": "WUob6ZTzqqk",
+      "watch_url": "https://www.youtube.com/watch?v=WUob6ZTzqqk",
+      "title": "I Opened Seven Issues for One Feature (On Purpose)",
+      "summary": "One feature. Seven real issues. Four hours. Zero babysitting.",
+      "recorded_on": "2026-07-02",
+      "duration_seconds": 140,
+      "demonstrated_revision": "v0.20.1",
+      "thumbnail_path": "/static/images/videos/WUob6ZTzqqk.webp",
+      "transcript": "/static/videos/transcripts/WUob6ZTzqqk.txt",
+      "placement": "featured",
+      "claims": [
+        "A seven-issue dependency graph completed in merge order.",
+        "Detent returned dependent work to Todo after its prerequisite merged."
+      ]
+    },
+    {
+      "video_id": "QvED7RHTKkI",
+      "watch_url": "https://www.youtube.com/watch?v=QvED7RHTKkI",
+      "title": "My AI Orchestrator Is Dumb on Purpose",
+      "summary": "The orchestrator stays deliberately simple while checked-in configuration and workflow files hold the engineering judgment.",
+      "recorded_on": "2026-07-06",
+      "duration_seconds": 680,
+      "demonstrated_revision": "v0.27.0",
+      "thumbnail_path": "/static/images/videos/QvED7RHTKkI.webp",
+      "transcript": "/static/videos/transcripts/QvED7RHTKkI.txt",
+      "placement": "docs-adjacent",
+      "docs_path": "/docs/configuration",
+      "claims": [
+        "Global configuration defines host-wide agent limits and project registration.",
+        "Project configuration binds tracker states, worktrees, gates, and merge-train behavior.",
+        "WORKFLOW.md carries the prose contract given to each agent."
+      ]
+    }
+  ]
+}

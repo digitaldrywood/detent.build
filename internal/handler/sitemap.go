@@ -17,6 +17,7 @@ var sitemapPaths = []string{
 	"/dashboard",
 	"/install",
 	"/open-source",
+	"/videos",
 	"/docs",
 }
 

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -15,6 +16,7 @@ import (
 	"detent.build/internal/docs"
 	"detent.build/internal/docsregistry"
 	"detent.build/internal/middleware"
+	"detent.build/internal/videos"
 
 	"github.com/labstack/echo/v4"
 )
@@ -69,6 +71,7 @@ func TestPagesRender(t *testing.T) {
 		{"/dashboard", "The board stays honest."},
 		{"/install", "No service to stand up."},
 		{"/open-source", "No control plane."},
+		{"/videos", "Detent, moving through real work."},
 		{"/docs", "Documentation, pinned to the source."},
 		{"/docs/getting-started", "Quick Start"},
 		{"/docs/site/project-contracts", "Project contracts"},
@@ -86,6 +89,111 @@ func TestPagesRender(t *testing.T) {
 				t.Errorf("body does not contain %q", tt.want)
 			}
 		})
+	}
+}
+
+func TestVideoPlacementsRenderFromManifest(t *testing.T) {
+	e := newTestServer(t)
+
+	tests := []struct {
+		path      string
+		want      []string
+		forbidden []string
+	}{
+		{
+			path: "/",
+			want: []string{
+				"It ships itself.",
+				"I Opened Seven Issues for One Feature (On Purpose)",
+				`src="/static/images/videos/WUob6ZTzqqk.webp"`,
+			},
+			forbidden: []string{"My AI Orchestrator Is Dumb on Purpose"},
+		},
+		{
+			path: "/videos",
+			want: []string{
+				"I Opened Seven Issues for One Feature (On Purpose)",
+				"My AI Orchestrator Is Dumb on Purpose",
+				`href="https://www.youtube.com/watch?v=WUob6ZTzqqk"`,
+				`href="https://www.youtube.com/watch?v=QvED7RHTKkI"`,
+			},
+		},
+		{
+			path: "/docs/configuration",
+			want: []string{
+				"Related walkthrough",
+				"My AI Orchestrator Is Dumb on Purpose",
+				`src="/static/images/videos/QvED7RHTKkI.webp"`,
+			},
+			forbidden: []string{"I Opened Seven Issues for One Feature (On Purpose)"},
+		},
+		{
+			path:      "/docs/getting-started",
+			forbidden: []string{"Related walkthrough", "My AI Orchestrator Is Dumb on Purpose"},
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.path, func(t *testing.T) {
+			rec := get(t, e, test.path, nil)
+			if rec.Code != http.StatusOK {
+				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+			}
+			body := rec.Body.String()
+			for _, want := range test.want {
+				if !strings.Contains(body, want) {
+					t.Errorf("body does not contain %q", want)
+				}
+			}
+			for _, forbidden := range test.forbidden {
+				if strings.Contains(body, forbidden) {
+					t.Errorf("body contains %q", forbidden)
+				}
+			}
+		})
+	}
+}
+
+func TestVideoSurfacesNeverLoadThirdPartyResources(t *testing.T) {
+	e := newTestServer(t)
+	remoteResource := regexp.MustCompile(`(?:src|srcset)="https?://`)
+	youTubeLink := regexp.MustCompile(`href="https://www\.youtube\.com/[^"]+"`)
+	approvedWatchURLs := make(map[string]struct{})
+	for _, entry := range videos.Published.Entries() {
+		approvedWatchURLs[`href="`+entry.WatchURL+`"`] = struct{}{}
+	}
+
+	for _, path := range []string{"/", "/videos", "/docs/configuration"} {
+		t.Run(path, func(t *testing.T) {
+			body := get(t, e, path, nil).Body.String()
+			if remoteResource.MatchString(body) {
+				t.Error("page loads a third-party resource through src or srcset")
+			}
+			for _, forbidden := range []string{"<iframe", "autoplay", "youtube.com/embed", "youtu.be/", "i.ytimg.com"} {
+				if strings.Contains(body, forbidden) {
+					t.Errorf("page contains forbidden video integration %q", forbidden)
+				}
+			}
+			for _, match := range youTubeLink.FindAllString(body, -1) {
+				if _, approved := approvedWatchURLs[match]; !approved {
+					t.Errorf("page contains unapproved YouTube link %q", match)
+				}
+			}
+		})
+	}
+}
+
+func TestContentSecurityPolicyRemainsExact(t *testing.T) {
+	want := "default-src 'self'; script-src 'self' 'unsafe-inline'; " +
+		"style-src 'self'; style-src-attr 'unsafe-inline'; " +
+		"img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; " +
+		"base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+
+	for _, path := range []string{"/", "/videos", "/docs/configuration"} {
+		rec := get(t, newTestServer(t), path, nil)
+		if got := rec.Header().Get("Content-Security-Policy"); got != want {
+			t.Errorf("%s Content-Security-Policy = %q, want %q", path, got, want)
+		}
 	}
 }
 
@@ -486,7 +594,7 @@ func TestHealth(t *testing.T) {
 func TestNoWWWAndNoPlainHTTPForProductionHost(t *testing.T) {
 	e := newTestServer(t)
 
-	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/sitemap.xml"}
+	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/videos", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/sitemap.xml"}
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
@@ -517,6 +625,7 @@ func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
 		{"/dashboard", "https://detent.build/dashboard"},
 		{"/install", "https://detent.build/install"},
 		{"/open-source", "https://detent.build/open-source"},
+		{"/videos", "https://detent.build/videos"},
 		{"/docs", "https://detent.build/docs"},
 		{"/docs/getting-started", "https://detent.build/docs/getting-started"},
 		{"/docs/site/project-contracts", "https://detent.build/docs/site/project-contracts"},
@@ -569,6 +678,7 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 		"<loc>https://detent.build/</loc>",
 		"<loc>https://detent.build/how-it-works</loc>",
 		"<loc>https://detent.build/open-source</loc>",
+		"<loc>https://detent.build/videos</loc>",
 		"<loc>https://detent.build/docs</loc>",
 		"<loc>https://detent.build/docs/getting-started</loc>",
 		"<loc>https://detent.build/docs/site/project-contracts</loc>",
@@ -706,7 +816,7 @@ func TestCanonicalTolerantOfTrailingSlashConfig(t *testing.T) {
 func TestNoAppLevelRedirects(t *testing.T) {
 	e := newTestServer(t)
 
-	for _, path := range []string{"/", "/install", "/install/linux", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/health", "/sitemap.xml"} {
+	for _, path := range []string{"/", "/videos", "/install", "/install/linux", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/health", "/sitemap.xml"} {
 		t.Run(path, func(t *testing.T) {
 			if code := get(t, e, path, nil).Code; code >= 300 && code < 400 {
 				t.Errorf("status = %d; the app must not redirect, Traefik already does", code)

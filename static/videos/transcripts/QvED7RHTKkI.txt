@@ -1,0 +1,163 @@
+Most people assume the AI system running my backlog must be smart. It isn't, and I built it dumb on purpose.
+
+Detent moves real work from a backlog to a merged pull request without anyone babysitting it, but the orchestrator itself knows nothing about software.
+
+Every bit of intelligence lives in one place — a workflow file I wrote, in plain text, for each project.
+
+That file walks every issue through the same stages a senior engineer refuses to skip — plan it, build it with tests, review it, prove it end to end. Nothing moves forward until each stage passes.
+
+Today I'm opening the real files from my production projects, and I'll show you the config, the contract, and why splitting them is the whole design.
+
+If that sounds like a lot of configuration, don't worry — you never write these files from scratch. Detent sets itself up, and I'll show you that before we're done.
+
+I'm Cory LaNou, and I build real solutions for real developers.
+
+I run a handful of production repos through Detent every day — my own site, client work, and even the pipeline that produces these videos.
+
+These aren't demos. The files on screen today are the actual configs dispatching real agents while I record this.
+
+Detent is a single Go binary that treats a status board as a state machine. An issue moves from To Do, to In Progress, to review, to merged, and that status is the source of truth.
+
+The configuration splits into two layers. One global config runs the host, and one workflow file defines each project.
+
+The global config decides how much runs at once. The workflow file decides what good engineering looks like for that repo.
+
+That split is deliberate. The orchestrator stays a dumb traffic cop, and all the judgment lives in files you own, version, and review like code.
+
+This is my actual global config. It fits on one screen, and that's the point.
+
+It caps the whole machine at five concurrent agents, no matter how many projects are asking for work.
+
+Scheduling is weighted, with a fair-share half life of one hour, so one busy project can't starve the others.
+
+Startup gets ten seconds of jitter and a cap of two spawns per second, because five agents slamming GitHub at the same instant is how you eat your rate limit.
+
+Then comes the project list. Each entry is just an ID, a path to the workflow file, a working directory, a weight, and a priority.
+
+Client work is ranked ahead of my own site in there, so paying projects get dispatched first when everything wants attention.
+
+Notice what's missing. There is nothing in this file about tests, reviews, branches, or how to write software. The host schedules work, and that is all it does.
+
+Every project points at one workflow file, and that file has two halves.
+
+The top half is machine config — the tracker binding, the board states, the workspace rules, the agent limits, and the validation stages.
+
+Below that sits a prose contract. It's the prompt every agent receives, written in plain English, describing exactly how work happens in this repo.
+
+The config wires the system to your board, and the prose teaches the agent your engineering process. The whole thing is one file, and it's checked into the repo and reviewed like any other change.
+
+Before we look at mine, you should know a project can bind to more than one kind of board. Detent speaks Linear, GitHub Projects, plain repository labels, or no board at all, in its own native mode.
+
+With Linear or GitHub Projects, you manage work from the board your team already uses, and Detent's own board view still works if you want it. Labels give you the same discipline with nothing to set up, and native mode keeps all the state local with no API limits — that's how the pipeline behind this video runs.
+
+The tracker section binds the project to GitHub. My site runs in label mode, where plain repository labels carry the status, so the board never leaves GitHub.
+
+The states split into three groups. Active states like To Do, In Progress, Rework, and Merging are where agents actually run.
+
+Observed states like Backlog, Human Review, and Blocked are watched but never dispatched, and terminal states like Done end the story.
+
+That grouping is the safety model. An agent physically cannot pick up work from Backlog, because Backlog is not an active state.
+
+Dependencies are handled in config too. If an issue declares that it's blocked by another issue, Detent parks it and watches the blocker.
+
+The moment the blocker merges, the issue moves itself back to To Do. Nobody wakes up at night to unblock a queue.
+
+The workspace section is where isolation comes from. Every issue gets its own Git worktree, on its own branch, created from my source checkout.
+
+Five agents can work in parallel because they never share a directory. Nothing can step on the main checkout, and nothing can step on a sibling.
+
+Idle worktrees clean themselves up after a day, and a sweep runs every ten minutes to enforce it.
+
+Hooks exist so every fresh worktree comes up with a valid environment. When a worktree is created, my after-create hook copies the environment file over, allows it with d i r e n v — a small tool that loads a project's environment variables — and installs node modules if they're missing.
+
+That's project knowledge encoded where it belongs — the same hook could just as easily fetch test files from the internet for the project to use. Detent has no idea what my environment variables are, and it shouldn't. It just runs my hook.
+
+The agent section sets the local limits. This project allows five concurrent agents, and every run is capped at twenty turns.
+
+One line in this section carries more weight than the rest. The Merging state is capped at exactly one agent.
+
+That single line is the merge train. Only one pull request rebases, watches CI, and merges at a time, so parallel branches never invalidate each other's green build.
+
+Dispatch priority is explicit. Merging beats Rework, Rework beats In Progress, and labels I chose can jump an issue up the queue.
+
+Auto-promotion is on, and there's an opt-out. Any issue labeled requires human review will sit and wait for me, because some changes should never merge themselves.
+
+This brings us to the part of the config people call a gate — the stages I promised early on. I'd rather describe a gate as a stage a senior engineer already refuses to skip.
+
+That means you reproduce the problem before touching code, you plan the change, you write it with tests, you get it reviewed, and you prove it end to end.
+
+A gate is just a stage that must pass before the work advances. It's the same process you already believe in, enforced every single time.
+
+For my site, the validation command is make check, and that runs the full build, the generated templates, the linters, and the test suite.
+
+If CI fails on the pull request head, the config moves the issue to Rework instead of letting it rot. An agent picks it back up, reads the feedback, and fixes it.
+
+The quiet period is a dial. My site sets it to zero and promotes immediately, but you can make every pull request soak until activity settles before it advances.
+
+You can go further. There's an optional validator agent that reviews the pull request and blocks promotion below a score, and there's a mode that waits for a human approval label. The gate is a policy you choose, not a default you inherit.
+
+Under the config sits the contract, and this is the half that does the heavy lifting.
+
+It opens by templating in the issue — the title, the current state, the labels, and the full description. The agent starts every run knowing exactly what it's working on.
+
+Then it lays down authority. The agent must read the project's own instruction files first, and when rules conflict, the stricter rule wins.
+
+It demands a workpad — one persistent issue comment that keeps the plan, the acceptance criteria, the validation evidence, and the handoff notes together. Progress never scatters across a thread.
+
+The workpad also keeps a machine-readable status block. The agent sets it to in progress, blocked, or complete, and Detent reads the block — never the prose.
+
+It tells the agent to reproduce a bug before fixing it, and it asks for the smallest complete change that satisfies the issue.
+
+It even handles scope creep. If the agent finds real work outside the issue, the contract says to open a new issue in Backlog rather than expanding this one.
+
+None of that is Detent being clever. Those sentences came out of my head, from years of doing this the hard way, and now they run on every issue in parallel.
+
+The customization really shows up when you put two projects side by side, so let's compare my site with Creswood Corners, a client project.
+
+My site validates with make check. Creswood Corners validates with the test suite plus a full Go build, because that repo defines done differently.
+
+My site runs Codex with the sandbox wide open, because it's my machine and I accept that trade. The client project locks it down to workspace writes.
+
+On my site, red CI moves the issue straight to Rework. On the client project it just sits and waits, because I look at those failures myself.
+
+Even the dispatch politics differ. The client board moves bug and operations labels to the front, while my site gives content work the fast lane.
+
+It's the same binary and the same board shape, running two completely different engineering cultures. The system didn't decide any of that. The workflow files did.
+
+Watch how the whole thing moves. An issue starts in Backlog, where it's visible but untouchable.
+
+I write the spec — the scope, the acceptance criteria, and the tests I expect — and I move the card to To Do. That is my entire involvement in starting the work.
+
+Detent claims it, cuts a worktree, runs my bootstrap hook, and hands the agent the contract with the issue templated in.
+
+The agent works the stages, opens a pull request with the validation evidence attached, and sets its workpad status to complete.
+
+Checks go green on the head commit, the issue promotes to Merging, and the train takes over one candidate at a time.
+
+The rebase lands, CI passes on the final head, the pull request merges, and the issue moves to Done.
+
+I was not sitting there for any of it. I reviewed a spec at the start and a pull request at the end, which are the two places human judgment actually belongs.
+
+This is why the dumb orchestrator wins. Anything smart the runtime did on its own would be a decision I never made and can't version.
+
+Instead, the intelligence stays in my spec and the runtime supplies the discipline. Every rule I believe in runs on every issue, every time, without me repeating myself.
+
+That is the difference between this and vibe coding. Nothing merges here on vibes. It merges because the stages I defined passed, with the evidence written down.
+
+When a better model comes out next year, I swap the model. The process stays, because the process was never in the model to begin with.
+
+That brings me back to the promise from the top. You are not required to know any of this to get started.
+
+Detent's setup is built to be run by your agent. It follows the setup docs, it asks you how you work, and it takes the best path through.
+
+Maybe that's a GitHub Projects board. Maybe it's plain repository labels like mine. Or maybe it's no tracker at all, with Detent running fully local on its own SQLite database and giving you the same Kanban board feel.
+
+Every option you saw today gets written for you, and you tune it from there. The files are the contract, but the setup is a conversation.
+
+If you want to read these files yourself, Detent's own orchestration config is public, and it dispatches the agents that build Detent itself.
+
+I'd like to know where your workflow file would differ from mine. Which stage would you never let an agent skip? Drop it in the comments.
+
+If real workflows and real tools are your thing, subscribe, because that's all this channel does.
+
+Thanks for watching, and I'll see you in the next one.
