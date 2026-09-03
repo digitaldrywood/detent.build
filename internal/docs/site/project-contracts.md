@@ -57,7 +57,7 @@ tracker:
     source_states:
       - Blocked
 ```
-> *source: detent.yaml*
+> *source: detent.yaml:project-config*
 
 
 ---

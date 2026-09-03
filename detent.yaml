@@ -1,3 +1,4 @@
+# snippet: project-config
 schema: 1
 # Keep machine-specific config in detent.local.yaml and local agent direction in WORKFLOW.local.md.
 tracker:
@@ -43,6 +44,7 @@ tracker:
     enabled: true
     source_states:
       - Blocked
+# snippet: project-config
     target_state: Todo
     readiness: terminal_or_merged
   blocked_recovery:
@@ -66,6 +68,7 @@ polling:
   conditional: true
 intake:
   sources: []
+# snippet: workspace-checkout
 workspace:
   root: /Users/corylanou/code/detent.build-workspaces
   source_root: /Users/corylanou/projects/digitaldrywood/detent.build
@@ -73,6 +76,7 @@ workspace:
   auto_branch: true
   cleanup_idle_ttl_ms: 86400000
   cleanup_sweep_interval_ms: 600000
+# snippet: workspace-checkout
 deliverable:
   merge_method: squash
 agent:
@@ -164,6 +168,7 @@ codex:
   turn_sandbox_policy:
     type: workspaceWrite
     networkAccess: true
+# snippet: merge-gate
 gate:
   kind: command
   run: make check && CGO_ENABLED=0 go build -o /dev/null ./cmd/server
@@ -181,6 +186,7 @@ gate:
     # max_inline_diff_bytes: 65536
     # block_on:
     #   - p1
+# snippet: merge-gate
 plan:
   enabled: false
   review: human

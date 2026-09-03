@@ -30,7 +30,7 @@ workspace:
   cleanup_idle_ttl_ms: 86400000
   cleanup_sweep_interval_ms: 600000
 ```
-> *source: detent.yaml*
+> *source: detent.yaml:workspace-checkout*
 
 
 Its gate is also explicit:
@@ -54,7 +54,7 @@ gate:
     # block_on:
     #   - p1
 ```
-> *source: detent.yaml*
+> *source: detent.yaml:merge-gate*
 
 
 This site sets `required_status_checks: []`, so it does **not** reproduce the failure. In a project with named required checks, Detent treats an absent name as `missing`, and missing, skipped, failed, cancelled, neutral, or running checks block promotion. [Source: required-check evaluation](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/internal/connector/github/pull_request_checks.go#L268-L310) and [gate contract](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/internal/gate/gate.go#L451-L456).
