@@ -15,11 +15,11 @@ When `projects[].workflow_ref` is empty, Detent loads the workflow from its conf
 
 The configured working checkout for this site is explicit:
 
-<code src="detent.yaml" range="68:75"></code>
+<code src="detent.yaml" snippet="workspace-checkout"></code>
 
 Its gate is also explicit:
 
-<code src="detent.yaml" range="166:183"></code>
+<code src="detent.yaml" snippet="merge-gate"></code>
 
 This site sets `required_status_checks: []`, so it does **not** reproduce the failure. In a project with named required checks, Detent treats an absent name as `missing`, and missing, skipped, failed, cancelled, neutral, or running checks block promotion. [Source: required-check evaluation](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/internal/connector/github/pull_request_checks.go#L268-L310) and [gate contract](https://github.com/digitaldrywood/detent/blob/1543929187369eca2703abd2a655cf86e9e5d83e/internal/gate/gate.go#L451-L456).
 

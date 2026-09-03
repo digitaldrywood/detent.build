@@ -6,6 +6,6 @@ This site is orchestrated from two checked-in contracts: the project configurati
 
 The opening section of the live project configuration identifies the tracker, status source, and repository used for this site.
 
-<code src="detent.yaml" range=":45"></code>
+<code src="detent.yaml" snippet="project-config"></code>
 
 <include src="partials/workflow.md"></include>
