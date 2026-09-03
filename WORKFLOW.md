@@ -155,6 +155,25 @@ human_action: null
 
 If meaningful out-of-scope work is discovered, file a separate tracker issue in Backlog with a best-guess `detent-agent` effort block instead of expanding the current work item.
 
+## Browser Verification In Workers
+
+This project is a website, so nearly every change is UI-visible and hits the
+ship flow's browser gate. Use the browser tooling this worker actually has.
+
+- Use the **`chrome-devtools` MCP server** (`mcp__chrome-devtools__*`) for all
+  browser verification. It is configured for Codex workers, is worktree-aware,
+  and gives each worktree an isolated Chrome profile.
+- Do **not** route browser verification through the `claude-in-chrome` skill or
+  `mcp__claude-in-chrome__*` tools. That path needs the Claude Chrome extension,
+  which is not available in a Detent worker, and the skill forbids substituting
+  chrome-devtools — so taking that path dead-ends the issue in `Blocked` even
+  though working browser tooling was available the whole time.
+- Missing browser tooling is only a real blocker if
+  `mcp__chrome-devtools__navigate_page` is genuinely absent from the tool list.
+  Check before declaring the gate unsatisfiable.
+- Screenshots: prefer viewport over full-page, and set `deviceScaleFactor: 1`
+  before any full-page capture.
+
 ## Required Execution Flow
 
 Use the current Detent state as the source of truth for which section applies.
