@@ -90,6 +90,12 @@ agent:
   # cache-created + cache-read tokens, accumulated across every turn of the
   # session, so cached context is re-counted each turn. max_session_context_multiplier
   # is left unset on purpose.
+  # Lifetime caps set HIGH (2026-08-22, operator doctrine): catch true runaways
+  # (81-dispatch class), never a successful long grind (#1890: 30 attempts,
+  # ~200M, MERGED). Defaults 15/40M would have parked it. Label
+  # allow-lifetime-limit overrides per issue.
+  lifetime_session_limit: 60
+  lifetime_token_limit: 500000000
   max_session_tokens: 25000000
   max_session_token_override_label: allow-large-session
   max_concurrent_agents_by_state:
