@@ -1,6 +1,8 @@
 SHELL := /bin/bash
 
-.PHONY: dev build test lint generate docs-sync docs-build docs-check css css-watch setup clean run check help
+.PHONY: dev build test lint generate docs-sync docs-build docs-check css css-watch setup clean run check smoke help
+
+SMOKE_URL ?= https://detent.build
 
 BINARY_NAME=detent.build
 DETENT_TEMP_ROOT=$(or $(TMPDIR),$(TMP),$(TEMP),/tmp)
@@ -63,6 +65,9 @@ setup:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	npm install
 
+smoke:
+	@./scripts/smoke.sh $(SMOKE_URL)
+
 clean:
 	rm -f $(BINARY_NAME)
 	rm -rf tmp/
@@ -84,6 +89,7 @@ help:
 	@echo "  css        - Build Tailwind CSS"
 	@echo "  css-watch  - Watch and rebuild Tailwind CSS"
 	@echo "  check      - Full validation gate: generate, vet, test, lint"
+	@echo "  smoke      - Post-deploy checks against SMOKE_URL (default https://detent.build)"
 	@echo "  setup      - Install development tools"
 	@echo "  clean      - Remove build artifacts"
 	@echo "  run        - Build and run the server"
