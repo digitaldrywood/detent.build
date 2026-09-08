@@ -8,23 +8,26 @@ constraints. Read both before changing anything.
 
 ## Reasoning Effort
 
+Use Codex Astra (`gpt-6-astra`) at low effort by default, medium for
+moderately difficult work, and high for the hardest work.
+
 Every issue created for this repository must include an explicit reasoning
 effort override:
 
 ```detent-agent
 schema: 1
-effort: medium
+effort: low
 ```
 
 Choose the effort from this rubric:
 
-- `medium` — tightly specified and mechanical: a copy correction, a test, a
+- `low` — tightly specified and mechanical: a copy correction, a test, a
   component swap, or a change described with `file:line` references and
-  complete acceptance criteria. Most work in this repository is `medium`.
-- `high` — a new page or a new section on an existing page, a change that
+  complete acceptance criteria. Most work in this repository is `low`.
+- `medium` — a new page or a new section on an existing page, a change that
   touches `internal/content/content.go` sourcing, or a change to the design
   tokens in `static/css/input.css`.
-- `xhigh` — anything touching routing, the deployment or runtime constraints
+- `high` — anything touching routing, the deployment or runtime constraints
   covered by `internal/handler/handler_test.go`, or the templ layout
   scaffolding in `templates/layouts/`.
 - `max` — exceptional and operator-designated only; never auto-assign it.
