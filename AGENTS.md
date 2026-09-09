@@ -8,31 +8,25 @@ constraints. Read both before changing anything.
 
 ## Reasoning Effort
 
-Use Codex Astra (`gpt-6-astra`) at low effort by default, medium for
-moderately difficult work, and high for the hardest work.
+Use Codex Astra (`gpt-6-astra`) at low effort by default for features, fixes,
+tests, reviews, and routine implementation, including cross-component work.
 
-Every issue created for this repository must include an explicit reasoning
-effort override:
+Every issue must include an explicit override, with model unset:
 
 ```detent-agent
 schema: 1
 effort: low
 ```
 
-Choose the effort from this rubric:
+- `low` — the default for all work without a specific documented reason to escalate.
+- `medium` — an exception for a concrete reasoning difficulty or evidence that low was insufficient; explain the reason in the issue.
+- `high` — rare, significant research or architecture work with a written justification.
+- `xhigh` and `max` — operator-designated only; never assign automatically.
 
-- `low` — tightly specified and mechanical: a copy correction, a test, a
-  component swap, or a change described with `file:line` references and
-  complete acceptance criteria. Most work in this repository is `low`.
-- `medium` — a new page or a new section on an existing page, a change that
-  touches `internal/content/content.go` sourcing, or a change to the design
-  tokens in `static/css/input.css`.
-- `high` — anything touching routing, the deployment or runtime constraints
-  covered by `internal/handler/handler_test.go`, or the templ layout
-  scaffolding in `templates/layouts/`.
-- `max` — exceptional and operator-designated only; never auto-assign it.
-
-Leave `model` unset so the issue inherits the fleet-standard model.
+Concurrency, recovery, routing, multiple files, or a new endpoint alone do not
+justify higher effort. Preserve intentional operator exceptions. Configured
+complexity levels default to low; verify any approved exception against the
+runtime effort ceiling rather than raising broad defaults.
 
 ## Validation
 
