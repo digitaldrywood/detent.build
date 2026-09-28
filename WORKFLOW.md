@@ -70,7 +70,9 @@ needing JavaScript must have their `Script()` called in
 ## Project CI Quality Gates
 
 Each required stage category, the local command that satisfies it, and the CI
-check that enforces it. The workflow is `.github/workflows/ci.yml`.
+job that also runs it. The workflow is `.github/workflows/ci.yml`; it runs only
+on manual dispatch and in the hourly mac-studio build, never on pushes or PRs,
+so the local gate is what enforces these stages on a pull request.
 
 - Code generation: local `make generate` (`templ generate`); CI check `check`,
   step "Generate templ"
@@ -89,10 +91,12 @@ not run the CGO-disabled server build or `templ fmt`, so the configured
 validation gate appends the build explicitly. Run `make lint` when you touch
 templ files.
 
+Zero CI: GitHub Actions does not run on pushes or PRs. After the configured gate (`make check` plus the server build, the `gate.run` in `detent.yaml`) passes on the exact commit you pushed, post the `local-gate` commit status on that SHA: `gh api -X POST repos/digitaldrywood/detent.build/statuses/$(git rev-parse HEAD) -f state=success -f context=local-gate -f description="make check passed locally"`. Post it only for a commit whose full gate passed in this session; if the gate fails, fix it instead of posting. Any later push, including a rebase onto develop, needs a fresh gate and a fresh local-gate status. Never poll or wait on CI. Open PRs against develop.
+
 Treat this list as part of the project contract. Whenever you touch CI
 configuration or perform a review, verify that every declared stage exists,
-runs its mapped project tool, and passes on the current pull request head. Do
-not rely on Detent or `detent doctor` to infer required stages or inspect CI
+runs its mapped project tool, and passes in the local gate on the current pull
+request head. Do not rely on Detent or `detent doctor` to infer required stages or inspect CI
 configuration.
 
 Use `in_progress` while implementation or validation is still active:
@@ -191,7 +195,7 @@ state.
 2. Create or update the persistent `## Codex Workpad` comment with the plan,
    acceptance criteria, validation plan, and the `in_progress`
    `detent-status` block shown above.
-3. Fetch current `origin/main`, confirm this worktree is based on it, and
+3. Fetch current `origin/develop`, confirm this worktree is based on it, and
    confirm every native dependency relation, `detent-status` blocker, and
    issue-body `Depends on:` reference is merged or otherwise terminal before
    coding.
@@ -200,14 +204,16 @@ state.
 5. Implement the smallest complete change that satisfies the issue.
 6. Run focused tests for touched packages, then run the configured validation
    gate.
-7. Commit and push the branch.
-8. Open or update a pull request that references the issue.
-9. Re-check pull request comments, inline review comments, and CI after the
-   latest push.
+7. Commit and push the branch, then post the `local-gate` status on the pushed
+   head once the gate has passed on that exact commit.
+8. Open or update a pull request against `develop` that references the issue.
+9. Re-check pull request comments and inline review comments after the latest
+   push. Do not wait on CI.
 10. Leave the issue in `In Progress`. Set the Workpad block to
     `status: complete` with `blockers: []` and `human_action: null` only after
-    the pull request is open, not a draft, references the issue, the gate and
-    current-head CI are green, and no actionable review comments remain.
+    the pull request is open, not a draft, references the issue, the gate passed
+    on the current head with its `local-gate` status posted, and no actionable
+    review comments remain.
     Detent auto-promotes directly to `Merging`; never use `Human Review`.
 
 ### For In Progress
@@ -215,7 +221,8 @@ state.
 1. Re-read the issue, pull request, comments, and `## Codex Workpad`, including
    the `detent-status` block.
 2. Continue from the current repository and tracker state.
-3. If implementation is complete, run the full pre-review gate, then update the
+3. If implementation is complete, run the full pre-review gate and post the
+   `local-gate` status on the pushed head, then update the
    Workpad block to `status: complete` with `blockers: []` and
    `human_action: null` only when the gate passes. Leave the issue in
    `In Progress` and let Detent promote it to `Merging`.
@@ -226,7 +233,8 @@ state.
 2. Move the issue to `In Progress`.
 3. Fix the requested changes.
 4. Push updates to the pull request.
-5. Run the full pre-review gate again.
+5. Run the full pre-review gate again on the pushed head and post a fresh
+   `local-gate` status.
 6. Set the Workpad block back to `status: complete` only when the gate passes,
    and leave the issue in `In Progress` for Detent to promote to `Merging`.
 
