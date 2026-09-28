@@ -1,11 +1,8 @@
+# Zero CI (2026-09-28): no push or PR runs. Workers run make check locally and post the local-gate status; an hourly build on mac-studio runs the full suite and cuts releases.
 name: CI
 
 on:
-  push:
-    branches: [main]
-  pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
-  merge_group:
+  workflow_dispatch:
 
 permissions:
   contents: read
