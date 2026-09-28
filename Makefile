@@ -5,6 +5,9 @@ SHELL := /bin/bash
 SMOKE_URL ?= https://detent.build
 
 BINARY_NAME=detent.build
+# Run the linter with the active Go toolchain so a stale installed binary cannot
+# fail to decode newer standard-library export data.
+GOLANGCI_LINT=go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
 DETENT_TEMP_ROOT=$(or $(TMPDIR),$(TMP),$(TEMP),/tmp)
 HYPE_VERSION=$(shell tr -d '[:space:]' < docs/site/hype.version)
 HYPE_BIN_DIR=$(DETENT_TEMP_ROOT)/detent-build-tools/hype-$(HYPE_VERSION)
@@ -28,7 +31,7 @@ test:
 	go test -race ./...
 
 lint:
-	golangci-lint run
+	$(GOLANGCI_LINT) run
 	templ fmt templates/ ui/
 
 generate:
@@ -56,7 +59,7 @@ css-watch:
 check: docs-check generate css
 	go vet ./...
 	go test -race ./...
-	golangci-lint run
+	$(GOLANGCI_LINT) run
 
 setup:
 	go install github.com/air-verse/air@latest
