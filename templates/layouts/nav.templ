@@ -36,11 +36,17 @@ templ Nav(current string) {
 			<div class="ml-auto flex items-center gap-2.5">
 				<a
 					href={ templ.SafeURL(content.ReleasesURL) }
-					class="hidden rounded-chip border border-line px-2 py-1 font-mono text-2xs text-dim transition-colors hover:border-accent hover:text-accent sm:inline-block"
+					class="hidden rounded-chip border border-line px-2 py-1 font-mono text-2xs text-dim transition-colors hover:border-accent hover:text-accent sm:inline-block lg:hidden xl:inline-block"
 				>
 					{ content.VersionFromCtx(ctx) } &#183; { content.License }
 				</a>
 				@ThemeToggle()
+				<a
+					href="https://hub.detent.build"
+					class="hidden rounded-card border border-line px-3 py-1.5 text-xs text-text transition-colors hover:border-accent hover:text-accent lg:inline-flex"
+				>
+					Sign in
+				</a>
 				<a
 					href={ templ.SafeURL(content.RepoURL) }
 					class="rounded-card border border-line px-3 py-1.5 font-mono text-xs text-text transition-colors hover:border-accent hover:text-accent"
@@ -51,6 +57,12 @@ templ Nav(current string) {
 		</nav>
 		<div class="border-t border-line lg:hidden">
 			<div class="mx-auto flex max-w-[1280px] gap-5 overflow-x-auto px-6 py-2 text-xs md:px-8">
+				<a
+					href="https://hub.detent.build"
+					class="inline-flex shrink-0 items-center whitespace-nowrap rounded-card border border-line px-3 py-1 text-text transition-colors hover:border-accent hover:text-accent"
+				>
+					Sign in
+				</a>
 				for _, item := range navItems {
 					@navLink(item, current)
 				}
