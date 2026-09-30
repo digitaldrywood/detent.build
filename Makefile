@@ -47,10 +47,13 @@ docs-build: $(HYPE_BIN)
 docs-check: $(HYPE_BIN)
 	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) go run ./cmd/docs-build -check -hype $(HYPE_BIN)
 
-css:
+node_modules/.package-lock.json: package.json package-lock.json
+	npm ci --include=dev
+
+css: node_modules/.package-lock.json
 	npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --minify
 
-css-watch:
+css-watch: node_modules/.package-lock.json
 	npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --watch
 
 check: docs-check generate css
