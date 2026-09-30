@@ -33,6 +33,8 @@ templ Footer() {
 					{"Install", "/install"},
 					{"Videos", "/videos"},
 					{"Open source", "/open-source"},
+					{"Privacy Policy", "/privacy"},
+					{"Terms of Service", "/terms"},
 				})
 				@footerColumn("Project", []footerLink{
 					{"Detent Cloud", "https://cloud.detent.build"},
@@ -55,7 +57,7 @@ templ Footer() {
 			<div class="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-6 gap-y-2 px-6 py-4 font-mono text-2xs text-dim md:px-8">
 				<span>{ content.VersionFromCtx(ctx) }</span>
 				<span>MIT</span>
-				<span>no telemetry, no analytics, no cookies</span>
+				<span>website: no analytics or tracking cookies</span>
 				<span class="ml-auto">a Digital Drywood project</span>
 			</div>
 		</div>

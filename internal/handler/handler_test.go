@@ -71,6 +71,8 @@ func TestPagesRender(t *testing.T) {
 		{"/dashboard", "The board stays honest."},
 		{"/install", "No service to stand up."},
 		{"/open-source", "No control plane."},
+		{"/privacy", "Privacy Policy"},
+		{"/terms", "Terms of Service"},
 		{"/videos", "Detent, moving through real work."},
 		{"/docs", "Documentation, pinned to the source."},
 		{"/docs/getting-started", "Quick Start"},
@@ -594,7 +596,7 @@ func TestHealth(t *testing.T) {
 func TestNoWWWAndNoPlainHTTPForProductionHost(t *testing.T) {
 	e := newTestServer(t)
 
-	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/videos", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/sitemap.xml"}
+	paths := []string{"/", "/how-it-works", "/why-detent", "/dashboard", "/install", "/open-source", "/privacy", "/terms", "/videos", "/docs", "/docs/getting-started", "/docs/site/project-contracts", "/docs/site/working-checkout-merge-gate", "/sitemap.xml"}
 
 	for _, path := range paths {
 		t.Run(path, func(t *testing.T) {
@@ -625,6 +627,8 @@ func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
 		{"/dashboard", "https://detent.build/dashboard"},
 		{"/install", "https://detent.build/install"},
 		{"/open-source", "https://detent.build/open-source"},
+		{"/privacy", "https://detent.build/privacy"},
+		{"/terms", "https://detent.build/terms"},
 		{"/videos", "https://detent.build/videos"},
 		{"/docs", "https://detent.build/docs"},
 		{"/docs/getting-started", "https://detent.build/docs/getting-started"},
