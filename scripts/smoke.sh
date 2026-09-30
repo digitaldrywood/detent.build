@@ -29,10 +29,17 @@ echo "smoke: $BASE"
 echo "routes"
 for path in / /how-it-works /why-detent /dashboard /install /install/macos \
             /install/linux /install/windows /install/source /open-source \
-            /privacy /terms /health /robots.txt /sitemap.xml; do
+            /privacy /terms /google971b363feb71cd5c.html /health /robots.txt /sitemap.xml; do
   code=$(status "$path")
   [ "$code" = "200" ] && pass "$path -> 200" || fail "$path -> $code, want 200"
 done
+
+verification=$(get /google971b363feb71cd5c.html)
+if [[ "$verification" == "google-site-verification: google971b363feb71cd5c.html" ]]; then
+  pass "Google verification file has its original content"
+else
+  fail "Google verification file content does not match"
+fi
 
 code=$(status /this-page-does-not-exist)
 [ "$code" = "404" ] && pass "unknown path -> 404" || fail "unknown path -> $code, want 404"

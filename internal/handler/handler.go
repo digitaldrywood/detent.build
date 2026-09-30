@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	// No /favicon.ico route: the layout links the SVG mark, and a registered
 	// route to a file that does not exist just turns a 404 into a slower 404.
 	e.File("/robots.txt", "static/robots.txt")
+	e.File("/google971b363feb71cd5c.html", "static/google971b363feb71cd5c.html")
 	e.GET("/sitemap.xml", h.Sitemap)
 
 	e.GET("/health", h.Health)
