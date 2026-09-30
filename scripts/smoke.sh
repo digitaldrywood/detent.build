@@ -29,7 +29,7 @@ echo "smoke: $BASE"
 echo "routes"
 for path in / /how-it-works /why-detent /dashboard /install /install/macos \
             /install/linux /install/windows /install/source /open-source \
-            /health /robots.txt /sitemap.xml; do
+            /privacy /terms /health /robots.txt /sitemap.xml; do
   code=$(status "$path")
   [ "$code" = "200" ] && pass "$path -> 200" || fail "$path -> $code, want 200"
 done
@@ -40,6 +40,14 @@ code=$(status /this-page-does-not-exist)
 echo "canonical host"
 home=$(get /)
 hiw=$(get /how-it-works)
+
+for path in /privacy /terms; do
+  if [[ "$home" == *"href=\"$path\""* ]]; then
+    pass "homepage links to $path"
+  else
+    fail "homepage is missing its $path link"
+  fi
+done
 
 # detent.build has no www record, and .build is HSTS-preloaded, so neither a
 # www host nor a plain-http absolute URL for it is reachable.
