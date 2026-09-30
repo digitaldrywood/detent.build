@@ -1,0 +1,36 @@
+package pages
+
+import (
+	"detent.build/internal/content"
+	"detent.build/internal/meta"
+	"detent.build/templates/layouts"
+	"detent.build/templates/partials"
+)
+
+templ Legal(page content.LegalPage) {
+	@layouts.Base(meta.New(page.Title, page.Description).WithPath(page.Path)) {
+		@partials.PageHeader("Legal", page.Title, page.Introduction)
+		<div class="mx-auto max-w-[1280px] px-6 py-8 md:px-8 md:py-12">
+			<article class="max-w-[860px]">
+				<p class="font-mono text-xs text-dim">Effective { content.LegalEffectiveDate }</p>
+				for _, section := range page.Sections {
+					<section class="mt-10 border-t border-line pt-6">
+						<h2 class="text-lg font-semibold tracking-tight text-text">{ section.Heading }</h2>
+						for _, paragraph := range section.Paragraphs {
+							<p class="mt-4 text-sm leading-relaxed text-sec">{ paragraph }</p>
+						}
+						if len(section.Links) > 0 {
+							<ul class="mt-4 flex flex-col gap-2 text-sm">
+								for _, link := range section.Links {
+									<li>
+										<a href={ templ.SafeURL(link.URL) } class="inline-flex min-h-6 items-center text-accent underline decoration-line underline-offset-4 hover:decoration-accent">{ link.Label }</a>
+									</li>
+								}
+							</ul>
+						}
+					</section>
+				}
+			</article>
+		</div>
+	}
+}
