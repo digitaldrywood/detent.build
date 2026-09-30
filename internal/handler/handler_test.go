@@ -736,6 +736,7 @@ func registeredIndexablePageRoutes(e *echo.Echo, catalog *docs.Catalog) map[stri
 		"/health": {},
 		// Robots directives are crawler configuration, not page content.
 		"/robots.txt": {},
+		"/google971b363feb71cd5c.html": {},
 		// The sitemap describes pages but is not itself an indexable page.
 		"/sitemap.xml": {},
 		// Install platform routes are HTMX partials canonicalized to /install.
