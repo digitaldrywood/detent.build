@@ -132,6 +132,22 @@ If you reorder sections, renumber the whole page.
 
 ## Upstream documentation renames and deletions
 
+`make docs-sync` fetches and verifies the pinned annotated tag object and peeled
+commit, materializes the full source tree in a temporary checkout, and runs the
+upstream `make generate-docs` target with `GOTOOLCHAIN=go1.26.6`. Git, Make, Go,
+and access to the pinned toolchain and upstream Go dependencies are required;
+Node, sqlc, and templ are not required for upstream documentation generation.
+The website's own Go version and build requirements are unchanged.
+
+Authored documentation comes from that same checkout and is verified against
+its Git blobs. Generated `docs/config.md` and
+`docs/mcp-capability-matrix.md` are included even when absent from Git, with
+SHA-256 hashes of their generated content in the existing manifest.
+`docs/config.md.in` is an input and is excluded from the published snapshot.
+Generation and validation finish before the existing vendor/manifest transaction
+publishes anything; a failure preserves the prior snapshot. Release pins must
+support the upstream generation target and both required outputs.
+
 `make docs-sync` compares the committed manifest with the incoming release and
 prints every added path, deleted path, and probable rename. An identical digest
 at a new path is reported as a probable rename automatically. A rename whose
