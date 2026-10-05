@@ -1,8 +1,11 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -124,6 +127,129 @@ func TestPublishSnapshotRollsBackOnRenameFailure(t *testing.T) {
 		t.Fatal("publishSnapshotWithRename() succeeded despite the injected failure")
 	}
 	assertSnapshot(t, docsDir, "old")
+}
+
+func TestSyncVerifiedDocsGeneratedSnapshot(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		recipe  string
+		wantErr string
+	}{
+		{name: "publishes generated and authored content"},
+		{name: "failed generation preserves publication", recipe: "\t@echo partial > docs/config.md\n\t@echo fixture-generation-failed >&2\n\t@false\n", wantErr: "fixture-generation-failed"},
+		{name: "missing output preserves publication", recipe: "\t@rm docs/mcp-capability-matrix.md\n", wantErr: "inspect upstream document docs/mcp-capability-matrix.md"},
+		{name: "changed authored content preserves publication", recipe: "\t@echo changed > docs/doc.md\n", wantErr: "git object mismatch for docs/doc.md"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			upstream, sourceCommit, sourceTag := generatedDocsFixture(t, tt.recipe)
+			docsDir := t.TempDir()
+			writeSnapshot(t, docsDir, "old")
+			previous := manifest{Schema: 1, Repository: sourceRepository, Tag: releaseTag,
+				TagObjectSHA: sourceTag, CommitSHA: sourceCommit, SyncedAt: "2026-08-08T12:00:00Z",
+				Files: []manifestFile{{Path: "config.md", SHA256: "old"}, {Path: "doc.md", SHA256: "old"}, {Path: "mcp-capability-matrix.md", SHA256: "old"}},
+			}
+			previousBytes, err := json.Marshal(previous)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manifestPath := filepath.Join(docsDir, "manifest.json")
+			if err := os.WriteFile(manifestPath, previousBytes, 0o644); err != nil {
+				t.Fatal(err)
+			}
+			registry := docsregistry.Registry{Pages: []docsregistry.Page{
+				{SourcePath: "config.md", PublicPath: "/docs/configuration", Origin: docsregistry.OriginUpstream},
+				{SourcePath: "mcp-capability-matrix.md", PublicPath: "/docs/capabilities", Origin: docsregistry.OriginUpstream},
+			}}
+			err = syncVerifiedDocs(upstream, docsDir, t.TempDir(), sourceTag, sourceCommit, registry)
+			if tt.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
+					t.Fatalf("syncVerifiedDocs() error = %v, want %q", err, tt.wantErr)
+				}
+				assertSnapshotFile(t, docsDir, "vendor/doc.md", "old")
+				assertSnapshotFile(t, docsDir, "manifest.json", string(previousBytes))
+				entries, err := os.ReadDir(filepath.Join(docsDir, "vendor"))
+				if err != nil || len(entries) != 1 {
+					t.Fatalf("prior vendor inventory changed: %v, %v", entries, err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, exists, err := readManifest(manifestPath)
+			if err != nil || !exists {
+				t.Fatalf("read published manifest: exists=%v, error=%v", exists, err)
+			}
+			if got.Repository != sourceRepository || got.Tag != releaseTag || got.TagObjectSHA != sourceTag || got.CommitSHA != sourceCommit {
+				t.Errorf("source provenance changed: %#v", got)
+			}
+			want := map[string]string{
+				"config.md":                "# Configuration\ntyped defaults\n",
+				"doc.md":                   "authored documentation\n",
+				"mcp-capability-matrix.md": "capability decisions\n",
+			}
+			if len(got.Files) != len(want) {
+				t.Fatalf("manifest files = %#v, want exactly authored and generated documents", got.Files)
+			}
+			for _, file := range got.Files {
+				contents, ok := want[file.Path]
+				if !ok {
+					t.Fatalf("unexpected published file %q", file.Path)
+				}
+				assertSnapshotFile(t, docsDir, "vendor/"+file.Path, contents)
+				digest := sha256.Sum256([]byte(contents))
+				if file.SHA256 != hex.EncodeToString(digest[:]) {
+					t.Errorf("manifest digest for %s = %s, want digest of generated content", file.Path, file.SHA256)
+				}
+			}
+			if _, err := os.Stat(filepath.Join(docsDir, "vendor", "config.md.in")); !os.IsNotExist(err) {
+				t.Errorf("config template published: %v", err)
+			}
+		})
+	}
+}
+
+// This upstream has no committed generated documents. Its make target consumes
+// inputs outside docs/, so a docs-only checkout cannot satisfy the fixture.
+func generatedDocsFixture(t *testing.T, recipe string) (string, string, string) {
+	t.Helper()
+	inputs := t.TempDir()
+	files := map[string]string{
+		"docs/doc.md":                                     "authored documentation\n",
+		"docs/config.md.in":                               "# Configuration\n",
+		"internal/config/defaults.txt":                    "typed defaults\n",
+		"internal/operatortool/capability/decisions.json": "capability decisions\n",
+		"Makefile":                                        "generate-docs:\n\t@test \"$(GOTOOLCHAIN)\" = \"go1.26.6\"\n\t@cat docs/config.md.in internal/config/defaults.txt > docs/config.md\n\t@cat internal/operatortool/capability/decisions.json > docs/mcp-capability-matrix.md\n" + recipe,
+	}
+	for path, contents := range files {
+		destination := filepath.Join(inputs, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(destination, []byte(contents), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	upstream := filepath.Join(t.TempDir(), "upstream.git")
+	if _, err := gitBytes("", nil, "init", "--bare", "--quiet", upstream); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := gitBytes(upstream, nil, "--work-tree="+inputs, "add", "--all"); err != nil {
+		t.Fatal(err)
+	}
+	tree, err := gitText(upstream, nil, "write-tree")
+	if err != nil {
+		t.Fatal(err)
+	}
+	commit, err := gitText(upstream, nil, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit-tree", tree, "-m", "authored source fixture")
+	if err != nil {
+		t.Fatal(err)
+	}
+	tag, err := gitText(upstream, []byte(fmt.Sprintf("object %s\ntype commit\ntag fixture\ntagger Fixture <fixture@example.test> 1786190400 +0000\n\nFixture\n", commit)), "mktag")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return upstream, commit, tag
 }
 
 func TestRecoverInterruptedPublication(t *testing.T) {
@@ -355,12 +481,17 @@ func writeSnapshot(t *testing.T, root, value string) {
 func assertSnapshot(t *testing.T, root, want string) {
 	t.Helper()
 	for _, path := range []string{"vendor/doc.md", "manifest.json"} {
-		contents, err := os.ReadFile(filepath.Join(root, path))
-		if err != nil {
-			t.Fatalf("read %s: %v", path, err)
-		}
-		if got := string(contents); got != want {
-			t.Errorf("%s = %q, want %q", path, got, want)
-		}
+		assertSnapshotFile(t, root, path, want)
+	}
+}
+
+func assertSnapshotFile(t *testing.T, root, path, want string) {
+	t.Helper()
+	contents, err := os.ReadFile(filepath.Join(root, path))
+	if err != nil {
+		t.Fatalf("read %s: %v", path, err)
+	}
+	if got := string(contents); got != want {
+		t.Errorf("%s = %q, want %q", path, got, want)
 	}
 }

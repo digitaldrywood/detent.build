@@ -25,6 +25,7 @@ const (
 	tagObjectSHA     = "10c9b2a531089e8bac7a3fcd42593b257863ec8d"
 	commitSHA        = "1543929187369eca2703abd2a655cf86e9e5d83e"
 	docsPrefix       = "docs/"
+	docsToolchain    = "go1.26.6"
 )
 
 type treeEntry struct {
@@ -126,18 +127,12 @@ func syncDocs() error {
 		return fmt.Errorf("peeled commit mismatch: got %s, want %s", resolvedCommit, commitSHA)
 	}
 
-	tree, err := gitBytes(upstream, nil, "ls-tree", "-r", "-z", "--full-tree", resolvedCommit, "--", "docs")
-	if err != nil {
-		return fmt.Errorf("list documentation tree: %w", err)
-	}
-	entries, err := parseTree(tree)
-	if err != nil {
-		return err
-	}
-	if len(entries) == 0 {
-		return errors.New("upstream documentation tree is empty")
-	}
+	return syncVerifiedDocs(upstream, docsDir, temporary, resolvedTag, resolvedCommit, docsregistry.Current)
+}
 
+// syncVerifiedDocs prepares the entire snapshot before the existing transaction
+// publishes anything. The caller has already verified the upstream tag and commit.
+func syncVerifiedDocs(upstream, docsDir, temporary, resolvedTag, resolvedCommit string, registry docsregistry.Registry) error {
 	stagedRoot, err := os.MkdirTemp(docsDir, ".docs-staging-")
 	if err != nil {
 		return fmt.Errorf("create staging directory: %w", err)
@@ -148,69 +143,27 @@ func syncDocs() error {
 		return fmt.Errorf("create staged vendor directory: %w", err)
 	}
 
-	files := make([]manifestFile, 0, len(entries))
-	seen := make(map[string]struct{}, len(entries))
-	for _, entry := range entries {
-		rel, err := safeRelativePath(entry.Path)
-		if err != nil {
-			return err
-		}
-		if _, ok := seen[rel]; ok {
-			return fmt.Errorf("duplicate documentation path %q", rel)
-		}
-		seen[rel] = struct{}{}
-		if entry.Type != "blob" {
-			return fmt.Errorf("unsupported git object type %q for %s", entry.Type, entry.Path)
-		}
-		mode, err := fileMode(entry.Mode)
-		if err != nil {
-			return fmt.Errorf("%s: %w", entry.Path, err)
-		}
-
-		contents, err := gitBytes(upstream, nil, "cat-file", "blob", entry.OID)
-		if err != nil {
-			return fmt.Errorf("read upstream blob for %s: %w", entry.Path, err)
-		}
-
-		destination := filepath.Join(stagedVendor, filepath.FromSlash(rel))
-		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
-			return fmt.Errorf("create directory for %s: %w", rel, err)
-		}
-		if err := os.WriteFile(destination, contents, mode); err != nil {
-			return fmt.Errorf("stage %s: %w", rel, err)
-		}
-		stagedContents, err := os.ReadFile(destination)
-		if err != nil {
-			return fmt.Errorf("read staged file %s: %w", rel, err)
-		}
-		verifiedOID, err := gitText(upstream, stagedContents, "hash-object", "--stdin")
-		if err != nil {
-			return fmt.Errorf("verify staged file %s: %w", rel, err)
-		}
-		if verifiedOID != entry.OID {
-			return fmt.Errorf("git object mismatch for %s: got %s, want %s", entry.Path, verifiedOID, entry.OID)
-		}
-		digest := sha256.Sum256(stagedContents)
-		files = append(files, manifestFile{Path: rel, SHA256: hex.EncodeToString(digest[:])})
+	files, err := prepareDocumentation(upstream, resolvedCommit, filepath.Join(temporary, "source"), stagedVendor)
+	if err != nil {
+		return err
 	}
-	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 
 	manifestPath := filepath.Join(docsDir, "manifest.json")
 	previous, hasPrevious, err := readManifest(manifestPath)
 	if err != nil {
 		return err
 	}
-	if err := validatePublishedSources(files, docsregistry.Current); err != nil {
+	if err := validatePublishedSources(files, registry); err != nil {
 		return err
 	}
 	if hasPrevious {
-		decisions := decisionsFor(previous.CommitSHA, resolvedCommit, docsregistry.Current.Inventory)
+		decisions := decisionsFor(previous.CommitSHA, resolvedCommit, registry.Inventory)
 		changes, classifyErr := inventoryChanges(previous.Files, files, decisions)
 		printInventoryChanges(changes)
 		if classifyErr != nil {
 			return classifyErr
 		}
-		if err := validateInventoryChanges(changes, decisions, docsregistry.Current); err != nil {
+		if err := validateInventoryChanges(changes, decisions, registry); err != nil {
 			return err
 		}
 	} else {
@@ -240,6 +193,107 @@ func syncDocs() error {
 
 	_, _ = fmt.Printf("vendored %d files from %s at %s (%s)\n", len(files), sourceRepository, releaseTag, resolvedCommit)
 	return nil
+}
+
+// prepareDocumentation uses a full checkout: generators discover inputs outside
+// docs/. Authored files retain blob verification; generated files are hashed from
+// their actual output because they need not exist in the Git tree.
+func prepareDocumentation(upstream, commit, sourceRoot, stagedVendor string) ([]manifestFile, error) {
+	if err := os.Mkdir(sourceRoot, 0o755); err != nil {
+		return nil, fmt.Errorf("create upstream checkout: %w", err)
+	}
+	if _, err := gitBytes(upstream, nil, "--work-tree="+sourceRoot, "checkout", "--force", commit, "--", "."); err != nil {
+		return nil, fmt.Errorf("materialize upstream source: %w", err)
+	}
+	tree, err := gitBytes(upstream, nil, "ls-tree", "-r", "-z", "--full-tree", commit, "--", "docs")
+	if err != nil {
+		return nil, fmt.Errorf("list documentation tree: %w", err)
+	}
+	entries, err := parseTree(tree)
+	if err != nil {
+		return nil, err
+	}
+	if len(entries) == 0 {
+		return nil, errors.New("upstream documentation tree is empty")
+	}
+	cmd := exec.Command("make", "generate-docs")
+	cmd.Dir = sourceRoot
+	cmd.Env = append(os.Environ(), "GOTOOLCHAIN="+docsToolchain)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("generate upstream documentation with %s: %w\n%s", docsToolchain, err, strings.TrimSpace(string(output)))
+	}
+	generated := map[string]bool{
+		"docs/config.md":                true,
+		"docs/mcp-capability-matrix.md": true,
+	}
+	selected := make([]treeEntry, 0, len(entries)+len(generated))
+	for _, entry := range entries {
+		if entry.Path == "docs/config.md.in" || generated[entry.Path] {
+			continue
+		}
+		selected = append(selected, entry)
+	}
+	for path := range generated {
+		selected = append(selected, treeEntry{Mode: "100644", Type: "blob", Path: path})
+	}
+	files := make([]manifestFile, 0, len(selected))
+	seen := make(map[string]struct{}, len(selected))
+	for _, entry := range selected {
+		rel, err := safeRelativePath(entry.Path)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := seen[rel]; ok {
+			return nil, fmt.Errorf("duplicate documentation path %q", rel)
+		}
+		seen[rel] = struct{}{}
+		if entry.Type != "blob" {
+			return nil, fmt.Errorf("unsupported git object type %q for %s", entry.Type, entry.Path)
+		}
+		mode, err := fileMode(entry.Mode)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", entry.Path, err)
+		}
+
+		sourcePath := filepath.Join(sourceRoot, filepath.FromSlash(entry.Path))
+		info, err := os.Lstat(sourcePath)
+		if err != nil {
+			return nil, fmt.Errorf("inspect upstream document %s: %w", entry.Path, err)
+		}
+		if !info.Mode().IsRegular() {
+			return nil, fmt.Errorf("upstream document %s is not a regular file", entry.Path)
+		}
+		contents, err := os.ReadFile(sourcePath)
+		if err != nil {
+			return nil, fmt.Errorf("read upstream document %s: %w", entry.Path, err)
+		}
+
+		destination := filepath.Join(stagedVendor, filepath.FromSlash(rel))
+		if err := os.MkdirAll(filepath.Dir(destination), 0o755); err != nil {
+			return nil, fmt.Errorf("create directory for %s: %w", rel, err)
+		}
+		if err := os.WriteFile(destination, contents, mode); err != nil {
+			return nil, fmt.Errorf("stage %s: %w", rel, err)
+		}
+		stagedContents, err := os.ReadFile(destination)
+		if err != nil {
+			return nil, fmt.Errorf("read staged file %s: %w", rel, err)
+		}
+		if entry.OID != "" {
+			verifiedOID, err := gitText(upstream, stagedContents, "hash-object", "--stdin")
+			if err != nil {
+				return nil, fmt.Errorf("verify staged file %s: %w", rel, err)
+			}
+			if verifiedOID != entry.OID {
+				return nil, fmt.Errorf("git object mismatch for %s: got %s, want %s", entry.Path, verifiedOID, entry.OID)
+			}
+		}
+		digest := sha256.Sum256(stagedContents)
+		files = append(files, manifestFile{Path: rel, SHA256: hex.EncodeToString(digest[:])})
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files, nil
 }
 
 func publishSnapshot(docsDir, stagedRoot string) error {
