@@ -78,6 +78,80 @@ same commit.
 
 ## Verifying a deploy
 
+### Hourly develop releases
+
+`.github/workflows/ci.yml` runs at minute 17 of each UTC hour and keeps manual
+dispatch. GitHub schedules use the default branch; keep `develop` as the default.
+Manual dispatches from another branch do nothing. Pushes and pull requests do
+not trigger this workflow, and its jobs must not become landing requirements.
+The runner's pre-landing gate remains `make check && CGO_ENABLED=0 go build -o
+/dev/null ./cmd/server`.
+
+Each run pins one develop commit for every job. `check` runs the complete local
+gate, template formatting, and CI helper tests. `browser` exercises the built
+binary, every published docs page, CSS, and HTMX install navigation in Chromium,
+and runs the HTTP smoke locally. A failure or skipped prerequisite prevents
+promotion.
+
+On green, `promote` fetches main again and skips if main already contains the
+tested commit. Otherwise it creates a merge commit whose tree must exactly
+match the tested develop tree and pushes normally. Newer develop commits wait
+for another run; main-only changes, conflicts, concurrent incompatible updates,
+and branch protection rejections fail visibly. There is no force push or
+protection bypass. Dokploy continues deploying from main. After a 90-second
+build allowance, `smoke` retries the production checks up to 15 times. This
+verifies production responses; it does not attest Dokploy's deployed commit.
+
+Before rollout, the repository/release operator must configure these Actions
+secrets:
+
+- `DETENT_PROMOTION_TOKEN`: a release identity with repository contents write
+  access that main's existing protections allow. Use a dedicated app token or
+  fine-grained token; do not relax protections. This also supplies a normal push
+  event for Dokploy. The workflow's default token stays read-only.
+- `DETENT_CI_INTAKE_URL` and `DETENT_CI_INTAKE_TOKEN`: an HTTPS receiver connected
+  to this **native Detent Cloud project**. The worker cannot provision or verify
+  this receiver. The checked-in OSS `/api/v1/intake` documentation only supports
+  GitHub trackers; it is not evidence of a Cloud API. Do not substitute GitHub
+  issues or point the receiver at a guessed Cloud route.
+
+The receiver integration contract is explicit in `scripts/ci/report.mjs`:
+authenticated POST JSON with `project_id`, `summary`, `details`, a stable
+job-specific `fingerprint`, `delivery_id`, `state: Todo`, and `priority: 2`.
+It must create one native Todo/High issue per failed job or **append a comment**
+to the open issue with that fingerprint, preserving its current state. Repeated
+delivery ids must not duplicate comments. Return JSON containing a canonical
+`work_item_id` and `action` (`created`, `commented`, or `duplicate`), only after
+durable success. This is a required adapter contract, not a claimed built-in
+Cloud endpoint. Receiver availability and conformance must be verified before
+enabling promotion.
+
+The reporter reads the current run attempt's failed jobs and actual logs, and
+sends the run/job URLs, tested SHA, and the last 16000 characters of output.
+Skipped jobs do not create issues. Every failure is attempted even if another
+delivery fails; intake failures make the reporter red. Full job output and
+browser traces remain in Actions. Promotion requires all three secrets; missing
+configuration cannot silently release.
+
+### Live acceptance (release operator)
+
+After integration and receiver setup, leave `CI_FAILURE_JOB` unset and record
+an actual **scheduled** green run with a new develop SHA. Confirm its promotion
+commit on main, Dokploy deployment, and successful `smoke` job. Record the run,
+tested SHA, promotion, and smoke links in the native issue through the release
+owner; a manual run or local fixture is not scheduled-run evidence.
+
+Set the repository Actions variable `CI_FAILURE_JOB=check` for the next
+scheduled run. The check job fails deliberately after validation with a clear
+log line. Confirm no main promotion, and a Todo/High native issue containing
+that run URL, SHA, and failing output. A second scheduled failure must comment
+on the same open issue, without duplicating it or resetting its state. Remove
+the variable immediately after verification, and record those links in the
+native acceptance issue. Secrets, receiver setup, and both live runs are
+post-integration work; do not claim them from a source worker's local tests.
+
+### HTTP smoke
+
 ```sh
 make smoke                                # against https://detent.build
 make smoke SMOKE_URL=http://localhost:3000
