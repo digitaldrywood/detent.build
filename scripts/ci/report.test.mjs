@@ -68,6 +68,21 @@ test('a delivery failure still attempts the other job and fails the reporter', a
   assert.equal(calls, 2);
 });
 
+test('unavailable logs still report the failed job and keep missing evidence visible', async () => {
+  const f = fixture();
+  f.jobs[0].conclusion = 'startup_failure';
+  f.jobs[0].steps = [{ name: 'Set up job', conclusion: 'failure' }];
+  f.github.rest.actions.downloadJobLogsForWorkflowRun = async ({ job_id }) => {
+    if (job_id === 0) throw new Error('HTTP 404');
+    return { data: 'browser failed' };
+  };
+  await assert.rejects(reportFailures({ ...f, context, env }), /check: Job logs unavailable: HTTP 404/);
+  assert.equal(f.deliveries.length, 2);
+  assert.match(f.deliveries[0].details, /Job logs unavailable: HTTP 404/);
+  assert.match(f.deliveries[0].details, /Set up job: failure/);
+  assert.match(f.deliveries[1].details, /browser failed/);
+});
+
 test('missing credentials and unacknowledged HTML responses fail visibly', async () => {
   const f = fixture();
   await assert.rejects(reportFailures({ ...f, context, env: { ...env, INTAKE_TOKEN: '' } }), /not configured/);

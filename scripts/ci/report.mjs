@@ -12,10 +12,19 @@ export async function reportFailures({ github, context, env, send = fetch }) {
   const errors = [];
   for (const job of failed) {
     try {
-      const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
-        ...context.repo, job_id: job.id,
-      });
-      const output = typeof logs.data === 'string' ? logs.data : Buffer.from(logs.data).toString('utf8');
+      let output;
+      try {
+        const logs = await github.rest.actions.downloadJobLogsForWorkflowRun({
+          ...context.repo, job_id: job.id,
+        });
+        output = typeof logs.data === 'string' ? logs.data : Buffer.from(logs.data).toString('utf8');
+      } catch (error) {
+        // Startup failures and expired logs can have no downloadable output.
+        // Still file the failed job, but keep the reporter red for missing evidence.
+        errors.push(`${job.name}: Job logs unavailable: ${error.message}`);
+        const steps = (job.steps || []).filter(step => step.conclusion && !['success', 'skipped'].includes(step.conclusion));
+        output = `Job logs unavailable: ${error.message}\nAvailable step results:\n${steps.map(step => `${step.name}: ${step.conclusion}`).join('\n') || '(none)'}`;
+      }
       const excerpt = output.slice(-16000).replaceAll('```', '`\u200b``');
       const runURL = `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}/actions/runs/${context.runId}/attempts/${env.GITHUB_RUN_ATTEMPT}`;
       const payload = {

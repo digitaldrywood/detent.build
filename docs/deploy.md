@@ -129,8 +129,9 @@ enabling promotion.
 The reporter reads the current run attempt's failed jobs and actual logs, and
 sends the run/job URLs, tested SHA, and the last 16000 characters of output.
 Skipped jobs do not create issues. Every failure is attempted even if another
-delivery fails; intake failures make the reporter red. Full job output and
-browser traces remain in Actions. Promotion requires all three secrets; missing
+delivery fails. If logs are unavailable, the issue records that gap and any
+available step results; missing logs and intake failures make the reporter red.
+Full job output and browser traces remain in Actions. Promotion requires all three secrets; missing
 configuration cannot silently release.
 
 ### Live acceptance (release operator)
