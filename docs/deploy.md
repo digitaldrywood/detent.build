@@ -87,6 +87,12 @@ not trigger this workflow, and its jobs must not become landing requirements.
 The runner's pre-landing gate remains `make check && CGO_ENABLED=0 go build -o
 /dev/null ./cmd/server`.
 
+The CSS targets install the locked frontend dependencies with `npm ci
+--include=dev` when the local installation is missing or older than either npm
+manifest, then invoke the local Tailwind CLI. A fresh landing checkout therefore
+needs npm and registry access; it does not need a separate `npm ci` before the
+gate. Existing installations are reused on subsequent builds.
+
 Each run pins one develop commit for every job. `check` runs the complete local
 gate, template formatting, and CI helper tests. `browser` exercises the built
 binary, every published docs page, CSS, and HTMX install navigation in Chromium,
