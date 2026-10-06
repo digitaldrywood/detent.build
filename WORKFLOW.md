@@ -70,23 +70,31 @@ needing JavaScript must have their `Script()` called in
 ## Project CI Quality Gates
 
 Each required stage category, the local command that satisfies it, and the CI
-job that also runs it. The workflow is `.github/workflows/ci.yml`; it runs only
-on manual dispatch and in the hourly mac-studio build, never on pushes or PRs,
-so the local gate is what enforces these stages on a pull request.
+job that also runs it. The workflow is `.github/workflows/ci.yml`; it runs
+hourly and on manual dispatch from `develop`, never on pushes or PRs. The local
+gate enforces landing; Actions supplies release evidence and promotes the tested
+tree to `main`. Setup and live acceptance are described in `docs/deploy.md`.
 
-- Code generation: local `make generate` (`templ generate`); CI check `check`,
-  step "Generate templ"
-- Stylesheet build: local `make css`; CI check `check`, step "Build CSS"
-- Static analysis: local `go vet ./...`; CI check `check`, step "Vet"
-- Unit tests with race detector: local `go test -race ./...`; CI check `check`,
-  step "Test"
+- Site-authored documentation: local `make docs-check`; CI job `check`, via
+  `make check`
+- Code generation: local `make generate` (`templ generate`); CI job `check`,
+  via `make check`
+- Stylesheet build: local `make css`; CI jobs `check` (via `make check`) and
+  `browser` (for the browser's static assets)
+- Static analysis: local `go vet ./...`; CI job `check`, via `make check`
+- Unit tests with race detector: local `go test -race ./...`; CI job `check`,
+  via `make check`
 - Server build with CGO disabled: local
   `CGO_ENABLED=0 go build -o /dev/null ./cmd/server`; CI check `check`, step
-  "Build"
+  "Full pre-landing suite, CI helpers, and server build"
 - Lint: local `golangci-lint run` and `templ fmt templates/ ui/` (both via
-  `make lint`); CI check `lint`, golangci-lint-action
+  `make lint`); CI job `check`, via `make check` and `templ fmt -fail`
+- CI helper regression tests: local `node --test scripts/ci/*.test.mjs`; CI job
+  `check`
+- HTTP smoke and Chromium rendering/HTMX checks: CI job `browser`, using the
+  binary from `check`; deployment smoke: CI job `smoke`, after promotion
 
-`make check` runs generate, css, vet, race tests, and golangci-lint. It does
+`make check` runs docs-check, generate, css, vet, race tests, and golangci-lint. It does
 not run the CGO-disabled server build or `templ fmt`, so the configured
 validation gate appends the build explicitly. Run `make lint` when you touch
 templ files.
