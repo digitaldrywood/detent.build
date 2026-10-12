@@ -29,9 +29,9 @@ echo "smoke: $BASE"
 echo "routes"
 for path in / /how-it-works /why-detent /dashboard /install /install/macos \
             /install/linux /install/windows /install/source /open-source \
-            /privacy /terms /google971b363feb71cd5c.html /health /robots.txt /sitemap.xml; do
+            /privacy /terms /videos /docs /google971b363feb71cd5c.html /health /robots.txt /sitemap.xml; do
   code=$(status "$path")
-  [ "$code" = "200" ] && pass "$path -> 200" || fail "$path -> $code, want 200"
+  if [ "$code" = "200" ]; then pass "$path -> 200"; else fail "$path -> $code, want 200"; fi
 done
 
 verification=$(get /google971b363feb71cd5c.html)
@@ -42,7 +42,7 @@ else
 fi
 
 code=$(status /this-page-does-not-exist)
-[ "$code" = "404" ] && pass "unknown path -> 404" || fail "unknown path -> $code, want 404"
+if [ "$code" = "404" ]; then pass "unknown path -> 404"; else fail "unknown path -> $code, want 404"; fi
 
 echo "canonical host"
 home=$(get /)
@@ -72,7 +72,9 @@ fi
 
 # The failure that motivated this script: SITE_URL unset, so every canonical
 # and og:url pointed at localhost while the site otherwise looked healthy.
-if grep -qE 'localhost|127\.0\.0\.1' <<<"$home$hiw"; then
+if [[ "$BASE" != https://* ]]; then
+  pass "local canonical host permitted for local smoke"
+elif grep -qE 'localhost|127\.0\.0\.1' <<<"$home$hiw"; then
   fail "a page references localhost — SITE_URL is probably unset in the deployment"
 else
   pass "no localhost references"
@@ -103,6 +105,24 @@ else
   pass "no doubled slashes"
 fi
 
+echo "published documentation"
+# Follow the deployed sitemap so new published pages join the smoke automatically.
+docs_paths=$(sed -n 's#.*<loc>[^<]*\(/docs/[^<]*\)</loc>.*#\1#p' <<<"${sitemap//<\/loc>/<\/loc>$'\n'}")
+if [[ -z "$docs_paths" ]]; then
+  fail "sitemap contains no published documentation"
+fi
+while IFS= read -r path; do
+  [[ -n "$path" ]] || continue
+  code=$(status "$path")
+  if [ "$code" = "200" ]; then pass "$path -> 200"; else fail "$path -> $code, want 200"; fi
+  body=$(get "$path")
+  if [[ "$body" == *'<article class="docs-prose '* ]] || [[ "$body" == *'<article class="docs-prose"'* ]]; then
+    pass "$path renders a documentation article"
+  else
+    fail "$path is missing its documentation article"
+  fi
+done <<<"$docs_paths"
+
 echo "transport"
 if [[ "$BASE" == https://* ]]; then
   redirect=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 20 "${BASE/https:/http:}/")
@@ -115,7 +135,7 @@ if [[ "$BASE" == https://* ]]; then
   headers=$(curl -sSI --max-time 20 "$BASE/")
   for h in "content-security-policy" "strict-transport-security" \
            "x-content-type-options" "referrer-policy"; do
-    grep -qi "^$h:" <<<"$headers" && pass "$h present" || fail "$h missing"
+    if grep -qi "^$h:" <<<"$headers"; then pass "$h present"; else fail "$h missing"; fi
   done
 fi
 

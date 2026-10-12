@@ -46,8 +46,9 @@ type manifest struct {
 }
 
 type manifestFile struct {
-	Path   string `json:"path"`
-	SHA256 string `json:"sha256"`
+	Path      string `json:"path"`
+	SHA256    string `json:"sha256"`
+	Generated bool   `json:"generated,omitempty"`
 }
 
 type inventoryChange struct {
@@ -216,16 +217,11 @@ func prepareDocumentation(upstream, commit, sourceRoot, stagedVendor string) ([]
 	if len(entries) == 0 {
 		return nil, errors.New("upstream documentation tree is empty")
 	}
-	cmd := exec.Command("make", "generate-docs")
-	cmd.Dir = sourceRoot
-	cmd.Env = append(os.Environ(), "GOTOOLCHAIN="+docsToolchain)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, fmt.Errorf("generate upstream documentation with %s: %w\n%s", docsToolchain, err, strings.TrimSpace(string(output)))
+	if err := generateConfigDocumentation(upstream, sourceRoot, entries); err != nil {
+		return nil, err
 	}
 	generated := map[string]bool{
-		"docs/config.md":                true,
-		"docs/mcp-capability-matrix.md": true,
+		"docs/config.md": true,
 	}
 	selected := make([]treeEntry, 0, len(entries)+len(generated))
 	for _, entry := range entries {
@@ -290,10 +286,51 @@ func prepareDocumentation(upstream, commit, sourceRoot, stagedVendor string) ([]
 			}
 		}
 		digest := sha256.Sum256(stagedContents)
-		files = append(files, manifestFile{Path: rel, SHA256: hex.EncodeToString(digest[:])})
+		files = append(files, manifestFile{Path: rel, SHA256: hex.EncodeToString(digest[:]), Generated: generated[entry.Path]})
 	}
 	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
 	return files, nil
+}
+
+func generateConfigDocumentation(upstream, sourceRoot string, entries []treeEntry) error {
+	configPath := filepath.Join(sourceRoot, "docs", "config.md")
+	hasTemplate, err := pathExists(filepath.Join(sourceRoot, "docs", "config.md.in"))
+	if err != nil {
+		return fmt.Errorf("inspect config documentation template: %w", err)
+	}
+	if hasTemplate {
+		// Template-based generators must produce fresh output.
+		if err := os.Remove(configPath); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("remove stale generated config documentation: %w", err)
+		}
+	} else {
+		// Older tags use config.md itself as the authored input. Restore it from
+		// the verified tree, even if deleted in the checkout, then regenerate.
+		for _, entry := range entries {
+			if entry.Path != "docs/config.md" {
+				continue
+			}
+			if entry.Type != "blob" || entry.Mode != "100644" {
+				return fmt.Errorf("unsupported legacy config documentation input: %#v", entry)
+			}
+			input, err := gitBytes(upstream, nil, "cat-file", "blob", entry.OID)
+			if err != nil {
+				return fmt.Errorf("read legacy config documentation input: %w", err)
+			}
+			if err := os.WriteFile(configPath, input, 0o644); err != nil {
+				return fmt.Errorf("restore legacy config documentation input: %w", err)
+			}
+			break
+		}
+	}
+	cmd := exec.Command("go", "run", "./internal/config/cmd/configdoc", "-root", sourceRoot)
+	cmd.Dir = sourceRoot
+	cmd.Env = append(os.Environ(), "GOTOOLCHAIN="+docsToolchain)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("generate upstream config documentation with configdoc (%s): %w\n%s", docsToolchain, err, strings.TrimSpace(string(output)))
+	}
+	return nil
 }
 
 func publishSnapshot(docsDir, stagedRoot string) error {

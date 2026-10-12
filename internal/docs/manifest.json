@@ -4,7 +4,7 @@
   "tag": "v0.57.0",
   "tag_object_sha": "10c9b2a531089e8bac7a3fcd42593b257863ec8d",
   "commit_sha": "1543929187369eca2703abd2a655cf86e9e5d83e",
-  "synced_at": "2026-08-08T19:38:02Z",
+  "synced_at": "2026-10-06T02:56:52Z",
   "files": [
     {
       "path": "ONBOARDING.md",
@@ -40,7 +40,8 @@
     },
     {
       "path": "config.md",
-      "sha256": "8c37a16800fadef53c4f8313c9328273fd33eb4fc6db3327f7c76956f7763128"
+      "sha256": "8c37a16800fadef53c4f8313c9328273fd33eb4fc6db3327f7c76956f7763128",
+      "generated": true
     },
     {
       "path": "dashboard-api.md",

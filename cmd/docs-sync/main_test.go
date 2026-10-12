@@ -103,6 +103,10 @@ func TestPreservedSyncTime(t *testing.T) {
 		t.Errorf("preservedSyncTime() = %q, want %q", got, previous.SyncedAt)
 	}
 
+	current.Files[0].Generated = true
+	if got := preservedSyncTime(path, current); got == previous.SyncedAt {
+		t.Errorf("preservedSyncTime() reused %q for changed provenance", got)
+	}
 	current.Files[0].SHA256 = "changed"
 	if got := preservedSyncTime(path, current); got == previous.SyncedAt {
 		t.Errorf("preservedSyncTime() reused %q for changed content", got)
@@ -131,22 +135,27 @@ func TestPublishSnapshotRollsBackOnRenameFailure(t *testing.T) {
 
 func TestSyncVerifiedDocsGeneratedSnapshot(t *testing.T) {
 	for _, tt := range []struct {
-		name    string
-		recipe  string
-		wantErr string
+		name      string
+		committed bool
+		legacy    bool
+		recipe    string
+		wantErr   string
 	}{
-		{name: "publishes generated and authored content"},
-		{name: "failed generation preserves publication", recipe: "\t@echo partial > docs/config.md\n\t@echo fixture-generation-failed >&2\n\t@false\n", wantErr: "fixture-generation-failed"},
-		{name: "missing output preserves publication", recipe: "\t@rm docs/mcp-capability-matrix.md\n", wantErr: "inspect upstream document docs/mcp-capability-matrix.md"},
-		{name: "changed authored content preserves publication", recipe: "\t@echo changed > docs/doc.md\n", wantErr: "git object mismatch for docs/doc.md"},
+		{name: "publishes config absent from git"},
+		{name: "regenerates committed config", committed: true},
+		{name: "regenerates legacy config input", committed: true, legacy: true},
+		{name: "failed generation preserves publication", committed: true, recipe: `if err := os.WriteFile(output, []byte("partial"), 0644); err != nil { panic(err) }; fmt.Fprintln(os.Stdout, "fixture-generation-stdout"); fmt.Fprintln(os.Stderr, "fixture-generation-failed"); os.Exit(1)`, wantErr: "fixture-generation-failed"},
+		{name: "missing output preserves publication", recipe: `return`, wantErr: "inspect upstream document docs/config.md"},
+		{name: "missing output rejects stale copy", committed: true, recipe: `return`, wantErr: "inspect upstream document docs/config.md"},
+		{name: "changed authored content preserves publication", recipe: `if err := os.WriteFile(filepath.Join(*root, "docs", "doc.md"), []byte("changed"), 0644); err != nil { panic(err) }`, wantErr: "git object mismatch for docs/doc.md"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			upstream, sourceCommit, sourceTag := generatedDocsFixture(t, tt.recipe)
+			upstream, sourceCommit, sourceTag := generatedDocsFixture(t, tt.committed, tt.legacy, tt.recipe)
 			docsDir := t.TempDir()
 			writeSnapshot(t, docsDir, "old")
 			previous := manifest{Schema: 1, Repository: sourceRepository, Tag: releaseTag,
 				TagObjectSHA: sourceTag, CommitSHA: sourceCommit, SyncedAt: "2026-08-08T12:00:00Z",
-				Files: []manifestFile{{Path: "config.md", SHA256: "old"}, {Path: "doc.md", SHA256: "old"}, {Path: "mcp-capability-matrix.md", SHA256: "old"}},
+				Files: []manifestFile{{Path: "config.md", SHA256: "old"}, {Path: "doc.md", SHA256: "old"}},
 			}
 			previousBytes, err := json.Marshal(previous)
 			if err != nil {
@@ -158,12 +167,14 @@ func TestSyncVerifiedDocsGeneratedSnapshot(t *testing.T) {
 			}
 			registry := docsregistry.Registry{Pages: []docsregistry.Page{
 				{SourcePath: "config.md", PublicPath: "/docs/configuration", Origin: docsregistry.OriginUpstream},
-				{SourcePath: "mcp-capability-matrix.md", PublicPath: "/docs/capabilities", Origin: docsregistry.OriginUpstream},
 			}}
 			err = syncVerifiedDocs(upstream, docsDir, t.TempDir(), sourceTag, sourceCommit, registry)
 			if tt.wantErr != "" {
 				if err == nil || !strings.Contains(err.Error(), tt.wantErr) {
 					t.Fatalf("syncVerifiedDocs() error = %v, want %q", err, tt.wantErr)
+				}
+				if tt.wantErr == "fixture-generation-failed" && !strings.Contains(err.Error(), "fixture-generation-stdout") {
+					t.Errorf("generator stdout missing from error: %v", err)
 				}
 				assertSnapshotFile(t, docsDir, "vendor/doc.md", "old")
 				assertSnapshotFile(t, docsDir, "manifest.json", string(previousBytes))
@@ -184,9 +195,8 @@ func TestSyncVerifiedDocsGeneratedSnapshot(t *testing.T) {
 				t.Errorf("source provenance changed: %#v", got)
 			}
 			want := map[string]string{
-				"config.md":                "# Configuration\ntyped defaults\n",
-				"doc.md":                   "authored documentation\n",
-				"mcp-capability-matrix.md": "capability decisions\n",
+				"config.md": "# Configuration\ntyped defaults\n",
+				"doc.md":    "authored documentation\n",
 			}
 			if len(got.Files) != len(want) {
 				t.Fatalf("manifest files = %#v, want exactly authored and generated documents", got.Files)
@@ -195,6 +205,9 @@ func TestSyncVerifiedDocsGeneratedSnapshot(t *testing.T) {
 				contents, ok := want[file.Path]
 				if !ok {
 					t.Fatalf("unexpected published file %q", file.Path)
+				}
+				if file.Generated != (file.Path == "config.md") {
+					t.Errorf("manifest generated flag for %s = %v", file.Path, file.Generated)
 				}
 				assertSnapshotFile(t, docsDir, "vendor/"+file.Path, contents)
 				digest := sha256.Sum256([]byte(contents))
@@ -209,17 +222,46 @@ func TestSyncVerifiedDocsGeneratedSnapshot(t *testing.T) {
 	}
 }
 
-// This upstream has no committed generated documents. Its make target consumes
-// inputs outside docs/, so a docs-only checkout cannot satisfy the fixture.
-func generatedDocsFixture(t *testing.T, recipe string) (string, string, string) {
+// The generator consumes inputs outside docs/ and uses -root to locate them.
+// No Makefile or capability generator is available in this fixture.
+func generatedDocsFixture(t *testing.T, committed, legacy bool, recipe string) (string, string, string) {
 	t.Helper()
 	inputs := t.TempDir()
 	files := map[string]string{
-		"docs/doc.md":                                     "authored documentation\n",
-		"docs/config.md.in":                               "# Configuration\n",
-		"internal/config/defaults.txt":                    "typed defaults\n",
-		"internal/operatortool/capability/decisions.json": "capability decisions\n",
-		"Makefile":                                        "generate-docs:\n\t@test \"$(GOTOOLCHAIN)\" = \"go1.26.6\"\n\t@cat docs/config.md.in internal/config/defaults.txt > docs/config.md\n\t@cat internal/operatortool/capability/decisions.json > docs/mcp-capability-matrix.md\n" + recipe,
+		"docs/doc.md":                  "authored documentation\n",
+		"docs/config.md.in":            "# Configuration\n",
+		"internal/config/defaults.txt": "typed defaults\n",
+		"go.mod":                       "module fixture\n\ngo 1.25\n",
+		"internal/config/cmd/configdoc/main.go": `package main
+import (
+    "flag"
+    "fmt"
+    "os"
+    "path/filepath"
+)
+func main() {
+    root := flag.String("root", "", "source root")
+    flag.Parse()
+    if *root == "" { panic("missing -root") }
+    if os.Getenv("GOTOOLCHAIN") != "go1.26.6" { panic("unexpected toolchain") }
+    template, err := os.ReadFile(filepath.Join(*root, "docs", "config.md.in"))
+    if err != nil { panic(err) }
+    defaults, err := os.ReadFile(filepath.Join(*root, "internal", "config", "defaults.txt"))
+    if err != nil { panic(err) }
+    output := filepath.Join(*root, "docs", "config.md")
+` + recipe + `
+    if err := os.WriteFile(output, append(template, defaults...), 0644); err != nil { panic(err) }
+    fmt.Println("generated config")
+}
+`,
+	}
+	if committed {
+		files["docs/config.md"] = "stale committed config\n"
+	}
+	if legacy {
+		delete(files, "docs/config.md.in")
+		files["docs/config.md"] = "# Configuration\n"
+		files["internal/config/cmd/configdoc/main.go"] = strings.ReplaceAll(files["internal/config/cmd/configdoc/main.go"], `"config.md.in"`, `"config.md"`)
 	}
 	for path, contents := range files {
 		destination := filepath.Join(inputs, filepath.FromSlash(path))
@@ -250,6 +292,30 @@ func generatedDocsFixture(t *testing.T, recipe string) (string, string, string) 
 		t.Fatal(err)
 	}
 	return upstream, commit, tag
+}
+
+func TestGenerateConfigDocumentationRestoresDeletedLegacyInput(t *testing.T) {
+	upstream, commit, _ := generatedDocsFixture(t, true, true, "")
+	sourceRoot := t.TempDir()
+	if _, err := gitBytes(upstream, nil, "--work-tree="+sourceRoot, "checkout", "--force", commit, "--", "."); err != nil {
+		t.Fatal(err)
+	}
+	tree, err := gitBytes(upstream, nil, "ls-tree", "-r", "-z", commit, "--", "docs")
+	if err != nil {
+		t.Fatal(err)
+	}
+	entries, err := parseTree(tree)
+	if err != nil {
+		t.Fatal(err)
+	}
+	configPath := filepath.Join(sourceRoot, "docs", "config.md")
+	if err := os.Remove(configPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := generateConfigDocumentation(upstream, sourceRoot, entries); err != nil {
+		t.Fatal(err)
+	}
+	assertSnapshotFile(t, sourceRoot, "docs/config.md", "# Configuration\ntyped defaults\n")
 }
 
 func TestRecoverInterruptedPublication(t *testing.T) {

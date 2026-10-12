@@ -134,19 +134,24 @@ If you reorder sections, renumber the whole page.
 
 `make docs-sync` fetches and verifies the pinned annotated tag object and peeled
 commit, materializes the full source tree in a temporary checkout, and runs the
-upstream `make generate-docs` target with `GOTOOLCHAIN=go1.26.6`. Git, Make, Go,
-and access to the pinned toolchain and upstream Go dependencies are required;
-Node, sqlc, and templ are not required for upstream documentation generation.
-The website's own Go version and build requirements are unchanged.
+upstream `go run ./internal/config/cmd/configdoc -root <checkout>` command with
+`GOTOOLCHAIN=go1.26.6`. Git, Go, and access to the pinned toolchain and upstream
+Go dependencies are required; Make, Node, sqlc, and templ are not required for
+upstream documentation generation. The website's own Go version and build
+requirements are unchanged.
 
 Authored documentation comes from that same checkout and is verified against
-its Git blobs. Generated `docs/config.md` and
-`docs/mcp-capability-matrix.md` are included even when absent from Git, with
-SHA-256 hashes of their generated content in the existing manifest.
+its Git blobs. Generated `docs/config.md` is included even when absent from Git,
+with its generated content's SHA-256 hash and `generated: true` in the existing
+manifest. Template-based tags remove any committed config output before
+generation. Legacy tags use the verified committed config document as the
+authored input and regenerate its reference section, restoring that input if
+deleted. The capability matrix is copied only if committed at that tag; its
+removed generator is never invoked.
 `docs/config.md.in` is an input and is excluded from the published snapshot.
 Generation and validation finish before the existing vendor/manifest transaction
-publishes anything; a failure preserves the prior snapshot. Release pins must
-support the upstream generation target and both required outputs.
+publishes anything; a generator failure reports its output and preserves the
+prior snapshot. Release pins must support configdoc and its required output.
 
 `make docs-sync` compares the committed manifest with the incoming release and
 prints every added path, deleted path, and probable rename. An identical digest
