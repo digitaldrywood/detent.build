@@ -1,12 +1,24 @@
 You are working on {{ issue.identifier }}: {{ issue.title }}.
 Current Detent status: {{ issue.state }}.
 
-Follow repository instructions, keep changes scoped to the issue, and keep a
-single persistent `## Codex Workpad` issue comment updated with the plan,
-validation evidence, and final handoff. Every Workpad update must include one
-`detent-status` fenced block. Detent reads blocker and human-action
-declarations from that block; narrative sentences are never read as blockers.
-`status` must be one of `in_progress`, `blocked`, or `complete`.
+This is a Detent Cloud native project. The issue lives on the Detent Hub, not
+on GitHub, and Detent itself turns your work into a native Change Request.
+
+## Completion Contract
+
+- Do the work in this workspace on the branch Detent checked out for you.
+- Commit your finished change on that branch with a conventional commit
+  message. Detent records the Change Request from your commits when the run
+  finishes; uncommitted work is lost.
+- Never push, never open or update pull requests, never post or edit issue
+  comments (including any Workpad comment), and never change issue state or
+  labels. Never run `gh` or call the GitHub API for any reason; this project
+  works without GitHub issues or pull requests. Detent owns all of that.
+- Do not rebase onto or merge other branches unless the issue asks for it.
+- If you cannot finish, do not commit a half-done change; explain the blocker
+  plainly in your final message.
+- End with a short summary: what changed, how you validated it, anything a
+  reviewer should check.
 
 ## Project Contract
 
@@ -67,110 +79,18 @@ also fetches the `Script()` template that manual copies miss. Components
 needing JavaScript must have their `Script()` called in
 `templates/layouts/base.templ`, and `assets/js` must stay served.
 
-## Project CI Quality Gates
+## Validation
 
-Each required stage category, the local command that satisfies it, and the CI
-job that also runs it. The workflow is `.github/workflows/ci.yml`; it runs
-hourly and on manual dispatch from `develop`, never on pushes or PRs. The local
-gate enforces landing; Actions supplies release evidence and promotes the tested
-tree to `main`. Setup and live acceptance are described in `docs/deploy.md`.
-
-- Site-authored documentation: local `make docs-check`; CI job `check`, via
-  `make check`
-- Code generation: local `make generate` (`templ generate`); CI job `check`,
-  via `make check`
-- Stylesheet build: local `make css`; CI jobs `check` (via `make check`) and
-  `browser` (for the browser's static assets)
-- Static analysis: local `go vet ./...`; CI job `check`, via `make check`
-- Unit tests with race detector: local `go test -race ./...`; CI job `check`,
-  via `make check`
-- Server build with CGO disabled: local
-  `CGO_ENABLED=0 go build -o /dev/null ./cmd/server`; CI check `check`, step
-  "Full pre-landing suite, CI helpers, and server build"
-- Lint: local `golangci-lint run` and `templ fmt templates/ ui/` (both via
-  `make lint`); CI job `check`, via `make check` and `templ fmt -fail`
-- CI helper regression tests: local `node --test scripts/ci/*.test.mjs`; CI job
-  `check`
-- HTTP smoke and Chromium rendering/HTMX checks: CI job `browser`, using the
-  binary from `check`; deployment smoke: CI job `smoke`, after promotion
-
-`make check` runs docs-check, generate, css, vet, race tests, and golangci-lint. It does
-not run the CGO-disabled server build or `templ fmt`, so the configured
-validation gate appends the build explicitly. Run `make lint` when you touch
-templ files.
-
-Zero CI: GitHub Actions does not run on pushes or PRs. After the configured gate (`make check` plus the server build, the `gate.run` in `detent.yaml`) passes on the exact commit you pushed, post the `local-gate` commit status on that SHA: `gh api -X POST repos/digitaldrywood/detent.build/statuses/$(git rev-parse HEAD) -f state=success -f context=local-gate -f description="make check passed locally"`. Post it only for a commit whose full gate passed in this session; if the gate fails, fix it instead of posting. Any later push, including a rebase onto develop, needs a fresh gate and a fresh local-gate status. Never poll or wait on CI. Open PRs against develop.
-
-Treat this list as part of the project contract. Whenever you touch CI
-configuration or perform a review, verify that every declared stage exists,
-runs its mapped project tool, and passes in the local gate on the current pull
-request head. Do not rely on Detent or `detent doctor` to infer required stages or inspect CI
-configuration.
-
-Use `in_progress` while implementation or validation is still active:
-
-```detent-status
-schema: 1
-status: in_progress
-blockers: []
-human_action: null
-```
-
-This project runs in autopilot. Detent watches the pull request gate and
-promotes completed work to `Merging` itself, so agents never move an issue to
-`Human Review`. A stuck agent belongs in `Blocked` with a concrete blocker in
-the `detent-status` block. `Backlog`, `Human Review`, `Done`, and `Cancelled`
-are never worked.
-
-Use `complete` only when the pull request is open, marked ready for review,
-is not a draft, references the issue, validation is green, and no actionable
-review comments remain. If the pull request is a draft, mark it ready and
-verify the resulting state before declaring completion:
-
-```sh
-gh pr ready <number>
-gh pr view <number> --json isDraft --jq '.isDraft' # must be false
-```
-
-```detent-status
-schema: 1
-status: complete
-blockers: []
-human_action: null
-```
-
-For dependency blockers, use this order:
-
-1. Create GitHub's native `blocked_by` dependency relation.
-
-```sh
-BLOCKED_NUMBER=<blocked-issue-number>
-BLOCKER_NUMBER=<blocker-issue-number>
-BLOCKER_ID="$(gh api repos/{owner}/{repo}/issues/$BLOCKER_NUMBER --jq '.id')"
-gh api --method POST "repos/{owner}/{repo}/issues/$BLOCKED_NUMBER/dependencies/blocked_by" -F issue_id="$BLOCKER_ID"
-```
-
-2. Declare the blocker in the Workpad status block with `status: blocked`.
-
-```detent-status
-schema: 1
-status: blocked
-blockers:
-  - ref: "owner/repo#123"
-    reason: "waiting for the dependency to merge"
-human_action: null
-```
-
-3. Legacy fallback during the deprecation window: if native dependencies are
-   unavailable and the project has not migrated, keep a machine-readable
-   issue-body line such as `Blocked by: #123` or `Depends on: owner/repo#123`.
-
-If meaningful out-of-scope work is discovered, file a separate tracker issue in Backlog with a best-guess `detent-agent` effort block instead of expanding the current work item.
+Detent runs `make check && CGO_ENABLED=0 go build -o /dev/null ./cmd/server`
+on your commit after the run. Run it yourself before committing, and run
+`make lint` when you touch templ files. `make check` runs generate, css, vet,
+race tests, and golangci-lint. Fix failures instead of committing around them.
+Do not post commit statuses.
 
 ## Browser Verification In Workers
 
-This project is a website, so nearly every change is UI-visible and hits the
-ship flow's browser gate. Use the browser tooling this worker actually has.
+This project is a website, so nearly every change is UI-visible and needs a
+browser check. Use the browser tooling this worker actually has.
 
 - Use the **`chrome-devtools` MCP server** (`mcp__chrome-devtools__*`) for all
   browser verification. It is configured for Codex workers, is worktree-aware,
@@ -178,7 +98,7 @@ ship flow's browser gate. Use the browser tooling this worker actually has.
 - Do **not** route browser verification through the `claude-in-chrome` skill or
   `mcp__claude-in-chrome__*` tools. That path needs the Claude Chrome extension,
   which is not available in a Detent worker, and the skill forbids substituting
-  chrome-devtools — so taking that path dead-ends the issue in `Blocked` even
+  chrome-devtools — so taking that path dead-ends the run even
   though working browser tooling was available the whole time.
 - Missing browser tooling is only a real blocker if
   `mcp__chrome-devtools__navigate_page` is genuinely absent from the tool list.
@@ -188,74 +108,12 @@ ship flow's browser gate. Use the browser tooling this worker actually has.
 
 ## Required Execution Flow
 
-Use the current Detent state as the source of truth for which section applies.
-
-Before any rebase, capture the branch's effective diff against its merge base
-or preserve the pre-rebase ref. After the rebase, compare with `git range-diff`
-or an equivalent diff-stat and confirm the same files and hunks remain. If
-changes are missing without explanation or conflict resolution dropped hunks,
-stop before pushing and move the issue to the configured blocked or exception
-state.
-
-### For Todo
-
-1. Move the issue to `In Progress`.
-2. Create or update the persistent `## Codex Workpad` comment with the plan,
-   acceptance criteria, validation plan, and the `in_progress`
-   `detent-status` block shown above.
-3. Fetch current `origin/develop`, confirm this worktree is based on it, and
-   confirm every native dependency relation, `detent-status` blocker, and
-   issue-body `Depends on:` reference is merged or otherwise terminal before
-   coding.
-4. Reproduce or confirm the reported behavior before changing code when the
+1. Re-read the issue and any earlier review feedback in it. For rework, fix
+   exactly what the reviewer asked for on top of the existing branch.
+2. Reproduce or confirm the reported behavior before changing code when the
    issue is a bug.
-5. Implement the smallest complete change that satisfies the issue.
-6. Run focused tests for touched packages, then run the configured validation
-   gate.
-7. Commit and push the branch, then post the `local-gate` status on the pushed
-   head once the gate has passed on that exact commit.
-8. Open or update a pull request against `develop` that references the issue.
-9. Re-check pull request comments and inline review comments after the latest
-   push. Do not wait on CI.
-10. Leave the issue in `In Progress`. Set the Workpad block to
-    `status: complete` with `blockers: []` and `human_action: null` only after
-    the pull request is open, not a draft, references the issue, the gate passed
-    on the current head with its `local-gate` status posted, and no actionable
-    review comments remain.
-    Detent auto-promotes directly to `Merging`; never use `Human Review`.
-
-### For In Progress
-
-1. Re-read the issue, pull request, comments, and `## Codex Workpad`, including
-   the `detent-status` block.
-2. Continue from the current repository and tracker state.
-3. If implementation is complete, run the full pre-review gate and post the
-   `local-gate` status on the pushed head, then update the
-   Workpad block to `status: complete` with `blockers: []` and
-   `human_action: null` only when the gate passes. Leave the issue in
-   `In Progress` and let Detent promote it to `Merging`.
-
-### For Rework
-
-1. Re-read all human and bot feedback.
-2. Move the issue to `In Progress`.
-3. Fix the requested changes.
-4. Push updates to the pull request.
-5. Run the full pre-review gate again on the pushed head and post a fresh
-   `local-gate` status.
-6. Set the Workpad block back to `status: complete` only when the gate passes,
-   and leave the issue in `In Progress` for Detent to promote to `Merging`.
-
-### For Merging
-
-1. Confirm `$go-workflow:ship` is available in the Codex environment. If it is
-   unavailable, keep the issue in `Merging` and record the missing ship workflow
-   as `human_action` in the `detent-status` block.
-2. Invoke and follow `$go-workflow:ship`.
-3. Do not call `gh pr merge` directly outside the ship workflow.
-4. End with exactly one terminal outcome:
-   - pull request merged and issue moved to `Done`;
-   - issue moved to `Rework` with an actionable defect;
-   - issue remains in `Merging` with a concrete external blocker recorded in
-     the `detent-status` block and described in the `## Codex Workpad`.
-5. Move the issue to `Done` only after the pull request is merged.
+3. Implement the smallest complete change that satisfies the issue.
+4. Run focused tests for touched packages, then the full validation command
+   above, and verify UI changes in the browser.
+5. Commit on the current branch and stop. Detent opens the Change Request and
+   moves the issue to review.
