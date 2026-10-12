@@ -47,7 +47,7 @@ var documents = []document{
 
 var policy = sourcePolicy{
 	Inputs: map[string]string{
-		"detent.yaml":                   "detent.yaml",
+		"detent.yaml":                   "docs/site/examples/detent.yaml",
 		"partials/examples/WORKFLOW.md": "docs/site/examples/WORKFLOW.md",
 	},
 	CommandAllowlist: map[string]struct{}{},
