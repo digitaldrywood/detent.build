@@ -38,8 +38,10 @@ gate:
     required_status_checks: []
     run: make check && CGO_ENABLED=0 go build -o /dev/null ./cmd/server
     transient_ci_retry_limit: 2
+    security_audit:
+        enabled: true
     validator:
-        enabled: false
+        enabled: true
 plan:
     approval_label: plan-approved
     enabled: false
