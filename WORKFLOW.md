@@ -81,11 +81,14 @@ needing JavaScript must have their `Script()` called in
 
 ## Validation
 
-Detent runs `make check && CGO_ENABLED=0 go build -o /dev/null ./cmd/server`
-on your commit after the run. Run it yourself before committing, and run
-`make lint` when you touch templ files. `make check` runs generate, css, vet,
-race tests, and golangci-lint. Fix failures instead of committing around them.
-Do not post commit statuses.
+While working, run focused tests for the packages you change, for example
+`go test -timeout=120s ./<touched-package>/...`, plus `make generate` and
+`make css` when templ or CSS inputs change, and run `make lint` when you touch
+templ files; do not run `make check` yourself. Detent's finalization runs
+`make check && CGO_ENABLED=0 go build -o /dev/null ./cmd/server` once on your
+finished commit and returns any failure to Rework with its output. `make check`
+runs generate, css, vet, race tests, and golangci-lint. Fix failures instead of committing around them. Do not post
+commit statuses.
 
 ## Browser Verification In Workers
 
@@ -113,7 +116,7 @@ browser check. Use the browser tooling this worker actually has.
 2. Reproduce or confirm the reported behavior before changing code when the
    issue is a bug.
 3. Implement the smallest complete change that satisfies the issue.
-4. Run focused tests for touched packages, then the full validation command
-   above, and verify UI changes in the browser.
+4. Run focused tests for touched packages and verify UI changes in the
+   browser; the finalization gate runs the full validation command.
 5. Commit on the current branch and stop. Detent opens the Change Request and
    moves the issue to review.
