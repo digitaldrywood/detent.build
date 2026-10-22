@@ -13,7 +13,7 @@ templ Dashboard() {
 		@partials.PageHeader(
 			"Dashboard",
 			"The board stays honest.",
-			"Detent ships a web dashboard and a terminal UI over the same state. \"In progress\" means an agent is working right now, not that someone forgot to move a card.",
+			"The Hub's web app, its MCP endpoint, and the CLI read the same state. \"In progress\" means an agent is working right now, not that someone forgot to move a card.",
 		)
 		<section class="mx-auto max-w-[1280px] px-6 pt-14 md:px-8">
 			<figure>
@@ -25,19 +25,19 @@ templ Dashboard() {
 					class="block w-full rounded-card border border-line"
 				/>
 				<figcaption class="mt-3 font-mono text-2xs text-dim">
-					A real board across nine projects. Note the waiting reasons on the blocked cards — the
-					dashboard says why something is stopped, not just that it is.
+					A real board across nine projects, from an earlier release. Note the waiting reasons on the
+					blocked cards — the board says why something is stopped, not just that it is.
 				</figcaption>
 			</figure>
 		</section>
 		@components.Section("01", "What it shows", "Instrument panel, not a status page.", "") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-				@surfaceCard("Live counts", "Running, queued, waiting, blocked, and completed over the last 48 hours, across every project on the host.")
-				@surfaceCard("Running agents", "Which issue each agent has, how long it has been working, and what it is doing right now — dispatch, make check, PR update.")
-				@surfaceCard("Why something is stopped", "Not just the lane. The actual reason: dependency not ready, paused by project status, mergeStateStatus DIRTY, awaiting review artifact.")
+				@surfaceCard("Live counts", "Running, queued, waiting, blocked, and completed over the last 48 hours, across every project in the organization.")
+				@surfaceCard("Running agents", "Which issue each agent has, how long it has been working, and what it is doing right now — dispatch, gate command, Change Request.")
+				@surfaceCard("Why something is stopped", "Not just the lane. The actual reason: dependency not ready, project paused, plan capacity reached, landing refused with its reason.")
 				@surfaceCard("Token, budget, and rate limit", "Live spend against your cap and the current rate-limit posture, so a run that is about to hit a wall is visible before it does.")
-				@surfaceCard("Board flow", "Charts, trends, and timelines with hover detail — where work is accumulating and how long it sits in each lane.")
-				@surfaceCard("Density and staleness", "Compact, cozy, and comfy card densities, plus an explicit stale-data banner when the tracker poll is behind.")
+				@surfaceCard("Reports and activity", "Reports, an activity feed, and saved Work views — where work is accumulating and how long it sits in each lane.")
+				@surfaceCard("Density and staleness", "Compact, cozy, and comfy card densities, in the same Templ and HTMX shell on desktop and narrow screens.")
 			</div>
 			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
 				The dashboard is also an API. Everything the browser renders is available as JSON.
@@ -45,32 +45,33 @@ templ Dashboard() {
 			</p>
 		}
 		@components.Section("02", "The lanes", content.DashboardLaneHeading,
-			"A ProjectV2 board, a boardless issue Status field, or repository status labels all render into this view.") {
+			"The Hub's native board holds the lanes. GitHub issues can be imported into it; they are not the source of truth.") {
 			@components.Board(content.Board)
 			<p class="mt-3 max-w-[840px] font-mono text-2xs leading-relaxed text-dim">
 				{ content.BoardCaption }
-				<a href={ templ.SafeURL(content.NonCodeWorkflowURL) } class="text-accent hover:underline">Non-code workflow example &#8594;</a>
+				<a href="/#lanes" class="text-accent hover:underline">Lanes for other kinds of work &#8594;</a>
 			</p>
 		}
-		@components.Section("03", "The terminal UI", "For people who live in tmux.",
-			"Same lanes, same counts, same reasons — no browser.") {
+		@components.Section("03", "Beyond the browser", "Your own agent can read the board.",
+			"The Hub exposes its board, issues, changes, runners, and settings over MCP, and the CLI reads the same state.") {
 			<div class="grid gap-4 lg:grid-cols-[1fr_320px]">
-				@components.Terminal("$ detent tui") {
-					<span class="text-text">{ "detent" }</span>{ "  ·  9 projects  ·  " }<span class="text-ok">{ "running" }</span>{ "  ·  " }<span class="text-warn">{ "held" }</span>{ "  ·  budget and rate limit in the header\n\n" }
-					{ "▸ In Progress   agent working, make check …\n" }
-					{ "▸ Human Review  " }<span class="text-warn">{ "held: approval label" }</span>{ "\n" }
-					{ "▸ Rework        " }<span class="text-info">{ "review threads unresolved" }</span>{ "\n" }
-					{ "▸ Merging       " }<span class="text-ok">{ "train: rebased, CI watch" }</span>
+				@components.Terminal("from a runner or your laptop") {
+					<span class="text-dim">{ "$ " }</span>{ "detent state\n" }
+					<span class="text-dim">{ "  fleet and project state\n\n" }</span>
+					<span class="text-dim">{ "$ " }</span>{ "detent issue\n" }
+					<span class="text-dim">{ "  issue explanation reads\n\n" }</span>
+					<span class="text-dim">{ "$ " }</span>{ "detent report\n" }
+					<span class="text-dim">{ "  operations report export" }</span>
 				}
 				@components.Card("p-5") {
 					<p class="text-sm leading-relaxed text-sec">
-						The TUI reads the same state the dashboard does. There is no separate data path to
-						drift out of sync, and no browser tab to keep open on a second monitor.
+						Create a key in Settings &#8250; API &amp; MCP and point your client at your
+						organization&#39;s MCP endpoint. Your agent can file issues, read run history, and
+						review changes.
 					</p>
-					<p class="mt-3 text-xs leading-relaxed text-dim">
-						The dashboard binds locally by default. Nothing is exposed to a network you did not
-						choose to expose it to.
-					</p>
+					<a href={ templ.SafeURL(content.Doc("api-mcp-setup.md")) } class="mt-3 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
+						API &amp; MCP setup &#8594;
+					</a>
 				}
 			</div>
 		}

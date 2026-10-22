@@ -70,40 +70,63 @@ func sigilFor(shell string) string {
 	return "$"
 }
 
-// InstallSection is the home page's install block: the tabs, plus the first
-// run and the requirements underneath.
+// InstallSection is the home page's closing block: the Cloud path first, the
+// runner install it needs, and the self-hosted alternative.
 templ InstallSection() {
-	@components.Section("11", "Install", "One CGO-free binary. No service to stand up.",
-		"macOS, Linux, and Windows. Install it, run the preflight check, and point it at a repository.") {
+	@components.Section("11", "Get started", "Start on Detent Cloud. Your runner does the work.",
+		"Sign in, create a project, and enroll a machine. The Free plan needs no card.") {
 		<div class="grid gap-4 lg:grid-cols-[1fr_380px]">
-			@InstallTabs(content.InstallTargets[0])
-			@components.Card("p-5") {
-				<div class="font-mono text-2xs uppercase tracking-[0.06em] text-dim">Requirements</div>
-				<ul class="mt-3 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
-					for _, req := range content.Requirements {
-						if !req.Optional {
-							<li class="flex gap-2">
-								<span class="text-dim" aria-hidden="true">&#183;</span>
-								<span>{ req.Name }</span>
-							</li>
-						}
-					}
-					<li class="flex gap-2 text-dim">
-						<span aria-hidden="true">&#183;</span>
-						<span>Go 1.26+ for source builds only</span>
-					</li>
-				</ul>
+			@components.Card("p-6") {
+				<ol class="flex flex-col gap-3 text-sm leading-relaxed text-sec">
+					@getStartedStep(1, "Create an account at cloud.detent.build and create or join an organization.")
+					@getStartedStep(2, "Create a project. New projects start with Todo, In Progress, Merging, Done, Blocked, and Human Review; change them to fit the work.")
+					@getStartedStep(3, "Commit detent.yaml and WORKFLOW.md to the repository the project works in.")
+					@getStartedStep(4, "Install Detent on the runner machine and sign in there to Codex or Claude Code.")
+					@getStartedStep(5, "In Settings › Providers & runners, choose Enroll a runner and run the command it shows.")
+					@getStartedStep(6, "File an issue in Todo and watch it move across the board.")
+				</ol>
+				<div class="mt-6 flex flex-wrap gap-3">
+					<a
+						href={ templ.SafeURL(content.CloudSignUpURL) }
+						class="rounded-card border border-accent bg-accent px-5 py-2.5 text-sm font-semibold text-page transition-opacity hover:opacity-90"
+					>
+						Create a free account
+					</a>
+					<a
+						href={ templ.SafeURL(content.Doc("cloud-onboarding.md")) }
+						class="rounded-card border border-line px-5 py-2.5 text-sm text-sec transition-colors hover:border-accent hover:text-accent"
+					>
+						Cloud onboarding guide
+					</a>
+				</div>
+			}
+			@components.Card("flex flex-col p-6") {
+				<h3 class="text-base font-semibold text-text">Rather run it yourself?</h3>
+				<p class="mt-3 text-sm leading-relaxed text-sec">
+					The Hub is the same binary. Self-hosting is free and needs no Detent Cloud account or
+					billing &#8212; one host, SQLite, and a TLS proxy in front.
+				</p>
 				<a href="/install" class="mt-4 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
-					Full requirements and first run &#8594;
+					Self-host the Hub &#8594;
 				</a>
 			}
 		</div>
 		<div class="mt-4">
-			@components.Terminal("first run") {
-				<span class="text-dim">{ "$ " }</span>{ "detent doctor         " }<span class="text-dim">{ "# preflight: gh, codex, token scope, config discovery" }</span>{ "\n" }
-				<span class="text-dim">{ "$ " }</span>{ "detent version        " }<span class="text-dim">{ "# binary version, commit, and build date" }</span>{ "\n" }
-				<span class="text-dim">{ "$ " }</span>{ "detent update --check " }<span class="text-dim">{ "# checksum-verified self-update" }</span>
+			@InstallTabs(content.InstallTargets[0])
+		</div>
+		<div class="mt-4">
+			@components.Terminal("enroll the runner") {
+				<span class="text-dim">{ "$ " }</span>{ "detent hub runner register --url https://cloud.detent.build/organizations/ORGANIZATION_ID \\\n" }
+				{ "    --token TOKEN --name \"Build host\" --service\n" }
+				<span class="text-dim">{ "  creates the runner's identity, writes its configuration, and installs a background service" }</span>
 			}
 		</div>
 	}
+}
+
+templ getStartedStep(n int, text string) {
+	<li class="grid grid-cols-[1.5rem_1fr] gap-2">
+		<span class="font-mono text-xs leading-relaxed text-dim">{ strconv.Itoa(n) }</span>
+		<span>{ text }</span>
+	</li>
 }

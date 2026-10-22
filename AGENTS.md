@@ -57,7 +57,10 @@ These are restated in full in `WORKFLOW.md`. In short:
   config, CLI output, lane labels — not decoration.
 - **One thing animates.** The pulsing agent dot and the held card's ring.
   `prefers-reduced-motion` turns both off.
-- **No signup, no pricing, no demo booking, no fake social proof.**
+- **Detent Cloud first, self-hosting second.** Prices come only from
+  `docs/hosted-allowances.md`. No demo booking, no fake social proof.
+- **Orchestration, not coding.** Lanes and gates are each project's
+  configuration; never describe Detent as code-only.
 - **Deployment.** `PORT` stays 3000. No www, ever. `SITE_URL` is
   `https://detent.build` with no trailing slash. No TLS or http-to-https
   redirect in Go; Traefik already does both. `go.mod` stays at `go 1.25`.

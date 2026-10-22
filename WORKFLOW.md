@@ -34,7 +34,8 @@ The binary is stateless: it renders templ pages and serves static assets.
 **Content is sourced, not written.** `internal/content/content.go` holds every
 factual claim on the site, and each claim must trace to the
 `digitaldrywood/detent` repository — its `README.md`, `docs/comparison.md`,
-`docs/concepts.md`, or the live `detent-orchestration` config. Do not add a
+`docs/concepts.md`, `docs/cloud-onboarding.md`, `docs/hosted-allowances.md`,
+`docs/hub-self-hosting.md`, or its own `detent.yaml`. Do not add a
 capability claim, a metric, a testimonial, or a logo that the Detent repository
 cannot substantiate. The comparison matrix is copied from `docs/comparison.md`
 including the rows where Detent loses; keep those rows.
@@ -53,8 +54,11 @@ Geist Mono because they are literal strings, not decoration.
 card's ring. `prefers-reduced-motion` turns both off. Do not add more
 animation.
 
-**No signup, no pricing, no demo booking, no fake social proof.** The product
-is free and self-hosted; any of those elements would misrepresent it.
+**Detent Cloud first, self-hosting second.** Lead with the free Cloud plan.
+Prices come only from the capacity catalog in `docs/hosted-allowances.md`. No
+demo booking and no fake social proof. Detent is an orchestration layer for any
+kind of work, not a coding tool: lanes and gates are each project's
+configuration.
 
 **Deployment constraints, each covered by a test in
 `internal/handler/handler_test.go`.** `PORT` stays 3000 because the Dokploy
