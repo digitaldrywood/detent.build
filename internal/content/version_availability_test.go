@@ -42,8 +42,8 @@ func TestVersionAvailabilityRequiresExplicitRecord(t *testing.T) {
 	if entries := VersionAvailabilityForSource("config.md"); len(entries) != 0 {
 		t.Errorf("unrecorded source returned version availability: %#v", entries)
 	}
-	entries := VersionAvailabilityForSource("workflow-overlays.md")
-	if len(entries) != 1 || entries[0].FeatureID != "machine-local-workflow-overlays" {
+	entries := VersionAvailabilityForSource("webhook-freshness.md")
+	if len(entries) != 1 || entries[0].FeatureID != "per-project-github-webhook-freshness" {
 		t.Errorf("recorded source returned version availability %#v", entries)
 	}
 }

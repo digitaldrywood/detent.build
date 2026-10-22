@@ -49,7 +49,7 @@ const (
 	HomeHeroDeckBeforeTodo = "You put an issue in "
 	HomeHeroDeckAfterTodo  = ". A runner on a machine you control claims it, runs Codex or Claude Code against the " +
 		"contract you checked in, and moves it between the states your workflow defines, holding it wherever you put a gate."
-	HomeHeroStatement = "You are not steering an agent; you are running your own engineering process at scale."
+	HomeHeroStatement = "You are not steering an agent; you are running your own process at scale."
 
 	DetentREADMEURL             = RepoURL + "/blob/" + docs.CommitSHA + "/README.md"
 	DefiniteStatesHeading       = "A detent makes position definite."
@@ -127,26 +127,6 @@ var LineageDivergences = []lineageDivergence{
 }
 
 var versionAvailability = []VersionAvailability{
-	{
-		FeatureID:       "machine-local-workflow-overlays",
-		FeatureName:     "Machine-local workflow overlays",
-		SourcePath:      "workflow-overlays.md",
-		IntroducedBy:    RepoURL + "/pull/1366",
-		VerifiedVersion: "v0.43.0",
-		VerificationMethod: "PR #1366 adds the implementation and focused tests; the parent commit lacks overlay handling, " +
-			"and the affected config and project tests pass at v0.43.0.",
-		Confidence: VersionAvailabilityIntroduced,
-	},
-	{
-		FeatureID:       "scheduled-maintenance-routines",
-		FeatureName:     "Scheduled maintenance routines",
-		SourcePath:      "scheduled-routines.md",
-		IntroducedBy:    RepoURL + "/pull/1409",
-		VerifiedVersion: "v0.46.0",
-		VerificationMethod: "PR #1409 adds the routine implementation and focused tests; the parent commit lacks the routine package, " +
-			"and the affected config and routine tests pass at v0.46.0.",
-		Confidence: VersionAvailabilityIntroduced,
-	},
 	{
 		FeatureID:       "per-project-github-webhook-freshness",
 		FeatureName:     "Per-project GitHub webhook freshness",
@@ -754,7 +734,7 @@ type Plan struct {
 
 var Plans = []Plan{
 	{"Free", "0", 2, "Try Detent on real work. No card, no Stripe customer.", false},
-	{"Starter", "49", 8, "A few repositories running side by side.", true},
+	{"Starter", "49", 8, "A few projects running side by side.", true},
 	{"Team", "99", 20, "A team's backlog moving through review at once.", true},
 	{"Growth", "249", 50, "Fleets of runners across many projects.", true},
 	{"Scale", "", 0, "A custom allowance, set up with us.", true},

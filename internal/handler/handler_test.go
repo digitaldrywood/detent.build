@@ -69,8 +69,9 @@ func TestPagesRender(t *testing.T) {
 		{"/how-it-works", "The mechanism, stop by stop."},
 		{"/why-detent", "You are not steering an agent."},
 		{"/dashboard", "The board stays honest."},
-		{"/install", "No service to stand up."},
-		{"/open-source", "No control plane."},
+		{"/install", "It is the runner, and it can be the Hub."},
+		{"/open-source", "Source available. Free to self-host."},
+		{"/pricing", "Start free. Pay for more work running at once."},
 		{"/privacy", "Privacy Policy"},
 		{"/terms", "Terms of Service"},
 		{"/videos", "Detent, moving through real work."},
@@ -212,10 +213,9 @@ func TestHomeOwnsSymphonyLineage(t *testing.T) {
 		"Symphony is an Apache-2.0 ",
 		"SPEC.md",
 		"plus an Elixir reference implementation that polls a Linear board.",
-		"GitHub-native state",
-		"boardless issue-field mode",
-		"boardless label mode",
-		"github_local",
+		"A native board",
+		"Runners you enroll",
+		"GitHub is an optional integration",
 		"Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2.",
 		`href="https://github.com/openai/symphony"`,
 	} {
@@ -241,7 +241,7 @@ func TestLineageMachineLiteralsUseMono(t *testing.T) {
 			if rec.Code != http.StatusOK {
 				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 			}
-			for _, literal := range []string{"SPEC.md", "ProjectV2", "github_local", "detent doctor"} {
+			for _, literal := range []string{"SPEC.md", "detent doctor"} {
 				want := `<span class="font-mono text-xs">` + literal + `</span>`
 				if !strings.Contains(rec.Body.String(), want) {
 					t.Errorf("body does not contain %q", want)
@@ -423,14 +423,15 @@ func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
 			path: "/",
 			want: []string{
 				html.EscapeString(content.BoardCaption),
-				content.NonCodeWorkflowURL,
+				`id="lanes"`,
+				"Detent is the orchestration layer, not a coding tool.",
 				`content="` + content.OpenGraphDefaultImageAlt + `"`,
 			},
 			forbidden: []string{"one item at every stop", "The six board lanes", "the gates decide when it lands. The six"},
 		},
 		{
 			path:      "/dashboard",
-			want:      []string{html.EscapeString(content.DashboardLaneHeading), content.NonCodeWorkflowURL},
+			want:      []string{html.EscapeString(content.DashboardLaneHeading), `href="/#lanes"`},
 			forbidden: []string{"The same six stops, live."},
 		},
 		{
@@ -859,5 +860,48 @@ func TestDefaultPortIsThreeThousand(t *testing.T) {
 
 	if got := config.Load().Port; got != "3000" {
 		t.Errorf("default port = %q, want 3000; the Dokploy domain entry is bound to 3000", got)
+	}
+}
+
+func TestNavLeadsWithCloudAndPricing(t *testing.T) {
+	e := newTestServer(t)
+
+	for _, path := range []string{"/", "/pricing", "/install", "/docs"} {
+		t.Run(path, func(t *testing.T) {
+			body := get(t, e, path, nil).Body.String()
+			for _, want := range []string{
+				`href="/pricing"`,
+				`href="` + content.CloudURL + `"`,
+				`href="` + html.EscapeString(content.CloudSignUpURL) + `"`,
+				">Get started<",
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("body does not contain %q", want)
+				}
+			}
+			for _, forbidden := range []string{"cloud.detent.build/login", "hub.detent.build", "No hosted plan", "There is no hosted tier"} {
+				if strings.Contains(body, forbidden) {
+					t.Errorf("body contains %q", forbidden)
+				}
+			}
+		})
+	}
+}
+
+func TestPricingShowsTheCapacityCatalog(t *testing.T) {
+	body := get(t, newTestServer(t), "/pricing", nil).Body.String()
+
+	for _, plan := range content.Plans {
+		if !strings.Contains(body, `data-plan="`+plan.Name+`"`) {
+			t.Errorf("pricing page is missing the %s plan", plan.Name)
+		}
+		if plan.Price != "" && !strings.Contains(body, "$"+plan.Price) {
+			t.Errorf("pricing page is missing the %s price $%s", plan.Name, plan.Price)
+		}
+	}
+	for _, want := range []string{"Create a free account", content.ContactURL, "Or run the Hub yourself, free."} {
+		if !strings.Contains(body, want) {
+			t.Errorf("pricing page does not contain %q", want)
+		}
 	}
 }
