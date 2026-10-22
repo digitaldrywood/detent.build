@@ -52,6 +52,10 @@ func (h *Handler) OpenSource(c echo.Context) error {
 	return render(c, http.StatusOK, pages.OpenSource())
 }
 
+func (h *Handler) Pricing(c echo.Context) error {
+	return render(c, http.StatusOK, pages.Pricing())
+}
+
 func (h *Handler) Privacy(c echo.Context) error {
 	return render(c, http.StatusOK, pages.Legal(content.PrivacyPolicy))
 }

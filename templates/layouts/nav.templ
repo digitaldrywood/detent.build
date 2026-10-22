@@ -14,11 +14,10 @@ type navItem struct {
 var navItems = []navItem{
 	{"how-it-works", "How it works", "/how-it-works"},
 	{"why-detent", "Why Detent", "/why-detent"},
-	{"dashboard", "Dashboard", "/dashboard"},
-	{"install", "Install", "/install"},
+	{"pricing", "Pricing", "/pricing"},
 	{"docs", "Docs", "/docs"},
+	{"install", "Self-host", "/install"},
 	{"videos", "Videos", "/videos"},
-	{"open-source", "Open source", "/open-source"},
 }
 
 templ Nav(current string) {
@@ -36,33 +35,36 @@ templ Nav(current string) {
 			<div class="ml-auto flex items-center gap-2.5">
 				<a
 					href={ templ.SafeURL(content.ReleasesURL) }
-					class="hidden rounded-chip border border-line px-2 py-1 font-mono text-2xs text-dim transition-colors hover:border-accent hover:text-accent sm:inline-block lg:hidden xl:inline-block"
+					class="hidden rounded-chip border border-line px-2 py-1 font-mono text-2xs text-dim transition-colors hover:border-accent hover:text-accent xl:inline-block"
 				>
-					{ content.VersionFromCtx(ctx) } &#183; { content.License }
+					{ content.VersionFromCtx(ctx) }
 				</a>
 				@ThemeToggle()
 				<a
-					href="https://cloud.detent.build"
-					class="hidden rounded-card border border-line px-3 py-1.5 text-xs text-text transition-colors hover:border-accent hover:text-accent lg:inline-flex"
+					href={ templ.SafeURL(content.RepoURL) }
+					aria-label="Detent on GitHub"
+					class="hidden rounded-card border border-line px-3 py-1.5 font-mono text-xs text-text transition-colors hover:border-accent hover:text-accent sm:inline-flex"
+				>
+					GitHub &#8599;
+				</a>
+				<a
+					href={ templ.SafeURL(content.CloudURL) }
+					data-cloud-sign-in
+					class="rounded-card border border-line px-3 py-1.5 text-xs text-text transition-colors hover:border-accent hover:text-accent"
 				>
 					Sign in
 				</a>
 				<a
-					href={ templ.SafeURL(content.RepoURL) }
-					class="rounded-card border border-line px-3 py-1.5 font-mono text-xs text-text transition-colors hover:border-accent hover:text-accent"
+					href={ templ.SafeURL(content.CloudSignUpURL) }
+					data-cloud-sign-up
+					class="rounded-card border border-accent bg-accent px-3 py-1.5 text-xs font-semibold text-page transition-opacity hover:opacity-90"
 				>
-					GitHub &#8599;
+					Get started
 				</a>
 			</div>
 		</nav>
 		<div class="border-t border-line lg:hidden">
 			<div class="mx-auto flex max-w-[1280px] gap-5 overflow-x-auto px-6 py-2 text-xs md:px-8">
-				<a
-					href="https://cloud.detent.build"
-					class="inline-flex shrink-0 items-center whitespace-nowrap rounded-card border border-line px-3 py-1 text-text transition-colors hover:border-accent hover:text-accent"
-				>
-					Sign in
-				</a>
 				for _, item := range navItems {
 					@navLink(item, current)
 				}

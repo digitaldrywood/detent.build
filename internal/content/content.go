@@ -1,9 +1,10 @@
 // Package content holds the site's factual copy in one place.
 //
 // Every claim here is traceable to the Detent repository — README.md,
-// docs/comparison.md, docs/concepts.md, docs/merge-train.md, or the live
-// digitaldrywood/detent-orchestration config. Nothing in this package is
-// invented, and nothing describes behavior the repository cannot substantiate.
+// detent.yaml, docs/comparison.md, docs/concepts.md, docs/cloud-onboarding.md,
+// docs/hosted-allowances.md, or docs/hub-self-hosting.md. Nothing in this
+// package is invented, and nothing describes behavior the repository cannot
+// substantiate.
 package content
 
 import (
@@ -15,7 +16,8 @@ import (
 
 const (
 	RepoURL            = docs.SourceRepository
-	OrchestrationURL   = "https://github.com/digitaldrywood/detent-orchestration"
+	DetentConfigURL    = RepoURL + "/blob/main/detent.yaml"
+	DetentWorkflowURL  = RepoURL + "/blob/main/WORKFLOW.md"
 	ReleasesURL        = "https://github.com/digitaldrywood/detent/releases"
 	LicenseURL         = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
 	IssuesURL          = "https://github.com/digitaldrywood/detent/issues"
@@ -23,26 +25,30 @@ const (
 	CIURL              = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
 	SymphonyURL        = "https://github.com/openai/symphony"
 	CodexCLIURL        = "https://github.com/openai/codex"
-	NonCodeWorkflowURL = RepoURL + "/blob/" + docs.CommitSHA + "/docs/examples/non-code-artifact/README.md"
 
 	DocsBase = RepoURL + "/blob/" + docs.CommitSHA + "/docs/"
+
+	// CloudURL is the Detent Cloud sign-in screen. cloud.detent.build serves it
+	// at the root; /login is not a route there.
+	CloudURL       = "https://cloud.detent.build/"
+	CloudSignUpURL = CloudURL + "auth/oidc/start?screen_hint=sign-up"
+	ContactURL     = "mailto:" + LegalContactEmail
 
 	// Version is hand-maintained and will rot. It should come from the
 	// releases API or a build flag; until then TestVersionMatchesBare keeps the
 	// two spellings in sync, and nothing else.
-	Version     = "v0.61.0"
-	VersionBare = "0.61.0"
-	License     = "MIT"
+	Version     = "v0.164.2"
+	VersionBare = "0.164.2"
+	License     = "FSL-1.1-ALv2"
 
 	HomeTitle       = "Manage work, not agents"
 	HomeHeadline    = HomeTitle + "."
-	HomeDescription = "Detent is status-driven agentic work orchestration in a single Go binary. " +
-		"Mark an issue Todo; it moves between the states your workflow defines, holding wherever you put a gate. " +
-		"Self-hosted, MIT, no vendor control plane."
-	HomeHeroDeckBeforeTodo = "You mark an issue "
-	HomeHeroDeckAfterTodo  = ". Detent claims it, runs it against the contract you checked in, and moves it between " +
-		"the states your workflow defines, holding it wherever you put a gate. Every issue it manages sits at a named " +
-		"state on the board."
+	HomeDescription = "Detent is an orchestration layer for agent work. Write issues on a board whose lanes and gates your workflow defines; " +
+		"Detent hands each ready issue to an agent on a machine you control, checks the result against your gates, and moves it forward. " +
+		"Code, video, documents, or office workflows. Start free on Detent Cloud, or self-host the Hub."
+	HomeHeroDeckBeforeTodo = "You put an issue in "
+	HomeHeroDeckAfterTodo  = ". A runner on a machine you control claims it, runs Codex or Claude Code against the " +
+		"contract you checked in, and moves it between the states your workflow defines, holding it wherever you put a gate."
 	HomeHeroStatement = "You are not steering an agent; you are running your own engineering process at scale."
 
 	DetentREADMEURL             = RepoURL + "/blob/" + docs.CommitSHA + "/README.md"
@@ -50,10 +56,10 @@ const (
 	DefiniteStatesDefinition    = "A detent is the catch that holds a moving part at a defined position until it is deliberately released: the click-stop on a dial, the notch on a ratchet. It does two things at once. It resists movement out of a position, and it makes the set of positions definite. Detent is named for the second one."
 	DefiniteStatesWhereQuestion = "Where is it?"
 	DefiniteStatesWhereAutonomy = "You steer a session and course-correct when it drifts."
-	DefiniteStatesWhereDetent   = "At a state your workflow defines, on the board, in GitHub."
+	DefiniteStatesWhereDetent   = "At a state your workflow defines, on the board."
 	DefiniteStatesWaitQuestion  = "What is it waiting on?"
 	DefiniteStatesWaitAutonomy  = "Whatever you tell it next."
-	DefiniteStatesWaitDetent    = "The promotion condition you configured. That can require a linked open PR, green CI on the current head, an automated review, a quiet period, or a human approval label."
+	DefiniteStatesWaitDetent    = "The gate you configured: your gate command on the finished change, an automated validator, or a person in Human Review."
 	DefiniteStatesMoveQuestion  = "Who moves it?"
 	DefiniteStatesMoveAutonomy  = "You, by talking to the agent."
 	DefiniteStatesMoveDetent    = "The runtime when the condition is met, or you by changing the state."
@@ -82,43 +88,40 @@ var LineageSymphony = []LineageFragment{
 
 var LineageHistory = []LineageFragment{
 	{Text: "Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2. "},
-	{Text: "It is now a ground-up Go rewrite; that earlier implementation is archived."},
+	{Text: "It is now a ground-up Go rewrite with its own native board; that earlier implementation is archived."},
 }
 
 var LineageDivergences = []lineageDivergence{
 	{
 		Title: "One binary",
 		Body: []LineageFragment{
-			{Text: "One CGO-free Go binary for macOS, Linux, and Windows, with no BEAM service to stand up."},
+			{Text: "The Hub and the runner are the same CGO-free Go binary for macOS, Linux, and Windows."},
 		},
 	},
 	{
-		Title: "GitHub-native state",
+		Title: "A native board",
 		Body: []LineageFragment{
-			{Text: "ProjectV2", Mono: true},
-			{Text: ", boardless issue-field mode, boardless label mode, or the "},
-			{Text: "github_local", Mono: true},
-			{Text: " hybrid mode keep the work in GitHub's issue and pull request ID space."},
+			{Text: "The Hub holds issues, lanes, comments, dependencies, and Change Requests. GitHub is an optional integration for importing issues."},
 		},
 	},
 	{
-		Title: "Fleet scheduling",
+		Title: "Runners you enroll",
 		Body: []LineageFragment{
-			{Text: "Multiple projects from one host, with weights, priority, pause, and fair scheduling."},
+			{Text: "Agents run on machines you enroll, next to your checkout, your toolchain, and your agent sign-ins."},
 		},
 	},
 	{
 		Title: "Configurable gates",
 		Body: []LineageFragment{
-			{Text: "Configurable gates plus a serialized merge train that validates the exact commit about to land."},
+			{Text: "Your gate command, an automated validator, or a person in Human Review, then serialized landing one change at a time."},
 		},
 	},
 	{
 		Title: "Operator surface",
 		Body: []LineageFragment{
-			{Text: "A dashboard, terminal UI, "},
+			{Text: "A web app, MCP access for your own agents, "},
 			{Text: "detent doctor", Mono: true},
-			{Text: ", cross-platform config discovery, and a GoReleaser pipeline."},
+			{Text: ", and a GoReleaser pipeline."},
 		},
 	},
 }
@@ -185,11 +188,11 @@ type Lane struct {
 // Lanes is the delivery path in Detent's own production workflow.
 var Lanes = []Lane{
 	{"Todo", "todo", "Claimed by the scheduler when capacity and dependencies allow."},
-	{"In Progress", "in-progress", "A Codex agent is working in an isolated worktree on its own branch."},
+	{"In Progress", "in-progress", "A Codex or Claude Code agent is working on a runner, in an isolated worktree on its own branch."},
 	{"Human Review", "human-review", "Held. The workflow asked for a human gate; nothing advances until you release it."},
-	{"Rework", "rework", "Unresolved review feedback sent the work back for another pass."},
-	{"Merging", "merging", "In the serialized merge train: rebase, CI-watch, merge — one at a time."},
-	{"Done", "done", "Merged green, or closed as cancelled."},
+	{"Rework", "rework", "A failed gate or review feedback sent the work back for another pass."},
+	{"Merging", "merging", "The runner that holds the project lands the change on the base branch with plain git, one at a time."},
+	{"Done", "done", "Landed, or closed as cancelled."},
 }
 
 // Step is one numbered stage in the how-it-works mechanism, drawn from the
@@ -205,54 +208,54 @@ type Step struct {
 
 var Steps = []Step{
 	{
-		Num:   1,
-		Title: "You write the contracts",
-		Body:  "Each project has a checked-in detent.yaml machine contract — tracker bindings, states, lifecycle policy, scheduling, retries, leases, gates — plus a checked-in, portable WORKFLOW.md agent instruction contract.",
-		Detail: "The prompt declares the project's required CI stage categories and the commands and check names that satisfy each one. " +
-			"Optional gitignored detent.local.yaml and WORKFLOW.local.md apply machine-specific overrides without touching the shared contracts.",
-		DocPath: "config.md",
-		DocName: "Configuration reference",
+		Num:     1,
+		Title:   "Pick a Hub",
+		Body:    "The Hub holds the board, the issues, the review decisions, and the policy each project runs under. Use Detent Cloud, or run the same Hub yourself.",
+		Detail:  "Detent Cloud has a free plan that needs no card. Self-hosting is free and needs no Detent Cloud account.",
+		DocPath: "cloud-onboarding.md",
+		DocName: "Cloud onboarding",
 	},
 	{
 		Num:     2,
-		Title:   "You mark an issue Todo",
-		Body:    "Detent claims it, creates an isolated Git worktree from your source checkout, and dispatches a Codex agent with the contract — moving the issue to In Progress.",
-		Detail:  "The source of truth can be a GitHub ProjectV2 board, or Detent can run boardless from an issue Status field or repository status labels while supplying its own Kanban view.",
+		Title:   "Enroll a runner",
+		Body:    "A runner is a machine you enroll: a laptop, a build server, a VM, or a Fly Sprite. It keeps your checkout, your agent sign-ins, and your toolchain.",
+		Detail:  "Nothing that touches your code runs on the Hub. Cloud assigns each runner its allowed projects and model selection.",
+		DocPath: "sprite-runners.md",
+		DocName: "Runners on Fly Sprites",
+	},
+	{
+		Num:   3,
+		Title: "Commit the contracts",
+		Body:  "detent.yaml is the machine contract: lanes, gate command, review policy, scheduling, retries, and budgets. WORKFLOW.md is the agent contract: how to work in this repository and what done means.",
+		Detail: "Trusted workflow definitions from the repository's default branch apply automatically. " +
+			"The README's Start with AI prompt drafts both files for your review.",
 		DocPath: "concepts.md",
-		DocName: "Connectors and board states",
+		DocName: "Concepts",
 	},
 	{
-		Num:     3,
-		Title:   "The agent works",
-		Body:    "In its own branch. It runs your validation gate and opens or updates a pull request.",
-		Detail:  "Review-gate workflows move the issue to Human Review. Autopilot workflows leave it active with status: complete in the Workpad.",
-		DocPath: "execution-seams.md",
-		DocName: "Execution seams",
+		Num:     4,
+		Title:   "You put an issue in Todo",
+		Body:    "A runner that holds the project claims it, creates an isolated worktree, and starts Codex or Claude Code with the issue and WORKFLOW.md. The issue moves to In Progress.",
+		Detail:  "The agent works on its own branch and runs your gate command. When it commits, the runner publishes a Change Request on the Hub with the diff.",
+		DocPath: "concepts.md",
+		DocName: "Board states",
 	},
 	{
-		Num:   4,
+		Num:   5,
 		Title: "Gates decide",
-		Body:  "The workflow decides whether promotion to Merging waits in Human Review, waits in the active lane, requires a current-head automated PR review, or only needs linked PR + green CI + quiet time.",
-		Detail: "Unresolved feedback sends the issue to Rework for another pass. Code defaults to make check plus CI plus automated review; " +
-			"a human approval-label gate is available when the workflow explicitly asks for one.",
-		DocPath: "concepts.md",
-		DocName: "Review gates",
-	},
-	{
-		Num:     5,
-		Title:   "The merge train is serialized",
-		Body:    "One rebase, CI-watch, and merge at a time, so concurrent candidates never invalidate each other's CI. Then the issue is Done.",
-		Detail:  "Train width is configuration, not a fixed rule — Detent's own board runs it at one candidate at a time.",
-		DocPath: "merge-train.md",
-		DocName: "Merge train",
+		Body:  "With review.human: false an accepted change goes straight to Merging. With review.human: true it waits in Human Review until a person approves it or sends it back.",
+		Detail: "Workflows can add an automated validator and a security audit. Detent's own config sends a failed gate back to Rework " +
+			"with its output.",
+		DocPath: "native-review.md",
+		DocName: "Native review",
 	},
 	{
 		Num:     6,
-		Title:   "One host, many repos",
-		Body:    "A global.yaml runs multiple projects with weights, priority, pause, and fair scheduling.",
-		Detail:  "The web dashboard and terminal UI show live counts, running agents, token / budget / rate-limit state, and board flow.",
-		DocPath: "multi-project.md",
-		DocName: "Multi-project operation",
+		Title:   "Landing is serialized",
+		Body:    "In Merging, the runner that holds the project lands the change on the base branch with plain git, one change at a time. Then the issue is Done.",
+		Detail:  "A change that cannot land goes to Blocked with its reason instead of landing broken.",
+		DocPath: "concepts.md",
+		DocName: "Board states",
 	},
 }
 
@@ -263,14 +266,14 @@ type ProofPoint struct {
 }
 
 var ProofPoints = []ProofPoint{
-	{"One CGO-free Go binary", "macOS, Linux, and Windows. go install, Homebrew, Winget, Scoop, .deb, .rpm, or copy a single file. No service to stand up."},
-	{"Self-hosted, air-gappable", "Runs fully local. There is no Detent vendor control plane and no Detent telemetry — the only outbound traffic is to your tracker and your model provider."},
-	{"Deterministic gated merge train", "Serialized rebase, CI-watch, and merge — one candidate at a time, so what lands is always green."},
-	{"Multi-instance fleet governance", "Many projects from one host with weights, priority, pause, and fair scheduling."},
-	{"Budget and cost caps", "Token, budget, and rate-limit state live on the dashboard, with caps you configure."},
-	{"Pluggable validation gates", "Code defaults to make check plus CI plus automated review. A human approval-label gate is available when the workflow asks for one."},
-	{"detent doctor preflight", "Cross-platform config discovery, a GoReleaser pipeline, and checksum-verified self-update."},
-	{"MIT licensed, free", "You bring the model cost. Nothing else is metered."},
+	{"Free to start", "Detent Cloud's Free plan needs no card: two concurrent runs, with unlimited projects, members, repositories, and runners."},
+	{"Self-host for free", "Run the same Hub on your own host. No Detent Cloud account, subscription, or billing is required."},
+	{"Agents on your machines", "Runners keep your checkout, your toolchain, and your Codex or Claude Code sign-in. Detent stores no model credentials."},
+	{"Serialized landing", "One change lands at a time, on the base branch, after your gates clear. A change that cannot land goes to Blocked with its reason."},
+	{"A runner fleet", "Enroll laptops, build servers, VMs, or Fly Sprites, and route each runner to the projects it may work."},
+	{"Capacity you can see", "Concurrent work is counted per organization. A claim at the limit waits in its lane until a slot frees; nothing is refused at filing."},
+	{"MCP for your own agents", "The Hub exposes its board, issues, changes, runners, and settings over MCP, so your agent can file issues and review changes."},
+	{"Source available", "FSL-1.1-ALv2. Each release becomes Apache 2.0 on its second anniversary."},
 }
 
 // InstallTarget is one platform tab on the install surface.
@@ -351,31 +354,24 @@ type Requirement struct {
 
 var Requirements = []Requirement{
 	{
-		Name:   "OpenAI Codex CLI, signed in",
-		Detail: "Detent drives every agent through codex app-server on the host that dispatches them.",
-		Verify: "codex --version",
+		Name:   "A Hub to enroll against",
+		Detail: "A Detent Cloud organization, free to create, or a Hub you run yourself. The runner registers against its URL.",
+		Verify: "detent hub runner register --help",
 	},
 	{
-		Name:     "GitHub CLI (gh)",
-		Detail:   "Used for authentication and GitHub lookups. Optional, but assumed throughout the docs.",
-		Verify:   "gh auth status",
-		Optional: true,
+		Name:   "Codex CLI or Claude Code, signed in on the runner",
+		Detail: "Runners drive agents through their own CLIs, using the sign-in already on the machine. Detent stores no model credentials.",
+		Verify: "codex login · claude auth login",
 	},
 	{
-		Name:   "A GitHub token scoped to your tracker mode",
-		Detail: "ProjectV2 mode usually needs repo, read:org, read:project, and write project. Boardless issue-field mode needs repository issue access plus organization issue-field read access.",
-		Verify: "detent doctor --port 0",
+		Name:   "Your repository and its toolchain",
+		Detail: "The runner clones linked repositories under its workspace root and runs your gate command there, so the build tools your gate needs must be installed.",
+		Verify: "git --version",
 	},
 	{
 		Name:     "Go 1.26 or newer",
 		Detail:   "Only for go install or building from source. Release binaries need nothing installed.",
 		Verify:   "go version",
-		Optional: true,
-	},
-	{
-		Name:     "Claude Code CLI, signed in",
-		Detail:   "Only when routing selected roles to the claude_code backend. Detent stores no Claude credentials; it uses the ambient CLI login or ANTHROPIC_API_KEY.",
-		Verify:   "claude --version",
 		Optional: true,
 	},
 }
@@ -387,11 +383,10 @@ type Competitor struct {
 	What string
 }
 
-// Competitors mirrors docs/comparison.md, last verified July 6, 2026.
+// Competitors mirrors docs/comparison.md, last updated October 7, 2026.
 var Competitors = []Competitor{
-	{"Detent", RepoURL, "Single-binary Go orchestrator for GitHub-native issue-to-PR work, using ProjectV2 or boardless status sources."},
-	{"OpenAI Symphony", SymphonyURL, "Detent's origin point: an Apache-2.0 spec plus an Elixir reference implementation for Codex on Linear."},
-	{"Copilot agent", "https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent", "GitHub's paid issue- or prompt-to-branch-and-PR cloud agent."},
+	{"Detent", RepoURL, "Single-binary Go orchestrator: a Hub (Detent Cloud or self-hosted) holds the board and policy, and enrolled runners execute issues as gated changes."},
+	{"Copilot agent", "https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent", "GitHub's paid issue- or prompt-to-branch-and-PR agent."},
 	{"Cursor", "https://cursor.com/cloud", "IDE-first agent product with cloud and background agents, automations, and optional self-hosted workers."},
 	{"Hermes", "https://github.com/NousResearch/hermes-agent", "Nous's MIT personal assistant with memory, skills, model providers, and a messaging gateway."},
 	{"OpenClaw", "https://github.com/openclaw/openclaw", "MIT personal assistant centered on a local gateway and cross-channel automation."},
@@ -414,76 +409,46 @@ type Row struct {
 // Matrix mirrors the feature matrix in docs/comparison.md exactly.
 var Matrix = []Row{
 	{"Self-hosted, no vendor control plane", []Verdict{
-		{"yes", ""}, {"yes", ""}, {"no", ""}, {"no", ""}, {"yes", ""}, {"yes", ""}, {"no", "hosted"},
+		{"yes", "self-hosted Hub"}, {"no", ""}, {"no", ""}, {"yes", ""}, {"yes", ""}, {"no", "hosted"},
 	}},
-	{"Runs fully local / air-gappable", []Verdict{
-		{"yes", ""}, {"yes", ""}, {"no", ""}, {"no", ""}, {"yes", ""}, {"yes", ""}, {"no", "cloud"},
+	{"Agents run on your own machines", []Verdict{
+		{"yes", "enrolled runners"}, {"no", ""}, {"partial", "self-hosted workers"}, {"yes", ""}, {"yes", ""}, {"no", "cloud"},
 	}},
-	{"Board/tracker-native (issue→PR)", []Verdict{
-		{"yes", "GH Projects, issue fields, or labels"}, {"yes", "Linear"}, {"yes", "GH Issues"},
-		{"no", ""}, {"no", ""}, {"no", ""}, {"no", "own workspace"},
+	{"Board/tracker-native (issue→change)", []Verdict{
+		{"yes", "native tracker, optional GitHub"}, {"yes", "GH Issues"}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", "own workspace"},
 	}},
-	{"Deterministic gated merge train", []Verdict{
-		{"yes", ""}, {"partial", "per spec"}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""},
+	{"Deterministic gated landing", []Verdict{
+		{"yes", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""},
 	}},
 	{"Budget / cost caps", []Verdict{
-		{"yes", ""}, {"no", ""}, {"partial", ""}, {"partial", ""}, {"no", ""}, {"no", ""}, {"yes", "hosted controls"},
+		{"yes", ""}, {"partial", ""}, {"partial", ""}, {"no", ""}, {"no", ""}, {"yes", "hosted controls"},
 	}},
 	{"Multi-project", []Verdict{
-		{"yes", ""}, {"no", ""}, {"yes", ""}, {"yes", ""}, {"no", ""}, {"no", ""}, {"partial", "workspace-scoped"},
+		{"yes", ""}, {"yes", ""}, {"yes", ""}, {"no", ""}, {"no", ""}, {"partial", "workspace-scoped"},
 	}},
-	{"Multi-instance fleet governance", []Verdict{
-		{"yes", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"partial", "hosted agent controls"},
+	{"Runner fleet routing and capacity", []Verdict{
+		{"yes", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"no", ""}, {"partial", "hosted agent controls"},
 	}},
-	{"Model-agnostic, BYO incl. local", []Verdict{
-		{"partial", "codex now, seam shipped"}, {"no", "Codex"}, {"yes", "vendor-managed"}, {"yes", "vendor-managed"},
-		{"yes", ""}, {"yes", ""}, {"no", "cloud-managed"},
+	{"Model choice, BYO subscription", []Verdict{
+		{"yes", "Codex and Claude Code"}, {"yes", "vendor-managed"}, {"yes", "vendor-managed"}, {"yes", ""}, {"yes", ""}, {"no", "cloud-managed"},
 	}},
 	{"Local skills / workflows (your e2e etc.)", []Verdict{
-		{"yes", ""}, {"partial", ""}, {"no", ""}, {"partial", ""}, {"yes", ""}, {"yes", ""}, {"yes", "hosted skills/knowledge"},
+		{"yes", ""}, {"no", ""}, {"partial", ""}, {"yes", ""}, {"yes", ""}, {"yes", "hosted skills/knowledge"},
 	}},
 	{"Multi-channel triggers", []Verdict{
-		{"partial", "tracker-driven"}, {"partial", "Linear"}, {"partial", "GitHub"}, {"partial", "IDE/cloud tasks"},
+		{"partial", "tracker, conversations, MCP"}, {"partial", "GitHub"}, {"partial", "IDE/cloud tasks"},
 		{"yes", "messaging gateway"}, {"yes", "local gateway"}, {"yes", "Slack, schedules, webhooks, email, Telegram, Live Mode"},
 	}},
-	{"Open source", []Verdict{
-		{"yes", "MIT"}, {"yes", "Apache-2.0"}, {"no", ""}, {"no", ""}, {"yes", "MIT"}, {"yes", "MIT"}, {"no", "closed-source"},
-	}},
-	{"Free (bring your own model cost)", []Verdict{
-		{"yes", ""}, {"yes", ""}, {"no", "paid"}, {"no", "paid"}, {"yes", ""}, {"yes", ""}, {"no", "usage-billed"},
+	{"Source available", []Verdict{
+		{"yes", "FSL-1.1-ALv2"}, {"no", ""}, {"no", ""}, {"yes", "MIT"}, {"yes", "MIT"}, {"no", "closed-source"},
 	}},
 	{"Single static binary", []Verdict{
-		{"yes", ""}, {"no", "Elixir/BEAM"}, {"na", "SaaS"}, {"na", "SaaS"}, {"no", "gateway"}, {"no", "gateway"}, {"na", "SaaS"},
-	}},
-	{"~5-min setup", []Verdict{
-		{"yes", ""}, {"no", ""}, {"yes", "zero-install"}, {"yes", ""}, {"partial", ""}, {"partial", ""}, {"partial", "hosted onboarding"},
+		{"yes", ""}, {"na", "SaaS"}, {"na", "SaaS"}, {"no", "gateway"}, {"no", "gateway"}, {"na", "SaaS"},
 	}},
 }
 
-// MatrixAsOf is the verification date carried in docs/comparison.md.
-const MatrixAsOf = "July 6, 2026"
-
-// FleetProject is a row in the multi-project scheduling table. These are the
-// projects in Detent's own global.yaml.
-type FleetProject struct {
-	ID       string
-	Weight   string
-	Priority string
-}
-
-// Fleet is the projects block of Detent's own global.yaml. Only the fields
-// that file actually sets — there is no per-project state column in it, and
-// inventing one would make the "from Detent's own config" claim false.
-var Fleet = []FleetProject{
-	{"detent", "1", "0"},
-	{"gopher-ai", "1", "3"},
-	{"gopher-corp", "1", "3"},
-	{"detent.build", "1", "3"},
-}
-
-// FleetNote explains what the table above is.
-const FleetNote = "The projects block of Detent's own global.yaml. That file also sets " +
-	"max_concurrent_agents: 10, strict scheduling, and a 1h fair-share half-life."
+// MatrixAsOf is the date carried in docs/comparison.md.
+const MatrixAsOf = "October 7, 2026"
 
 // Card is one work item sitting in a lane on the hero board.
 type Card struct {
@@ -574,7 +539,7 @@ var Board = []BoardColumn{
 // Squash merges put the PR reference in the commit subject, so this counts
 // landed pull requests rather than raw commits. Hand-updated; see the note on
 // Version about the same staleness problem.
-const MergedPRs = "785"
+const MergedPRs = "3202"
 
 // BoardLabel replaces a "live" indicator. The board is a composition, and
 // saying so in the header rather than in a caption underneath is the whole
@@ -602,11 +567,10 @@ type MergeTrainStage struct {
 }
 
 var MergeTrain = []MergeTrainStage{
-	{"queued candidates wait", ""},
-	{"rebase onto main", "info"},
-	{"CI watch", "warn"},
-	{"merge", "ok"},
-	{"main stays green", ""},
+	{"accepted changes queue", ""},
+	{"Merging", "info"},
+	{"land on the base branch", "ok"},
+	{"Done", ""},
 }
 
 const (
@@ -715,16 +679,16 @@ var PrivacyPolicy = LegalPage{
 var TermsOfService = LegalPage{
 	Title:        "Terms of Service",
 	Path:         "/terms",
-	Description:  "Terms for the detent.build website and Detent Cloud, including accounts, organization content, execution, billing, and the separate MIT software license.",
+	Description:  "Terms for the detent.build website and Detent Cloud, including accounts, organization content, execution, billing, and the separate software license.",
 	Introduction: "These terms cover the detent.build website and Detent Cloud service operated by " + LegalOperator + ". By using these services, you agree to these terms.",
 	Sections: []LegalSection{
 		{
 			Heading: "Cloud service and open-source software",
 			Paragraphs: []string{
-				"Detent Cloud provides hosted collaboration and coordination for your organization. The Detent software is separately distributed under the MIT license. These service terms do not replace that license or restrict the rights it grants for self-hosted use.",
+				"Detent Cloud provides hosted collaboration and coordination for your organization. The Detent software is separately distributed under the FSL-1.1-ALv2 license. These service terms do not replace that license or restrict the rights it grants for self-hosted use.",
 				"You must be legally able to agree to these terms. If you use Cloud for an organization, you must have authority to act for it. Your use of Google, WorkOS, Stripe, repository hosts, and model providers is also subject to the applicable provider agreements.",
 			},
-			Links: []LegalLink{{"Detent MIT license", LicenseURL}},
+			Links: []LegalLink{{"Detent software license", LicenseURL}},
 		},
 		{
 			Heading: "Accounts and organization access",
@@ -771,4 +735,61 @@ var TermsOfService = LegalPage{
 			Links: []LegalLink{{"Contact " + LegalOperator, "mailto:" + LegalContactEmail}},
 		},
 	},
+}
+
+// Plan is one Detent Cloud tier. Every value is copied from the capacity
+// catalog in docs/hosted-allowances.md; the tiers differ only in price and
+// concurrent work.
+type Plan struct {
+	Name string
+	// Price is the USD price per organization per month, or "" for Scale,
+	// which has no self-serve price.
+	Price string
+	// ConcurrentWork is the number of live claims the organization may hold
+	// at once, or 0 for Scale's custom allowance.
+	ConcurrentWork int
+	Summary        string
+	HostedArtifact bool
+}
+
+var Plans = []Plan{
+	{"Free", "0", 2, "Try Detent on real work. No card, no Stripe customer.", false},
+	{"Starter", "49", 8, "A few repositories running side by side.", true},
+	{"Team", "99", 20, "A team's backlog moving through review at once.", true},
+	{"Growth", "249", 50, "Fleets of runners across many projects.", true},
+	{"Scale", "", 0, "A custom allowance, set up with us.", true},
+}
+
+// MaxPlanConcurrentWork is the largest self-serve allowance; the pricing page
+// draws every plan's capacity on that scale.
+const MaxPlanConcurrentWork = 50
+
+// PlanIncludes is what every tier, Free included, gets.
+var PlanIncludes = []string{
+	"Native execution on runners you enroll",
+	"Unlimited projects, members, repositories, and runners",
+	"Up to 10,000 open issues per organization",
+	"The web app, MCP access, and the same gates and serialized landing",
+}
+
+const (
+	PricingAsOf       = "October 22, 2026"
+	PricingCatalogDoc = "hosted-allowances.md"
+)
+
+// LaneSet is an example board for one kind of work. Lanes are whatever a
+// project's detent.yaml declares, each with a role: active lanes dispatch
+// agents, holding lanes wait, terminal lanes end the work.
+type LaneSet struct {
+	Kind  string
+	Lanes []string
+	// Gate is the index of the holding lane that waits for a person.
+	Gate int
+}
+
+// LaneSets are illustrations, not shipped templates; the page says so.
+var LaneSets = []LaneSet{
+	{"Software", []string{"Todo", "In Progress", "Human Review", "Merging", "Done"}, 2},
+	{"Video", []string{"Script", "Record", "Edit", "Review", "Published"}, 3},
+	{"Office", []string{"Request", "Draft", "Approval", "Filed"}, 2},
 }

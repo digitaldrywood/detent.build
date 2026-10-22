@@ -15,20 +15,43 @@ func TestVersionMatchesBare(t *testing.T) {
 	}
 }
 
-func TestFleetMatchesGlobalConfig(t *testing.T) {
-	want := []FleetProject{
-		{"detent", "1", "0"},
-		{"gopher-ai", "1", "3"},
-		{"gopher-corp", "1", "3"},
-		{"detent.build", "1", "3"},
+func TestPlansMatchHostedCapacityCatalog(t *testing.T) {
+	want := []struct {
+		name           string
+		price          string
+		concurrentWork int
+	}{
+		{"Free", "0", 2},
+		{"Starter", "49", 8},
+		{"Team", "99", 20},
+		{"Growth", "249", 50},
+		{"Scale", "", 0},
 	}
 
-	if len(Fleet) != len(want) {
-		t.Fatalf("Fleet has %d projects, want %d", len(Fleet), len(want))
+	if len(Plans) != len(want) {
+		t.Fatalf("Plans has %d tiers, want %d", len(Plans), len(want))
 	}
-	for i := range want {
-		if Fleet[i] != want[i] {
-			t.Errorf("Fleet[%d] = %#v, want %#v", i, Fleet[i], want[i])
+	for i, w := range want {
+		p := Plans[i]
+		if p.Name != w.name || p.Price != w.price || p.ConcurrentWork != w.concurrentWork {
+			t.Errorf("Plans[%d] = %s $%s %d, want %s $%s %d", i, p.Name, p.Price, p.ConcurrentWork, w.name, w.price, w.concurrentWork)
+		}
+		if p.ConcurrentWork > MaxPlanConcurrentWork {
+			t.Errorf("%s concurrent work %d exceeds MaxPlanConcurrentWork %d", p.Name, p.ConcurrentWork, MaxPlanConcurrentWork)
+		}
+	}
+	if Plans[0].HostedArtifact {
+		t.Error("Free plan claims hosted artifacts; only paid tiers add them")
+	}
+}
+
+func TestCloudLinksAvoidMissingLoginRoute(t *testing.T) {
+	for _, link := range []string{CloudURL, CloudSignUpURL} {
+		if !strings.HasPrefix(link, "https://cloud.detent.build/") {
+			t.Errorf("Cloud link %q is not on cloud.detent.build", link)
+		}
+		if strings.Contains(link, "/login") {
+			t.Errorf("Cloud link %q uses /login, which cloud.detent.build does not serve", link)
 		}
 	}
 }
@@ -71,14 +94,14 @@ func TestDocUsesPublishedPathOrPinnedBlob(t *testing.T) {
 }
 
 func TestPinnedDocumentationLinksUseVendoredCommit(t *testing.T) {
-	for _, link := range []string{DocsBase, NonCodeWorkflowURL} {
+	for _, link := range []string{DocsBase} {
 		if !strings.Contains(link, docs.CommitSHA) {
 			t.Errorf("documentation link %q does not contain pinned commit %s", link, docs.CommitSHA)
 		}
 	}
 }
 
-func TestLineageNamesGitHubStatusSources(t *testing.T) {
+func TestLineageNamesTheCurrentArchitecture(t *testing.T) {
 	var lineage strings.Builder
 	lineage.WriteString(LineageHeading)
 	lineage.WriteString(LineageSummary)
@@ -96,11 +119,10 @@ func TestLineageNamesGitHubStatusSources(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		"GitHub-native",
-		"ProjectV2",
-		"boardless issue-field mode",
-		"boardless label mode",
-		"github_local",
+		"native board",
+		"Change Requests",
+		"GitHub is an optional integration",
+		"Runners you enroll",
 	} {
 		if !strings.Contains(lineage.String(), want) {
 			t.Errorf("lineage does not contain %q", want)
