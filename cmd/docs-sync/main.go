@@ -21,9 +21,9 @@ import (
 const (
 	sourceRepository = "https://github.com/digitaldrywood/detent"
 	sourceRemote     = sourceRepository + ".git"
-	releaseTag       = "v0.57.0"
-	tagObjectSHA     = "10c9b2a531089e8bac7a3fcd42593b257863ec8d"
-	commitSHA        = "1543929187369eca2703abd2a655cf86e9e5d83e"
+	releaseTag       = "v0.164.2"
+	tagObjectSHA     = "ee30f13ec312d004c5ca11494b4d769e6585c291"
+	commitSHA        = "13d15fec6a142058dd74d1275256bfa261442958"
 	docsPrefix       = "docs/"
 	docsToolchain    = "go1.26.6"
 )

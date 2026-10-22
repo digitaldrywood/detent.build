@@ -75,7 +75,7 @@ func TestPagesRender(t *testing.T) {
 		{"/terms", "Terms of Service"},
 		{"/videos", "Detent, moving through real work."},
 		{"/docs", "Documentation, pinned to the source."},
-		{"/docs/getting-started", "Quick Start"},
+		{"/docs/cloud-onboarding", "Project onboarding"},
 		{"/docs/site/project-contracts", "Project contracts"},
 		{"/docs/site/working-checkout-merge-gate", "The working-checkout merge-gate trap"},
 	}
@@ -130,7 +130,7 @@ func TestVideoPlacementsRenderFromManifest(t *testing.T) {
 			forbidden: []string{"I Opened Seven Issues for One Feature (On Purpose)"},
 		},
 		{
-			path:      "/docs/getting-started",
+			path:      "/docs/cloud-onboarding",
 			forbidden: []string{"Related walkthrough", "My AI Orchestrator Is Dumb on Purpose"},
 		},
 	}
@@ -337,8 +337,6 @@ func TestDocumentationVersionAvailabilityIsExplicitAndDistinctFromSourcePin(t *t
 		prefix    string
 		version   string
 	}{
-		{"/docs/workflow-overlays", "machine-local-workflow-overlays", "Introduced in", "v0.43.0"},
-		{"/docs/scheduled-operations", "scheduled-maintenance-routines", "Introduced in", "v0.46.0"},
 		{"/docs/webhook-freshness", "per-project-github-webhook-freshness", "Available in", "v0.27.0"},
 	}
 	for _, test := range tests {
@@ -355,6 +353,32 @@ func TestDocumentationVersionAvailabilityIsExplicitAndDistinctFromSourcePin(t *t
 	unrecorded := get(t, e, "/docs/configuration", nil).Body.String()
 	if strings.Contains(unrecorded, "data-version-feature=") {
 		t.Error("documentation without an explicit record rendered a version badge")
+	}
+}
+
+func TestRetiredUpstreamDocumentationKeepsPublicURLs(t *testing.T) {
+	e := newTestServer(t)
+
+	alias := get(t, e, "/docs/getting-started", nil)
+	if alias.Code != http.StatusOK {
+		t.Fatalf("/docs/getting-started status = %d, want %d", alias.Code, http.StatusOK)
+	}
+	if want := `<link rel="canonical" href="https://detent.build/docs/cloud-onboarding">`; !strings.Contains(alias.Body.String(), want) {
+		t.Errorf("/docs/getting-started is missing canonical %s", want)
+	}
+	for _, path := range []string{
+		"/docs/project-onboarding",
+		"/docs/bootstrap",
+		"/docs/merge-train",
+		"/docs/multi-project",
+		"/docs/workflow-overlays",
+		"/docs/scheduled-operations",
+		"/docs/retrospection",
+		"/docs/execution-seams",
+	} {
+		if code := get(t, e, path, nil).Code; code != http.StatusGone {
+			t.Errorf("%s status = %d, want %d", path, code, http.StatusGone)
+		}
 	}
 }
 
@@ -631,7 +655,7 @@ func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
 		{"/terms", "https://detent.build/terms"},
 		{"/videos", "https://detent.build/videos"},
 		{"/docs", "https://detent.build/docs"},
-		{"/docs/getting-started", "https://detent.build/docs/getting-started"},
+		{"/docs/cloud-onboarding", "https://detent.build/docs/cloud-onboarding"},
 		{"/docs/site/project-contracts", "https://detent.build/docs/site/project-contracts"},
 		{"/docs/site/working-checkout-merge-gate", "https://detent.build/docs/site/working-checkout-merge-gate"},
 	}
@@ -684,7 +708,7 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 		"<loc>https://detent.build/open-source</loc>",
 		"<loc>https://detent.build/videos</loc>",
 		"<loc>https://detent.build/docs</loc>",
-		"<loc>https://detent.build/docs/getting-started</loc>",
+		"<loc>https://detent.build/docs/cloud-onboarding</loc>",
 		"<loc>https://detent.build/docs/site/project-contracts</loc>",
 		"<loc>https://detent.build/docs/site/working-checkout-merge-gate</loc>",
 	} {
