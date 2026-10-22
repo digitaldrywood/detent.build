@@ -122,9 +122,9 @@ func TestPublishedRegistryMatchesCuratedInformationArchitecture(t *testing.T) {
 		title string
 		count int
 	}{
+		{"Get started", 8},
+		{"Operate Detent", 12},
 		{"detent.build guides", 2},
-		{"Get started", 4},
-		{"Operate Detent", 10},
 		{"Reference and contribute", 3},
 	}
 	if len(groups) != len(wantGroups) {
@@ -142,7 +142,8 @@ func TestPublishedRegistryMatchesCuratedInformationArchitecture(t *testing.T) {
 	excluded := []string{
 		"comparison.md",
 		"development.md",
-		"parity-audit.md",
+		"cloud-hub-rfc.md",
+		"invariants.md",
 		"redesign-contrast.md",
 		"release.md",
 		"structured-workpad-signaling-migration.md",
@@ -200,19 +201,19 @@ func TestRelativeLinkDestinationsResolveFromSourceDocument(t *testing.T) {
 		publicPaths map[string]string
 		want        string
 	}{
-		{"published sibling with fragment", "getting-started.md", "concepts.md#review-gate", Published.bySource, "/docs/concepts#review-gate"},
-		{"published nested Markdown with query", "bootstrap.md", "examples/non-code-artifact/README.md?plain=1#run-the-demo", map[string]string{"examples/non-code-artifact/README.md": "/docs/non-code-artifact"}, "/docs/non-code-artifact?plain=1#run-the-demo"},
-		{"unpublished vendored Markdown", "getting-started.md", "workflow-layout-migration.md", Published.bySource, RepositoryBlobURL("docs/workflow-layout-migration.md")},
-		{"repository root Markdown", "getting-started.md", "../README.md#documentation", Published.bySource, RepositoryBlobURL("README.md") + "#documentation"},
+		{"published sibling with fragment", "cloud-onboarding.md", "concepts.md#review-gate", Published.bySource, "/docs/concepts#review-gate"},
+		{"published nested Markdown with query", "hub-self-hosting.md", "examples/hub/README.md?plain=1#install", map[string]string{"examples/hub/README.md": "/docs/hub-example"}, "/docs/hub-example?plain=1#install"},
+		{"unpublished vendored Markdown", "cloud-onboarding.md", "workflow-layout-migration.md", Published.bySource, RepositoryBlobURL("docs/workflow-layout-migration.md")},
+		{"repository root Markdown", "cloud-onboarding.md", "../README.md#documentation", Published.bySource, RepositoryBlobURL("README.md") + "#documentation"},
 		{"repository root non-Markdown", "config.md", "../config.annotated.yaml", Published.bySource, RepositoryBlobURL("config.annotated.yaml")},
-		{"vendored directory", "bootstrap.md", "examples/non-code-artifact", Published.bySource, RepositoryTreeURL("docs/examples/non-code-artifact")},
-		{"vendored non-Markdown file", "getting-started.md", "templates/detent.label.yaml", Published.bySource, RepositoryBlobURL("docs/templates/detent.label.yaml")},
-		{"nested source sibling", "examples/non-code-artifact/README.md", "WORKFLOW.md", Published.bySource, RepositoryBlobURL("docs/examples/non-code-artifact/WORKFLOW.md")},
-		{"nested source ancestor", "examples/non-code-artifact/README.md", "../../concepts.md", Published.bySource, "/docs/concepts"},
-		{"percent-encoded published path", "getting-started.md", "workflow%2Doverlays.md#machine-local-workflow-overlays", Published.bySource, "/docs/workflow-overlays#machine-local-workflow-overlays"},
-		{"external URL", "getting-started.md", "https://example.com/guide.md?plain=1#top", Published.bySource, "https://example.com/guide.md?plain=1#top"},
-		{"absolute site path", "getting-started.md", "/docs/concepts", Published.bySource, "/docs/concepts"},
-		{"fragment only", "getting-started.md", "#quick-start", Published.bySource, "#quick-start"},
+		{"vendored directory", "hub-self-hosting.md", "examples/hub", Published.bySource, RepositoryTreeURL("docs/examples/hub")},
+		{"vendored non-Markdown file", "cloud-onboarding.md", "templates/detent.label.yaml", Published.bySource, RepositoryBlobURL("docs/templates/detent.label.yaml")},
+		{"nested source sibling", "examples/hub/README.md", "Caddyfile", Published.bySource, RepositoryBlobURL("docs/examples/hub/Caddyfile")},
+		{"nested source ancestor", "examples/hub/README.md", "../../concepts.md", Published.bySource, "/docs/concepts"},
+		{"percent-encoded published path", "cloud-onboarding.md", "sprite%2Drunners.md#cloud-runners-on-fly-sprites", Published.bySource, "/docs/sprite-runners#cloud-runners-on-fly-sprites"},
+		{"external URL", "cloud-onboarding.md", "https://example.com/guide.md?plain=1#top", Published.bySource, "https://example.com/guide.md?plain=1#top"},
+		{"absolute site path", "cloud-onboarding.md", "/docs/concepts", Published.bySource, "/docs/concepts"},
+		{"fragment only", "cloud-onboarding.md", "#project-onboarding", Published.bySource, "#project-onboarding"},
 	}
 
 	for _, tt := range tests {
@@ -229,7 +230,7 @@ func TestMarkdownRewritesImagesAndPreservesAutolinks(t *testing.T) {
 		"![Detent mark](brand/detent-mark.svg?raw=1)",
 		"<https://example.com/guide.md?plain=1#top>",
 	}, "\n\n"))
-	rendered, err := renderMarkdown(markdownRenderer(), source, "getting-started.md", Published.bySource, Files)
+	rendered, err := renderMarkdown(markdownRenderer(), source, "cloud-onboarding.md", Published.bySource, Files)
 	if err != nil {
 		t.Fatalf("render Markdown: %v", err)
 	}
@@ -248,9 +249,9 @@ func TestHeadingIDsMatchInboundGitHubFragments(t *testing.T) {
 		sourcePath string
 		fragment   string
 	}{
-		{"bootstrap.md", "bootstrap-on-a-new-machine-humans-and-ai-agents"},
-		{"getting-started.md", "quick-start"},
-		{"multi-project.md", "running-multiple-instances"},
+		{"cloud-onboarding.md", "runner-access-through-luna"},
+		{"hub-self-hosting.md", "install-one-host"},
+		{"webhook-freshness.md", "cloud-entry-startup-replay"},
 	}
 
 	for _, tt := range tests {
@@ -270,7 +271,7 @@ func TestHeadingIDsMatchInboundGitHubFragments(t *testing.T) {
 	}
 
 	repeatedRealHeading := []byte("# Quick Start\n\n## Quick Start\n")
-	rendered, err := renderMarkdown(markdownRenderer(), repeatedRealHeading, "getting-started.md", Published.bySource, Files)
+	rendered, err := renderMarkdown(markdownRenderer(), repeatedRealHeading, "cloud-onboarding.md", Published.bySource, Files)
 	if err != nil {
 		t.Fatalf("render duplicate headings: %v", err)
 	}
@@ -283,6 +284,7 @@ func TestHeadingIDsMatchInboundGitHubFragments(t *testing.T) {
 
 func TestPublishedDocumentationHasNoUnresolvedRelativeLinks(t *testing.T) {
 	attribute := regexp.MustCompile(`(?:href|src)="([^"]+)"`)
+	pinnedCommitPath := regexp.MustCompile(`^` + regexp.QuoteMeta(SourceRepository) + `/(?:blob|tree)/[0-9a-f]{40}/`)
 
 	for _, page := range Published.Pages() {
 		t.Run(page.SourcePath, func(t *testing.T) {
@@ -296,8 +298,12 @@ func TestPublishedDocumentationHasNoUnresolvedRelativeLinks(t *testing.T) {
 				if !parsed.IsAbs() && !strings.HasPrefix(parsed.Path, "/") && path.Ext(parsed.Path) == ".md" {
 					t.Errorf("rendered documentation contains unresolved relative Markdown link %q", destination)
 				}
-				if strings.HasPrefix(destination, SourceRepository+"/") {
-					if !strings.Contains(destination, "/"+CommitSHA+"/") {
+				if strings.HasPrefix(destination, SourceRepository+"/blob/") || strings.HasPrefix(destination, SourceRepository+"/tree/") {
+					if page.Origin == OriginSite {
+						if !pinnedCommitPath.MatchString(destination) {
+							t.Errorf("site guide GitHub destination is not pinned to a full commit SHA: %q", destination)
+						}
+					} else if !strings.Contains(destination, "/"+CommitSHA+"/") {
 						t.Errorf("GitHub destination is not pinned to commit %s: %q", CommitSHA, destination)
 					}
 					if strings.Contains(destination, "/main/") {
