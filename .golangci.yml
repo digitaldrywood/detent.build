@@ -9,6 +9,10 @@ linters:
     - ineffassign
     - staticcheck
     - unused
+  exclusions:
+    # templ output can report generator-owned SA4006 and QF1002 findings.
+    paths:
+      - '_templ\.go$'
 
 issues:
   max-issues-per-linter: 0
