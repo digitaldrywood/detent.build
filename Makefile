@@ -6,6 +6,8 @@ SMOKE_URL ?= https://detent.build
 
 BINARY_NAME=detent.build
 DETENT_TEMP_ROOT=$(or $(TMPDIR),$(TMP),$(TEMP),/tmp)
+# Cached lint diagnostics contain source paths and must not cross checkouts.
+export GOLANGCI_LINT_CACHE := $(DETENT_TEMP_ROOT)/detent-build-lint/$(shell printf '%s' "$(CURDIR)" | shasum -a 256 | cut -d ' ' -f 1)
 HYPE_VERSION=$(shell tr -d '[:space:]' < docs/site/hype.version)
 HYPE_BIN_DIR=$(DETENT_TEMP_ROOT)/detent-build-tools/hype-$(HYPE_VERSION)
 HYPE_BIN=$(HYPE_BIN_DIR)/hype
