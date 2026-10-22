@@ -12,6 +12,8 @@ HYPE_BIN=$(HYPE_BIN_DIR)/hype
 HYPE_GOPATH=$(DETENT_TEMP_ROOT)/go-path
 HYPE_GOMODCACHE=$(DETENT_TEMP_ROOT)/go-mod
 HYPE_GOCACHE=$(DETENT_TEMP_ROOT)/go-build
+TEMPL=go run github.com/a-h/templ/cmd/templ@$(shell go list -m -f "{{.Version}}" github.com/a-h/templ)
+GOLANGCI_LINT=go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
 
 dev:
 	@mkdir -p tmp
@@ -28,18 +30,22 @@ test:
 	go test -race ./...
 
 lint:
-	golangci-lint run
-	templ fmt templates/ ui/
+	$(GOLANGCI_LINT) run
+	$(TEMPL) fmt templates/ ui/
 
 generate:
-	templ generate
+	$(TEMPL) generate
 
 docs-sync:
 	go run ./cmd/docs-sync
 
 $(HYPE_BIN): docs/site/hype.version
 	@mkdir -p $(HYPE_BIN_DIR) $(HYPE_GOPATH) $(HYPE_GOMODCACHE) $(HYPE_GOCACHE)
-	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) GOBIN=$(HYPE_BIN_DIR) go install github.com/gopherguides/hype/cmd/hype@$(HYPE_VERSION)
+	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) GOBIN=$(HYPE_BIN_DIR) go install github.com/gopherguides/hype/cmd/hype@$(HYPE_VERSION) || { \
+	    echo "hype install failed; clearing the Go caches under $(DETENT_TEMP_ROOT) and retrying"; \
+	    GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) go clean -cache -modcache && \
+	    GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) GOBIN=$(HYPE_BIN_DIR) go install github.com/gopherguides/hype/cmd/hype@$(HYPE_VERSION); \
+	}
 
 docs-build: $(HYPE_BIN)
 	GOPATH=$(HYPE_GOPATH) GOMODCACHE=$(HYPE_GOMODCACHE) GOCACHE=$(HYPE_GOCACHE) go run ./cmd/docs-build -hype $(HYPE_BIN)
@@ -59,7 +65,7 @@ css-watch: node_modules/.package-lock.json
 check: docs-check generate css
 	go vet ./...
 	go test -race ./...
-	golangci-lint run
+	$(GOLANGCI_LINT) run
 
 setup:
 	go install github.com/air-verse/air@latest
