@@ -5,7 +5,8 @@ import "testing"
 // The site claims the comparison matrix is copied from docs/comparison.md,
 // including the rows Detent loses. A drifting copy makes that claim false, and
 // a dropped row is how the claim broke the first time — the ~5-min setup row
-// went missing. These assertions pin shape and the rows most likely to be
+// went missing. The October 7, 2026 source dropped the Symphony column and
+// the setup-time and free rows itself. These assertions pin shape and the rows most likely to be
 // quietly softened in Detent's favor.
 //
 // The source table lives in the Detent repository, which is not a dependency
@@ -13,7 +14,7 @@ import "testing"
 // fails loudly if the transcription changes without someone re-reading the
 // source.
 func TestMatrixShapeMatchesSource(t *testing.T) {
-	const wantRows = 14
+	const wantRows = 12
 
 	if len(Matrix) != wantRows {
 		t.Errorf("matrix has %d rows, want %d — docs/comparison.md has %d capability rows and the site says it copies all of them",
@@ -46,7 +47,6 @@ func TestMatrixKeepsTheRowsDetentDoesNotWin(t *testing.T) {
 	const detent = 0
 
 	notWon := map[string]string{
-		"Model-agnostic, BYO incl. local":          "partial",
 		"Multi-channel triggers":                   "partial",
 		"Local skills / workflows (your e2e etc.)": "yes",
 	}
@@ -68,9 +68,9 @@ func TestMatrixKeepsTheRowsDetentDoesNotWin(t *testing.T) {
 		competitor int
 		mark       string
 	}{
-		{"~5-min setup", 2, "yes"},           // Copilot agent: zero-install
-		{"Budget / cost caps", 6, "yes"},     // Hyperagent: hosted controls
-		{"Multi-channel triggers", 4, "yes"}, // Hermes: messaging gateway
+		{"Budget / cost caps", 5, "yes"},     // Hyperagent: hosted controls
+		{"Multi-channel triggers", 3, "yes"}, // Hermes: messaging gateway
+		{"Multi-channel triggers", 4, "yes"}, // OpenClaw: local gateway
 	}
 
 	for _, b := range beaten {
@@ -87,7 +87,7 @@ func TestMatrixKeepsTheRowsDetentDoesNotWin(t *testing.T) {
 }
 
 func TestMatrixAsOfMatchesSource(t *testing.T) {
-	const want = "July 6, 2026"
+	const want = "October 7, 2026"
 
 	if MatrixAsOf != want {
 		t.Errorf("MatrixAsOf = %q, want %q — update it only when the source's own date changes", MatrixAsOf, want)

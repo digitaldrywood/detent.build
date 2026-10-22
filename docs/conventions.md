@@ -8,7 +8,8 @@ constraints live separately in [deploy.md](deploy.md).
 
 `internal/content/content.go` holds every factual claim on the site, and each
 one traces to the Detent repository: `README.md`, `docs/comparison.md`,
-`docs/concepts.md`, or the live `digitaldrywood/detent-orchestration` config.
+`docs/concepts.md`, `docs/cloud-onboarding.md`, `docs/hosted-allowances.md`,
+`docs/hub-self-hosting.md`, or Detent's own `detent.yaml`.
 
 Do not add a capability claim, a metric, a testimonial, or a logo the
 repository cannot substantiate. The design brief is explicit that this is a
@@ -24,8 +25,17 @@ Specifically:
   The arrangement across lanes is composed — one item at every stop at once,
   which a live board never shows — and `content.BoardCaption` says so on the
   page. If you change the cards, keep the caption true.
-- No signup form, no "book a demo", no pricing table. The product is free and
-  self-hosted; any of those would misrepresent it.
+- Detent Cloud is the primary path: the site leads with signing up for the
+  free plan and offers self-hosting as the alternative. Sign-in and sign-up
+  links point at `content.CloudURL` and `content.CloudSignUpURL`;
+  `cloud.detent.build/login` is not a route.
+- Prices and plan allowances on `/pricing` are copied from the capacity
+  catalog in `docs/hosted-allowances.md`. Change them only when that catalog
+  changes, and update `content.PricingAsOf` with them.
+- No "book a demo" and no fake social proof.
+- Detent is an orchestration layer, not a coding tool. Lanes, their roles, and
+  the gate are each project's configuration; do not describe the product as
+  code-only or the default lanes as fixed.
 
 ## Product version availability is curated evidence
 

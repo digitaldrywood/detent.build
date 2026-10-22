@@ -69,13 +69,14 @@ func TestPagesRender(t *testing.T) {
 		{"/how-it-works", "The mechanism, stop by stop."},
 		{"/why-detent", "You are not steering an agent."},
 		{"/dashboard", "The board stays honest."},
-		{"/install", "No service to stand up."},
-		{"/open-source", "No control plane."},
+		{"/install", "It is the runner, and it can be the Hub."},
+		{"/open-source", "Source available. Free to self-host."},
+		{"/pricing", "Start free. Pay for more work running at once."},
 		{"/privacy", "Privacy Policy"},
 		{"/terms", "Terms of Service"},
 		{"/videos", "Detent, moving through real work."},
 		{"/docs", "Documentation, pinned to the source."},
-		{"/docs/getting-started", "Quick Start"},
+		{"/docs/cloud-onboarding", "Project onboarding"},
 		{"/docs/site/project-contracts", "Project contracts"},
 		{"/docs/site/working-checkout-merge-gate", "The working-checkout merge-gate trap"},
 	}
@@ -130,7 +131,7 @@ func TestVideoPlacementsRenderFromManifest(t *testing.T) {
 			forbidden: []string{"I Opened Seven Issues for One Feature (On Purpose)"},
 		},
 		{
-			path:      "/docs/getting-started",
+			path:      "/docs/cloud-onboarding",
 			forbidden: []string{"Related walkthrough", "My AI Orchestrator Is Dumb on Purpose"},
 		},
 	}
@@ -212,10 +213,9 @@ func TestHomeOwnsSymphonyLineage(t *testing.T) {
 		"Symphony is an Apache-2.0 ",
 		"SPEC.md",
 		"plus an Elixir reference implementation that polls a Linear board.",
-		"GitHub-native state",
-		"boardless issue-field mode",
-		"boardless label mode",
-		"github_local",
+		"A native board",
+		"Runners you enroll",
+		"GitHub is an optional integration",
 		"Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2.",
 		`href="https://github.com/openai/symphony"`,
 	} {
@@ -241,7 +241,7 @@ func TestLineageMachineLiteralsUseMono(t *testing.T) {
 			if rec.Code != http.StatusOK {
 				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
 			}
-			for _, literal := range []string{"SPEC.md", "ProjectV2", "github_local", "detent doctor"} {
+			for _, literal := range []string{"SPEC.md", "detent doctor"} {
 				want := `<span class="font-mono text-xs">` + literal + `</span>`
 				if !strings.Contains(rec.Body.String(), want) {
 					t.Errorf("body does not contain %q", want)
@@ -337,8 +337,6 @@ func TestDocumentationVersionAvailabilityIsExplicitAndDistinctFromSourcePin(t *t
 		prefix    string
 		version   string
 	}{
-		{"/docs/workflow-overlays", "machine-local-workflow-overlays", "Introduced in", "v0.43.0"},
-		{"/docs/scheduled-operations", "scheduled-maintenance-routines", "Introduced in", "v0.46.0"},
 		{"/docs/webhook-freshness", "per-project-github-webhook-freshness", "Available in", "v0.27.0"},
 	}
 	for _, test := range tests {
@@ -355,6 +353,32 @@ func TestDocumentationVersionAvailabilityIsExplicitAndDistinctFromSourcePin(t *t
 	unrecorded := get(t, e, "/docs/configuration", nil).Body.String()
 	if strings.Contains(unrecorded, "data-version-feature=") {
 		t.Error("documentation without an explicit record rendered a version badge")
+	}
+}
+
+func TestRetiredUpstreamDocumentationKeepsPublicURLs(t *testing.T) {
+	e := newTestServer(t)
+
+	alias := get(t, e, "/docs/getting-started", nil)
+	if alias.Code != http.StatusOK {
+		t.Fatalf("/docs/getting-started status = %d, want %d", alias.Code, http.StatusOK)
+	}
+	if want := `<link rel="canonical" href="https://detent.build/docs/cloud-onboarding">`; !strings.Contains(alias.Body.String(), want) {
+		t.Errorf("/docs/getting-started is missing canonical %s", want)
+	}
+	for _, path := range []string{
+		"/docs/project-onboarding",
+		"/docs/bootstrap",
+		"/docs/merge-train",
+		"/docs/multi-project",
+		"/docs/workflow-overlays",
+		"/docs/scheduled-operations",
+		"/docs/retrospection",
+		"/docs/execution-seams",
+	} {
+		if code := get(t, e, path, nil).Code; code != http.StatusGone {
+			t.Errorf("%s status = %d, want %d", path, code, http.StatusGone)
+		}
 	}
 }
 
@@ -399,14 +423,15 @@ func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
 			path: "/",
 			want: []string{
 				html.EscapeString(content.BoardCaption),
-				content.NonCodeWorkflowURL,
+				`id="lanes"`,
+				"Detent is the orchestration layer, not a coding tool.",
 				`content="` + content.OpenGraphDefaultImageAlt + `"`,
 			},
 			forbidden: []string{"one item at every stop", "The six board lanes", "the gates decide when it lands. The six"},
 		},
 		{
 			path:      "/dashboard",
-			want:      []string{html.EscapeString(content.DashboardLaneHeading), content.NonCodeWorkflowURL},
+			want:      []string{html.EscapeString(content.DashboardLaneHeading), `href="/#lanes"`},
 			forbidden: []string{"The same six stops, live."},
 		},
 		{
@@ -631,7 +656,7 @@ func TestCanonicalAndOpenGraphAreAbsoluteApexURLs(t *testing.T) {
 		{"/terms", "https://detent.build/terms"},
 		{"/videos", "https://detent.build/videos"},
 		{"/docs", "https://detent.build/docs"},
-		{"/docs/getting-started", "https://detent.build/docs/getting-started"},
+		{"/docs/cloud-onboarding", "https://detent.build/docs/cloud-onboarding"},
 		{"/docs/site/project-contracts", "https://detent.build/docs/site/project-contracts"},
 		{"/docs/site/working-checkout-merge-gate", "https://detent.build/docs/site/working-checkout-merge-gate"},
 	}
@@ -684,7 +709,7 @@ func TestSitemapUsesCanonicalApexURLs(t *testing.T) {
 		"<loc>https://detent.build/open-source</loc>",
 		"<loc>https://detent.build/videos</loc>",
 		"<loc>https://detent.build/docs</loc>",
-		"<loc>https://detent.build/docs/getting-started</loc>",
+		"<loc>https://detent.build/docs/cloud-onboarding</loc>",
 		"<loc>https://detent.build/docs/site/project-contracts</loc>",
 		"<loc>https://detent.build/docs/site/working-checkout-merge-gate</loc>",
 	} {
@@ -835,5 +860,48 @@ func TestDefaultPortIsThreeThousand(t *testing.T) {
 
 	if got := config.Load().Port; got != "3000" {
 		t.Errorf("default port = %q, want 3000; the Dokploy domain entry is bound to 3000", got)
+	}
+}
+
+func TestNavLeadsWithCloudAndPricing(t *testing.T) {
+	e := newTestServer(t)
+
+	for _, path := range []string{"/", "/pricing", "/install", "/docs"} {
+		t.Run(path, func(t *testing.T) {
+			body := get(t, e, path, nil).Body.String()
+			for _, want := range []string{
+				`href="/pricing"`,
+				`href="` + content.CloudURL + `"`,
+				`href="` + html.EscapeString(content.CloudSignUpURL) + `"`,
+				">Get started<",
+			} {
+				if !strings.Contains(body, want) {
+					t.Errorf("body does not contain %q", want)
+				}
+			}
+			for _, forbidden := range []string{"cloud.detent.build/login", "hub.detent.build", "No hosted plan", "There is no hosted tier"} {
+				if strings.Contains(body, forbidden) {
+					t.Errorf("body contains %q", forbidden)
+				}
+			}
+		})
+	}
+}
+
+func TestPricingShowsTheCapacityCatalog(t *testing.T) {
+	body := get(t, newTestServer(t), "/pricing", nil).Body.String()
+
+	for _, plan := range content.Plans {
+		if !strings.Contains(body, `data-plan="`+plan.Name+`"`) {
+			t.Errorf("pricing page is missing the %s plan", plan.Name)
+		}
+		if plan.Price != "" && !strings.Contains(body, "$"+plan.Price) {
+			t.Errorf("pricing page is missing the %s price $%s", plan.Name, plan.Price)
+		}
+	}
+	for _, want := range []string{"Create a free account", content.ContactURL, "Or run the Hub yourself, free."} {
+		if !strings.Contains(body, want) {
+			t.Errorf("pricing page does not contain %q", want)
+		}
 	}
 }

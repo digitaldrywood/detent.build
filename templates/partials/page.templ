@@ -24,13 +24,14 @@ type nextStep struct {
 }
 
 var allNextSteps = []nextStep{
-	{"how-it-works", "How it works", "/how-it-works", "The state machine, the gate model, worktree isolation, and the merge train."},
+	{"pricing", "Pricing", "/pricing", "Start free on Detent Cloud. Paid plans add concurrent work and hosted artifacts."},
+	{"how-it-works", "How it works", "/how-it-works", "The Hub and runners, the state machine, the gate model, worktree isolation, and serialized landing."},
 	{"why-detent", "Why Detent", "/why-detent", "The interaction-model argument, the default choices, and the comparison matrix."},
-	{"dashboard", "Dashboard", "/dashboard", "The operator surface: lanes, agent activity, budget and rate-limit state, and the TUI."},
-	{"install", "Install", "/install", "Platform-tabbed install commands, requirements, and the first run."},
+	{"install", "Self-host", "/install", "Install a runner or your own Hub: platform-tabbed commands, requirements, and the first run."},
+	{"dashboard", "Dashboard", "/dashboard", "The operator surface: lanes, agent activity, budgets and capacity, and MCP access."},
 	{"videos", "Videos", "/videos", "Reviewed recordings of Detent moving real work through checked-in workflows."},
 	{"docs", "Documentation", "/docs", "The curated operator reference, mirrored from a pinned Detent release."},
-	{"open-source", "Open source", "/open-source", "MIT, the repository, releases, contributing, and the self-hosting proof."},
+	{"open-source", "Source", "/open-source", "FSL-1.1-ALv2, the repository, releases, contributing, and how Detent builds itself."},
 }
 
 // NextSteps closes an interior page with the other pages, minus the current one.

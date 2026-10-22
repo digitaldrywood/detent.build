@@ -13,7 +13,7 @@ templ HowItWorks() {
 		@partials.PageHeader(
 			"How it works",
 			"The mechanism, stop by stop.",
-			"Configured GitHub status is the state machine. Everything below is behavior the runtime actually implements — the state table and connector model live in the repository's Concepts document, and each step here links to it.",
+			"The Hub's board is the state machine, and your workflow defines its lanes. Everything below is behavior the runtime actually implements; each step links to the document that specifies it.",
 		)
 		@components.FirstSection("01", "The state machine", content.HowItWorksStateHeading, content.HowItWorksStateDetail) {
 			@components.LaneRail()
@@ -26,10 +26,13 @@ templ HowItWorks() {
 				}
 			</div>
 			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
-				The source of truth can be a GitHub ProjectV2 board, or Detent can run boardless from an
-				issue <span class="font-mono text-xs text-sec">Status</span> field or from repository status
-				labels while supplying its own Kanban view.
-				<a href={ templ.SafeURL(content.Doc("concepts.md")) } class="text-accent hover:underline">Concepts: connectors and board states &#8594;</a>
+				Each lane in <span class="font-mono text-xs text-sec">detent.yaml</span> has a role:
+				<span class="font-mono text-xs text-sec">active</span> lanes dispatch an agent,
+				<span class="font-mono text-xs text-sec">holding</span> lanes wait, and
+				<span class="font-mono text-xs text-sec">terminal</span> lanes end the work. The board lives on
+				the Hub; GitHub issues can be imported into it, but GitHub is an optional integration, not the
+				source of truth. Nothing here is specific to code.
+				<a href={ templ.SafeURL(content.Doc("concepts.md")) } class="text-accent hover:underline">Concepts: tracker and board states &#8594;</a>
 			</p>
 		}
 		@components.Section("02", "The mechanism", "Six steps, in the order they happen.", "") {
@@ -47,11 +50,10 @@ templ HowItWorks() {
 					<ul class="mt-4 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
 						<li>A worktree per issue, so no two agents share a working tree or fight over the index.</li>
 						<li>A branch per issue, so no agent commits onto your main line.</li>
-						<li>Your validation gate runs before anything is pushed.</li>
+						<li>Your gate command runs on the finished change.</li>
 						<li>Promotion is decided by the gates you configured, not by the agent.</li>
-						<li>The <span class="font-mono text-xs text-text">Rework</span> lane catches unresolved review feedback.</li>
-						<li>Leases and retries release a stalled claim instead of holding it forever.</li>
-						<li>The merge train, not the agent, performs every merge.</li>
+						<li>Moving an issue out of an active lane revokes the running worker and stops its process group.</li>
+						<li>The runner that holds the project, not the agent, lands every change.</li>
 					</ul>
 				}
 				@components.Card("p-6") {
@@ -59,60 +61,52 @@ templ HowItWorks() {
 					<p class="mt-4 text-sm leading-relaxed text-sec">
 						A Git worktree is not an OS sandbox, and
 						<span class="font-mono text-xs text-text">WORKFLOW.md</span> is an instruction to the
-						agent rather than a capability boundary. Detent&#39;s own production config runs
-						<span class="font-mono text-xs text-text">thread_sandbox: danger-full-access</span>, so
-						the agent process has whatever host, filesystem, network, and GitHub access its
-						runtime policy allows.
+						agent rather than a capability boundary. The agent process has whatever host,
+						filesystem, and network access the runner machine and its agent CLI allow.
 					</p>
 					<p class="mt-3 text-sm leading-relaxed text-sec">
-						What the gates and the train guarantee is about
+						What the gates and serialized landing guarantee is about
 						<em>promotion</em>: nothing lands on your main branch without clearing them. Treat the
-						agent as a trusted process you have configured, not as a contained one, and set
-						<span class="font-mono text-xs text-text">approval_policy</span> and the sandbox mode
-						deliberately.
+						agent as a trusted process you have configured, not as a contained one, and choose what
+						each runner machine can reach deliberately.
 					</p>
 					<a
-						href={ templ.SafeURL(content.Doc("config.md")) }
+						href={ templ.SafeURL(content.Doc("project-delivery.md")) }
 						class="mt-3 inline-flex min-h-6 items-center font-mono text-2xs text-accent hover:underline"
 					>
-						Sandbox and approval configuration &#8594;
+						Designing a project for reliable delivery &#8594;
 					</a>
 				}
 			</div>
 		}
 		@components.Section("04", "Gates", "A gate is a condition you wrote, not a vibe.",
-			"The workflow decides what promotion to Merging requires. These are the shipped options.") {
+			"The workflow decides what a change needs before it advances. These are the shipped options, and they compose.") {
 			<div class="grid gap-4 md:grid-cols-2">
-				@gateCard("Human Review", "The issue moves to the Human Review lane and stops. Nothing advances until a person releases it. This is the detent in its most literal form.")
-				@gateCard("Wait in the active lane", "The issue stays active with status: complete in the Workpad. Autopilot workflows use this when no human stop is wanted.")
-				@gateCard("Automated PR review", "Promotion requires a current-head automated review. A review of a stale head does not count.")
-				@gateCard("Linked PR + green CI + quiet time", "The lightest gate: a linked pull request, passing CI, and a quiet window with no new activity.")
+				@gateCard("Gate command", "gate.run is your check command, run on the finished change. Detent's own is make check-landing; yours can render a video or validate a document.")
+				@gateCard("Human Review", "With review.human: true, a Change Request waits in Human Review until a person approves it or sends it back. This is the detent in its most literal form.")
+				@gateCard("Automated validator", "A model scores the change against the issue's acceptance criteria and can send unverified work back for another pass.")
+				@gateCard("Security audit", "An independent audit pass on the change before it can land.")
 			</div>
 			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
-				Validation gates are pluggable. Code defaults to
-				<span class="font-mono text-xs text-sec">make check</span> plus CI plus automated review; a
-				human approval-label gate is available when the workflow explicitly asks for one.
-				Unresolved review feedback routes the issue back into the
-				<span class="font-mono text-xs text-sec">Rework</span> lane.
+				With the default <span class="font-mono text-xs text-sec">review.human: false</span>, an accepted
+				change goes straight to <span class="font-mono text-xs text-sec">Merging</span>. Detent&#39;s own
+				config sends a failed gate back to <span class="font-mono text-xs text-sec">Rework</span> with its
+				output.
+				<a href={ templ.SafeURL(content.Doc("native-review.md")) } class="text-accent hover:underline">Native review &#8594;</a>
 			</p>
 		}
 		@partials.MergeTrainSection("05")
 		@components.Section("06", "Admission", "Deciding what is even worth dispatching.",
-			"A scheduled read-only pass scores Backlog issues against the admission criteria in your WORKFLOW.md and proposes the ones worth working.") {
-			@components.CodeSurface("detent.yaml", "digitaldrywood/detent-orchestration") {
-				<span class="text-info">backlog_admission</span>{ ":\n" }
-				{ "    " }<span class="text-info">enabled</span>{ ": true\n" }
-				{ "    " }<span class="text-info">schedule</span>{ ": '*/15 * * * *'\n" }
-				{ "    " }<span class="text-info">auto_admit</span>{ ": true\n" }
-				{ "    " }<span class="text-info">auto_admit_min_confidence</span>{ ": 0.85\n" }
-				{ "    " }<span class="text-info">sources</span>{ ":\n" }
-				{ "        " }<span class="text-info">states</span>{ ":\n            - Backlog" }
+			"Admission criteria are project-owned text in your workflow: the sections an issue must contain before an agent picks it up. Admission and Todo dispatch use one evaluator, so a vague issue waits instead of producing vague work.") {
+			@components.CodeSurface("WORKFLOW.md", "the default issue contract") {
+				<span class="text-text">{ "## Issue Contract" }</span>{ "\n\n" }
+				{ "- Acceptance criteria\n" }
+				{ "- Must not break\n" }
+				{ "- How we know it worked" }
 			}
 			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
-				That confidence bar started at 0.9 and was lowered to 0.85 after every sub-0.9 proposal to
-				date had been accepted by hand anyway &#8212; the original bar was stricter than the
-				operator&#39;s own judgment and was producing silent waits. The comment explaining that
-				decision is in the config, next to the value.
+				These three sections are the default when a project configures none. Required sections must
+				contain text; headings inside code fences do not count.
 				<a href={ templ.SafeURL(content.Doc("admission.md")) } class="text-accent hover:underline">Admission criteria &#8594;</a>
 			</p>
 		}
@@ -123,7 +117,7 @@ templ HowItWorks() {
 func howItWorksMeta() meta.PageMeta {
 	return meta.New(
 		"How it works",
-		"The Detent state machine, the gate model, worktree isolation per issue, the serialized merge train, and scheduled backlog admission.",
+		"How Detent works: a Hub holds the board, runners you enroll do the work, your workflow defines the lanes and gates, and changes land one at a time.",
 	).WithNav("how-it-works").WithPath("/how-it-works")
 }
 

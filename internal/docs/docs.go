@@ -22,9 +22,9 @@ import (
 const (
 	SourceRepository = "https://github.com/digitaldrywood/detent"
 	SiteRepository   = "https://github.com/digitaldrywood/detent.build"
-	ReleaseTag       = "v0.57.0"
-	TagObjectSHA     = "10c9b2a531089e8bac7a3fcd42593b257863ec8d"
-	CommitSHA        = "1543929187369eca2703abd2a655cf86e9e5d83e"
+	ReleaseTag       = "v0.164.2"
+	TagObjectSHA     = "ee30f13ec312d004c5ca11494b4d769e6585c291"
+	CommitSHA        = "13d15fec6a142058dd74d1275256bfa261442958"
 )
 
 //go:embed vendor site manifest.json

@@ -38,6 +38,7 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	e.GET("/dashboard", h.Dashboard)
 	e.GET("/install", h.Install)
 	e.GET("/open-source", h.OpenSource)
+	e.GET("/pricing", h.Pricing)
 	e.GET("/privacy", h.Privacy)
 	e.GET("/terms", h.Terms)
 	e.GET("/videos", h.Videos)
