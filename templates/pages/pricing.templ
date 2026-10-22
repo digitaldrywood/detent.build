@@ -167,7 +167,7 @@ templ capacityStrip(slots int) {
 }
 
 templ planAction(plan content.Plan) {
-	switch {
+	switch  {
 		case plan.Price == "0":
 			<a
 				href={ templ.SafeURL(content.CloudSignUpURL) }

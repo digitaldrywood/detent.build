@@ -66,6 +66,7 @@ check: docs-check generate css
 	go vet ./...
 	go test -race ./...
 	$(GOLANGCI_LINT) run
+	$(TEMPL) fmt -fail templates/ ui/
 
 setup:
 	go install github.com/air-verse/air@latest
