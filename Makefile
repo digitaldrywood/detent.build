@@ -13,7 +13,7 @@ HYPE_GOPATH=$(DETENT_TEMP_ROOT)/go-path
 HYPE_GOMODCACHE=$(DETENT_TEMP_ROOT)/go-mod
 HYPE_GOCACHE=$(DETENT_TEMP_ROOT)/go-build
 TEMPL=go run github.com/a-h/templ/cmd/templ@$(shell go list -m -f "{{.Version}}" github.com/a-h/templ)
-GOLANGCI_LINT=go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
+GOLANGCI_LINT=go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
 
 dev:
 	@mkdir -p tmp
