@@ -101,31 +101,3 @@ func TestPinnedDocumentationLinksUseVendoredCommit(t *testing.T) {
 	}
 }
 
-func TestLineageNamesTheCurrentArchitecture(t *testing.T) {
-	var lineage strings.Builder
-	lineage.WriteString(LineageHeading)
-	lineage.WriteString(LineageSummary)
-	for _, fragment := range LineageSymphony {
-		lineage.WriteString(fragment.Text)
-	}
-	for _, fragment := range LineageHistory {
-		lineage.WriteString(fragment.Text)
-	}
-	for _, divergence := range LineageDivergences {
-		lineage.WriteString(divergence.Title)
-		for _, fragment := range divergence.Body {
-			lineage.WriteString(fragment.Text)
-		}
-	}
-
-	for _, want := range []string{
-		"native board",
-		"Change Requests",
-		"GitHub is an optional integration",
-		"Runners you enroll",
-	} {
-		if !strings.Contains(lineage.String(), want) {
-			t.Errorf("lineage does not contain %q", want)
-		}
-	}
-}

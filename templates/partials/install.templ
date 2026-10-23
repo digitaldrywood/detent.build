@@ -73,7 +73,7 @@ func sigilFor(shell string) string {
 // InstallSection is the home page's closing block: the Cloud path first, the
 // runner install it needs, and the self-hosted alternative.
 templ InstallSection() {
-	@components.Section("11", "Get started", "Start on Detent Cloud. Your runner does the work.",
+	@components.Section("10", "Get started", "Start on Detent Cloud. Your runner does the work.",
 		"Sign in, create a project, and enroll a machine. The Free plan needs no card.") {
 		<div class="grid gap-4 lg:grid-cols-[1fr_380px]">
 			@components.Card("p-6") {
@@ -104,7 +104,7 @@ templ InstallSection() {
 				<h3 class="text-base font-semibold text-text">Rather run it yourself?</h3>
 				<p class="mt-3 text-sm leading-relaxed text-sec">
 					The Hub is the same binary. Self-hosting is free and needs no Detent Cloud account or
-					billing &#8212; one host, SQLite, and a TLS proxy in front.
+					billing. You need one host, SQLite, and a TLS proxy in front.
 				</p>
 				<a href="/install" class="mt-4 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
 					Self-host the Hub &#8594;

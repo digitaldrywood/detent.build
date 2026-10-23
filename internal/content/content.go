@@ -15,16 +15,15 @@ import (
 )
 
 const (
-	RepoURL            = docs.SourceRepository
-	DetentConfigURL    = RepoURL + "/blob/main/detent.yaml"
-	DetentWorkflowURL  = RepoURL + "/blob/main/WORKFLOW.md"
-	ReleasesURL        = "https://github.com/digitaldrywood/detent/releases"
-	LicenseURL         = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
-	IssuesURL          = "https://github.com/digitaldrywood/detent/issues"
-	ContributingURL    = "https://github.com/digitaldrywood/detent/blob/main/CONTRIBUTING.md"
-	CIURL              = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
-	SymphonyURL        = "https://github.com/openai/symphony"
-	CodexCLIURL        = "https://github.com/openai/codex"
+	RepoURL           = docs.SourceRepository
+	DetentConfigURL   = RepoURL + "/blob/main/detent.yaml"
+	DetentWorkflowURL = RepoURL + "/blob/main/WORKFLOW.md"
+	ReleasesURL       = "https://github.com/digitaldrywood/detent/releases"
+	LicenseURL        = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
+	IssuesURL         = "https://github.com/digitaldrywood/detent/issues"
+	ContributingURL   = "https://github.com/digitaldrywood/detent/blob/main/CONTRIBUTING.md"
+	CIURL             = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
+	CodexCLIURL       = "https://github.com/openai/codex"
 
 	DocsBase = RepoURL + "/blob/" + docs.CommitSHA + "/docs/"
 
@@ -41,15 +40,15 @@ const (
 	VersionBare = "0.164.2"
 	License     = "FSL-1.1-ALv2"
 
-	HomeTitle       = "Manage work, not agents"
-	HomeHeadline    = HomeTitle + "."
+	HomeTitle       = "Agent work orchestration"
+	HomeHeadline    = "Agents do the work, and your process decides when it's done."
 	HomeDescription = "Detent is an orchestration layer for agent work. Write issues on a board whose lanes and gates your workflow defines; " +
 		"Detent hands each ready issue to an agent on a machine you control, checks the result against your gates, and moves it forward. " +
 		"Code, video, documents, or office workflows. Start free on Detent Cloud, or self-host the Hub."
 	HomeHeroDeckBeforeTodo = "You put an issue in "
 	HomeHeroDeckAfterTodo  = ". A runner on a machine you control claims it, runs Codex or Claude Code against the " +
 		"contract you checked in, and moves it between the states your workflow defines, holding it wherever you put a gate."
-	HomeHeroStatement = "You are not steering an agent; you are running your own process at scale."
+	HomeHeroStatement = "Instead of steering one agent through a chat, you run your own process across many agents at once."
 
 	DetentREADMEURL             = RepoURL + "/blob/" + docs.CommitSHA + "/README.md"
 	DefiniteStatesHeading       = "A detent makes position definite."
@@ -63,68 +62,8 @@ const (
 	DefiniteStatesMoveQuestion  = "Who moves it?"
 	DefiniteStatesMoveAutonomy  = "You, by talking to the agent."
 	DefiniteStatesMoveDetent    = "The runtime when the condition is met, or you by changing the state."
-	DefiniteStatesLaneRail      = "The board above and the lane rail below are the visible form of the claim: managed work sits at a state the workflow defines, rather than somewhere inside a session you have to read to locate."
-
-	LineageHeading = "Symphony named the thesis. Detent shipped the system."
-	LineageSummary = "\"Manage work, not agents\" is OpenAI Symphony's phrase. Detent grew out of that open spec " +
-		"and took the idea from spec to a shipped system."
+	DefiniteStatesLaneRail      = "The board above and the lane rail below show where each piece of work sits. It is always at a state the workflow defines, so you never have to read through an agent session to find it."
 )
-
-type LineageFragment struct {
-	Text string
-	Mono bool
-}
-
-type lineageDivergence struct {
-	Title string
-	Body  []LineageFragment
-}
-
-var LineageSymphony = []LineageFragment{
-	{Text: "Symphony is an Apache-2.0 "},
-	{Text: "SPEC.md", Mono: true},
-	{Text: " plus an Elixir reference implementation that polls a Linear board."},
-}
-
-var LineageHistory = []LineageFragment{
-	{Text: "Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2. "},
-	{Text: "It is now a ground-up Go rewrite with its own native board; that earlier implementation is archived."},
-}
-
-var LineageDivergences = []lineageDivergence{
-	{
-		Title: "One binary",
-		Body: []LineageFragment{
-			{Text: "The Hub and the runner are the same CGO-free Go binary for macOS, Linux, and Windows."},
-		},
-	},
-	{
-		Title: "A native board",
-		Body: []LineageFragment{
-			{Text: "The Hub holds issues, lanes, comments, dependencies, and Change Requests. GitHub is an optional integration for importing issues."},
-		},
-	},
-	{
-		Title: "Runners you enroll",
-		Body: []LineageFragment{
-			{Text: "Agents run on machines you enroll, next to your checkout, your toolchain, and your agent sign-ins."},
-		},
-	},
-	{
-		Title: "Configurable gates",
-		Body: []LineageFragment{
-			{Text: "Your gate command, an automated validator, or a person in Human Review, then serialized landing one change at a time."},
-		},
-	},
-	{
-		Title: "Operator surface",
-		Body: []LineageFragment{
-			{Text: "A web app, MCP access for your own agents, "},
-			{Text: "detent doctor", Mono: true},
-			{Text: ", and a GoReleaser pipeline."},
-		},
-	},
-}
 
 var versionAvailability = []VersionAvailability{
 	{
@@ -277,7 +216,7 @@ var InstallTargets = []InstallTarget{
 		Key:     "macos",
 		Label:   "macOS",
 		Shell:   "sh",
-		Primary: Command{"Homebrew — recommended when you already manage CLI tools with brew", "brew install digitaldrywood/tap/detent"},
+		Primary: Command{"Homebrew, if you already manage CLI tools with brew", "brew install digitaldrywood/tap/detent"},
 		Others: []Command{
 			{"Or build from source with Go", "go install github.com/digitaldrywood/detent/cmd/detent@latest"},
 		},
@@ -287,7 +226,7 @@ var InstallTargets = []InstallTarget{
 		Key:     "linux",
 		Label:   "Linux",
 		Shell:   "sh",
-		Primary: Command{"Shell installer — downloads the release archive and verifies its SHA-256 checksum", "curl -fsSL https://raw.githubusercontent.com/digitaldrywood/detent/main/install.sh | sh"},
+		Primary: Command{"Shell installer, which downloads the release archive and verifies its SHA-256 checksum", "curl -fsSL https://raw.githubusercontent.com/digitaldrywood/detent/main/install.sh | sh"},
 		Others: []Command{
 			{"Or a native .deb, so apt owns the binary, removal, and upgrades",
 				"DETENT_VERSION=" + VersionBare + " DETENT_ARCH=amd64 \\\n" +
@@ -305,7 +244,7 @@ var InstallTargets = []InstallTarget{
 		Key:     "windows",
 		Label:   "Windows",
 		Shell:   "powershell",
-		Primary: Command{"Winget — use the package manager that already manages your developer tools", "winget install --id DigitalDrywood.Detent --source winget"},
+		Primary: Command{"Winget, if it already manages your developer tools", "winget install --id DigitalDrywood.Detent --source winget"},
 		Others: []Command{
 			{"Or Scoop, for a user-local install", "scoop bucket add digitaldrywood https://github.com/digitaldrywood/scoop-bucket\nscoop install detent"},
 			{"Or the PowerShell installer, for bootstrap and CI images", "irm https://raw.githubusercontent.com/digitaldrywood/detent/main/install.ps1 | iex"},
@@ -529,8 +468,8 @@ const BoardLabel = "composed snapshot"
 const (
 	DashboardLaneHeading     = "Detent's configured delivery path."
 	HowItWorksStateHeading   = "A configured path, and the catches between states."
-	HowItWorksStateDetail    = "Lanes are workflow-defined. These six are the delivery path — a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done."
-	OpenGraphDefaultImageAlt = "Detent social card headed Manage work, not agents, with Rework returning from Human Review to In Progress in a workflow-defined delivery path."
+	HowItWorksStateDetail    = "Lanes are workflow-defined. These six are the delivery path, and a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done."
+	OpenGraphDefaultImageAlt = "Detent social card headed Agents do the work, and your process decides when it's done, with Rework returning from Human Review to In Progress in a workflow-defined delivery path."
 )
 
 // BoardCaption is the honesty note printed under the hero board.

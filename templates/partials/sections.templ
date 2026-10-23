@@ -17,7 +17,7 @@ templ Inversion(num string, first bool) {
 		<div class="grid gap-4 lg:grid-cols-2">
 			@components.Card("p-6") {
 				<div class="font-mono text-xs text-dim">
-					&#8220;add OAuth token rotation&#8221; &#8212; autonomy-first assistant
+					autonomy-first assistant: &#8220;add OAuth token rotation&#8221;
 				</div>
 				<ol class="mt-5 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
 					<li>It starts as a prompt. The agent picks a plan.</li>
@@ -29,7 +29,7 @@ templ Inversion(num string, first bool) {
 			}
 			<div class="rounded-card border border-accent/40 bg-surface p-6">
 				<div class="font-mono text-xs text-accent">
-					&#8220;add OAuth token rotation&#8221; &#8212; Detent
+					Detent: &#8220;add OAuth token rotation&#8221;
 				</div>
 				<ol class="mt-5 flex flex-col gap-2.5 text-sm leading-relaxed text-sec">
 					<li>It starts as an issue naming the storage change, CLI behavior, migration, rollback, and tests.</li>
@@ -41,15 +41,14 @@ templ Inversion(num string, first bool) {
 			</div>
 		</div>
 		<p class="mt-6 max-w-[760px] text-sm leading-relaxed text-dim">
-			The goal is not to replace engineers or hide work behind opaque behavior. It is to scale the
-			judgment of engineers who already have a high bar. The system does not try to be smarter than
-			you; it tries to be as disciplined as you would be, every time, in parallel.
+			Detent scales the judgment of people who already hold a high bar. It applies your rules the
+			way you would, every time and in parallel, and every step stays visible on the board.
 		</p>
 	}
 }
 
 templ inversionSection(num string, first bool) {
-	{{ heading := "A system, not an agent." }}
+	{{ heading := "Where the intelligence lives." }}
 	{{ lede := "Autonomy-first tools put the intelligence in the agent and ask you to supervise it. Detent puts the intelligence in your spec and supplies the discipline. Same task, two interaction models." }}
 	if first {
 		@components.FirstSection(num, "The inversion", heading, lede) {
@@ -65,7 +64,7 @@ templ inversionSection(num string, first bool) {
 // HowItWorksSummary is the home page's condensed mechanism: the lane rail plus
 // the six numbered steps.
 templ HowItWorksSummary() {
-	@components.Section("05", "How it works", "Your lanes. Your gates between them.",
+	@components.Section("04", "How it works", "Your lanes. Your gates between them.",
 		"The Hub's board is the state machine. Runners on your machines move work through it, and your gates decide when it advances.") {
 		@components.LaneRail()
 		<div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -84,7 +83,7 @@ templ HowItWorksSummary() {
 templ stepCard(step content.Step) {
 	@components.Card("flex flex-col p-5") {
 		<div class="font-mono text-xs text-accent">
-			{ stepNum(step.Num) } &#8212; { step.Title }
+			{ stepNum(step.Num) }. { step.Title }
 		</div>
 		<p class="mt-2.5 text-sm leading-relaxed text-sec">{ step.Body }</p>
 	}
@@ -127,7 +126,7 @@ templ MergeTrainSection(num string) {
 // OperatorSurface shows the real dashboard, large. It is the highest-value
 // image the project has, and it is a screenshot of the running product.
 templ OperatorSurface() {
-	@components.Section("07", "The operator surface", "The board stays honest.",
+	@components.Section("06", "The operator surface", "The board stays honest.",
 		"Live counts, running agents, budget and capacity, reports, and activity. \"In progress\" means an agent is actually working right now.") {
 		<figure class="overflow-hidden rounded-card border border-line bg-page">
 			<img
@@ -144,7 +143,7 @@ templ OperatorSurface() {
 			@components.Card("p-5") {
 				<p class="text-sm leading-relaxed text-sec">
 					The same board is available over MCP, so your own agent can file issues, read run history,
-					and review changes &#8212; and the CLI reads it too, from any runner.
+					and review changes. The CLI reads it too, from any runner.
 				</p>
 			}
 			@components.Card("p-5") {
@@ -159,7 +158,7 @@ templ OperatorSurface() {
 // ContractsSection shows the two checked-in files, because developers believe
 // config they can read.
 templ ContractsSection() {
-	@components.Section("08", "Contracts, shown", "Config you can read beats adjectives.",
+	@components.Section("07", "Contracts, shown", "Config you can read beats adjectives.",
 		"Two files, committed to your repository: the machine contract and the agent contract. Both are excerpted here from Detent's own repository, which Detent builds on Detent Cloud.") {
 		<div class="grid gap-4 lg:grid-cols-2">
 			@components.CodeSurface("detent.yaml", "digitaldrywood/detent") {
@@ -238,7 +237,7 @@ func hasFeaturedVideo() bool {
 // RunnersSection is the fleet story: the Hub routes work, and the machines
 // that touch code are yours.
 templ RunnersSection() {
-	@components.Section("10", "Runners", "Your machines do the work.",
+	@components.Section("09", "Runners", "Your machines do the work.",
 		"A runner keeps your repository checkout, your agent sign-ins, and your toolchain. Nothing that touches your code runs on the Hub.") {
 		<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 			@runnerCard("A laptop", "Enroll the machine you already work on and let it pick up issues while you review.")
