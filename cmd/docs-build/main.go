@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/url"
 	"os"
 	"os/exec"
@@ -195,9 +196,7 @@ func validateSources(root string, policy sourcePolicy) (map[string]string, error
 	}
 
 	staged := make(map[string]string, len(sourceFiles)+len(policy.Inputs))
-	for virtual, filename := range sourceFiles {
-		staged[virtual] = filename
-	}
+	maps.Copy(staged, sourceFiles)
 	for virtual, filename := range policy.Inputs {
 		clean, err := cleanVirtualPath("", virtual)
 		if err != nil || clean != virtual {
