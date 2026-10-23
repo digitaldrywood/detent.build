@@ -28,7 +28,7 @@ production constraints. Read both before changing anything. A `CLAUDE.md` may
 exist in a human's local checkout but is gitignored and will not be present
 here, so these rules are restated below rather than referenced.
 
-Stack: Go 1.25, Echo v4, templ, HTMX, Tailwind CSS v4, templUI. No database.
+Stack: Go 1.27, Echo v4, templ, HTMX, Tailwind CSS v4, templUI. No database.
 The binary is stateless: it renders templ pages and serves static assets.
 
 **Content is sourced, not written.** `internal/content/content.go` holds every
@@ -66,8 +66,8 @@ domain entry is bound to container port 3000. There is no `www.detent.build`
 DNS record and there will not be one — no www canonical, no www in the sitemap,
 no redirect either way. `SITE_URL` is `https://detent.build` with no trailing
 slash. Do not add TLS termination or an http-to-https redirect in Go; Traefik
-already does both and an app-level redirect loops. `go.mod` declares `go 1.25`
-because the pinned nixpkgs archive in `nixpacks.toml` ships `go_1_25` and the
+already does both and an app-level redirect loops. `go.mod` declares `go 1.27`
+because the pinned nixpkgs archive in `nixpacks.toml` ships `go_1_27` and the
 build phase has no network to fetch a newer toolchain. If you change one of
 these, the corresponding test should be the thing that tells you.
 

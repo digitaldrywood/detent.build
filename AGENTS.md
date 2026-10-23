@@ -63,5 +63,5 @@ These are restated in full in `WORKFLOW.md`. In short:
   configuration; never describe Detent as code-only.
 - **Deployment.** `PORT` stays 3000. No www, ever. `SITE_URL` is
   `https://detent.build` with no trailing slash. No TLS or http-to-https
-  redirect in Go; Traefik already does both. `go.mod` stays at `go 1.25`.
+  redirect in Go; Traefik already does both. `go.mod` stays at the Go version the nixpkgs pin ships (`go 1.27`).
   Each of these has a test in `internal/handler/handler_test.go`.

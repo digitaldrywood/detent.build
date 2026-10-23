@@ -323,8 +323,7 @@ func resolveDestination(sourcePath, destination string, publicPaths map[string]s
 	if target == ".." || strings.HasPrefix(target, "../") {
 		return destination
 	}
-	if strings.HasPrefix(target, "docs/") {
-		vendoredPath := strings.TrimPrefix(target, "docs/")
+	if vendoredPath, ok := strings.CutPrefix(target, "docs/"); ok {
 		if publicPath, ok := publicPaths[vendoredPath]; ok {
 			return withURLSuffix(publicPath, parsed)
 		}

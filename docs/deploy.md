@@ -58,23 +58,23 @@ record, no apex-to-www or www-to-apex redirect.
 
 - No `providers = [...]`; every package is listed in `nixPkgs` explicitly,
   because dual Go+Node providers collide over npm's bash completions.
-- `nodejs_20`, not `nodejs_22` — the latter is not in this archive.
-- No separate `"npm"` package; it ships inside `nodejs_20`.
-- The nixpkgs archive is pinned because the default one only carries Go 1.22.
+- `nodejs_22`, matching the Node version CI tests with.
+- No separate `"npm"` package; it ships inside `nodejs_22`.
+- The nixpkgs archive is pinned because the default one lags the Go release `go.mod` declares.
 - `go install` runs in the install phase, which has network access; the build
   phase does not.
 - `templ` is invoked as `/root/go/bin/templ` because `go install` output is not
   on `PATH` during the build phase.
 
-### The Go version, and why go.mod says 1.25
+### The Go version, and why go.mod says 1.27
 
-The pinned archive ships `go_1_25`. A `go 1.26` directive in `go.mod` would
-make the build phase try to download a newer toolchain, which fails with no
-network. `go.mod` therefore declares `go 1.25`; nothing in this repository uses
-a 1.26 feature, and local development on 1.26 builds it unchanged.
+The pinned archive (nixos-26.05) ships `go_1_27`. A directive newer than the
+archive's Go would make the build phase try to download a newer toolchain,
+which fails with no network. `go.mod` therefore declares `go 1.27`, and CI sets
+up the same Go version.
 
-If the pin is ever moved to an archive with Go 1.26, raise the directive in the
-same commit.
+Move the archive pin, the `go_1_X` package, the `go.mod` directive, and CI's
+`go-version` in the same commit.
 
 ## Verifying a deploy
 

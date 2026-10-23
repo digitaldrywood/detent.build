@@ -1,9 +1,9 @@
 module detent.build
 
-// Declared floor is 1.25 because the pinned nixpkgs archive in nixpacks.toml
-// ships go_1_25 and the Nixpacks build phase has no network to fetch a newer
-// toolchain. Local development on 1.26 builds this fine.
-go 1.25
+// Declared at 1.27 because the pinned nixpkgs archive in nixpacks.toml ships
+// go_1_27 and the Nixpacks build phase has no network to fetch a newer
+// toolchain. Raise this only together with that pin.
+go 1.27
 
 require (
 	github.com/Oudwins/tailwind-merge-go v0.2.1

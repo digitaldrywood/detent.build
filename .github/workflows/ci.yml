@@ -45,11 +45,11 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v6
         with:
-          go-version: '1.25'
+          go-version: '1.27'
           cache: true
       - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - name: Full pre-landing suite, CI helpers, and server build
         env:
@@ -58,7 +58,7 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
         run: |
           go install github.com/a-h/templ/cmd/templ@v0.3.1001
-          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+          go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
           npm ci
           node --test scripts/ci/*.test.mjs
           make check
@@ -86,7 +86,7 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: |
             package-lock.json
