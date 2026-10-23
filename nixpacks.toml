@@ -20,7 +20,7 @@ nixPkgs = ["go_1_27", "nodejs_22"]
 [phases.install]
 cmds = [
     "npm ci",
-    "go install github.com/a-h/templ/cmd/templ@v0.3.1001",
+    "go install github.com/a-h/templ/cmd/templ@v0.3.1070",
     # `go install pkg@version` resolves outside the main module, so it does NOT
     # populate this module's own dependencies. Without an explicit download the
     # build phase — which has no network — fails on every import. Verified by
