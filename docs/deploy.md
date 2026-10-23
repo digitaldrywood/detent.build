@@ -94,7 +94,8 @@ needs npm and registry access; it does not need a separate `npm ci` before the
 gate. Existing installations are reused on subsequent builds.
 
 Each run pins one develop commit for every job. `check` runs the complete local
-gate, template formatting, and CI helper tests. `browser` exercises the built
+gate, template formatting, CI helper tests, and `make vulncheck` (govulncheck
+against reachable code, on the latest Go 1.27 patch release). `browser` exercises the built
 binary, every published docs page, CSS, and HTMX install navigation in Chromium,
 and runs the HTTP smoke locally. A failure or skipped prerequisite prevents
 promotion.

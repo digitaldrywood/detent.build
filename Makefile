@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: dev build test lint generate docs-sync docs-build docs-check css css-watch setup clean run check smoke help
+.PHONY: dev build test lint generate docs-sync docs-build docs-check css css-watch setup clean run check vulncheck smoke help
 
 SMOKE_URL ?= https://detent.build
 
@@ -15,7 +15,8 @@ HYPE_GOPATH=$(DETENT_TEMP_ROOT)/go-path
 HYPE_GOMODCACHE=$(DETENT_TEMP_ROOT)/go-mod
 HYPE_GOCACHE=$(DETENT_TEMP_ROOT)/go-build
 TEMPL=go run github.com/a-h/templ/cmd/templ@$(shell go list -m -f "{{.Version}}" github.com/a-h/templ)
-GOLANGCI_LINT=go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.14.0
+GOLANGCI_LINT=go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
+GOVULNCHECK=go run golang.org/x/vuln/cmd/govulncheck@v1.9.0
 
 dev:
 	@mkdir -p tmp
@@ -77,6 +78,9 @@ setup:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 	npm install
 
+vulncheck:
+	$(GOVULNCHECK) ./...
+
 smoke:
 	@./scripts/smoke.sh $(SMOKE_URL)
 
@@ -101,6 +105,7 @@ help:
 	@echo "  css        - Build Tailwind CSS"
 	@echo "  css-watch  - Watch and rebuild Tailwind CSS"
 	@echo "  check      - Full validation gate: generate, vet, test, lint"
+	@echo "  vulncheck  - Scan for known vulnerabilities in reachable code"
 	@echo "  smoke      - Post-deploy checks against SMOKE_URL (default https://detent.build)"
 	@echo "  setup      - Install development tools"
 	@echo "  clean      - Remove build artifacts"
