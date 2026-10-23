@@ -200,54 +200,17 @@ func TestContentSecurityPolicyRemainsExact(t *testing.T) {
 	}
 }
 
-func TestHomeOwnsSymphonyLineage(t *testing.T) {
+func TestNoPageMentionsSymphony(t *testing.T) {
 	e := newTestServer(t)
-	rec := get(t, e, "/", nil)
-	body := html.UnescapeString(rec.Body.String())
 
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
-	}
-	for _, want := range []string{
-		`"Manage work, not agents" is OpenAI Symphony's phrase.`,
-		"Symphony is an Apache-2.0 ",
-		"SPEC.md",
-		"plus an Elixir reference implementation that polls a Linear board.",
-		"A native board",
-		"Runners you enroll",
-		"GitHub is an optional integration",
-		"Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2.",
-		`href="https://github.com/openai/symphony"`,
-	} {
-		if !strings.Contains(body, want) {
-			t.Errorf("body does not contain %q", want)
+	for _, path := range []string{"/", "/how-it-works", "/why-detent", "/pricing", "/install", "/open-source", "/dashboard", "/videos", "/docs"} {
+		rec := get(t, e, path, nil)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s status = %d, want %d", path, rec.Code, http.StatusOK)
 		}
-	}
-
-	lineageAt := strings.Index(body, "Symphony named the thesis")
-	inversionAt := strings.Index(body, "A system, not an agent")
-	if lineageAt < 0 || inversionAt < 0 || lineageAt >= inversionAt {
-		t.Errorf("lineage section must appear before the inversion: lineage=%d inversion=%d", lineageAt, inversionAt)
-	}
-}
-
-func TestLineageMachineLiteralsUseMono(t *testing.T) {
-	e := newTestServer(t)
-
-	for _, path := range []string{"/", "/open-source"} {
-		t.Run(path, func(t *testing.T) {
-			rec := get(t, e, path, nil)
-
-			if rec.Code != http.StatusOK {
-				t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
-			}
-			for _, literal := range []string{"SPEC.md", "detent doctor"} {
-				want := `<span class="font-mono text-xs">` + literal + `</span>`
-				if !strings.Contains(rec.Body.String(), want) {
-					t.Errorf("body does not contain %q", want)
-				}
-			}
-		})
+		if strings.Contains(strings.ToLower(rec.Body.String()), "symphony") {
+			t.Errorf("%s mentions Symphony", path)
+		}
 	}
 }
 
@@ -496,7 +459,7 @@ func TestHomeExplainsDefiniteStatesBetweenHeroAndInversion(t *testing.T) {
 	}
 
 	previous = 0
-	for _, want := range []string{"02", "03", "04", "05", "06", "07", "08", "09", "10", "11"} {
+	for _, want := range []string{"02", "03", "04", "05", "06", "07", "08", "09", "10"} {
 		marker := `class="text-accent">` + want + `</span>`
 		position := strings.Index(body[previous:], marker)
 		if position == -1 {

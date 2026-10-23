@@ -15,16 +15,15 @@ import (
 )
 
 const (
-	RepoURL            = docs.SourceRepository
-	DetentConfigURL    = RepoURL + "/blob/main/detent.yaml"
-	DetentWorkflowURL  = RepoURL + "/blob/main/WORKFLOW.md"
-	ReleasesURL        = "https://github.com/digitaldrywood/detent/releases"
-	LicenseURL         = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
-	IssuesURL          = "https://github.com/digitaldrywood/detent/issues"
-	ContributingURL    = "https://github.com/digitaldrywood/detent/blob/main/CONTRIBUTING.md"
-	CIURL              = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
-	SymphonyURL        = "https://github.com/openai/symphony"
-	CodexCLIURL        = "https://github.com/openai/codex"
+	RepoURL           = docs.SourceRepository
+	DetentConfigURL   = RepoURL + "/blob/main/detent.yaml"
+	DetentWorkflowURL = RepoURL + "/blob/main/WORKFLOW.md"
+	ReleasesURL       = "https://github.com/digitaldrywood/detent/releases"
+	LicenseURL        = "https://github.com/digitaldrywood/detent/blob/main/LICENSE"
+	IssuesURL         = "https://github.com/digitaldrywood/detent/issues"
+	ContributingURL   = "https://github.com/digitaldrywood/detent/blob/main/CONTRIBUTING.md"
+	CIURL             = "https://github.com/digitaldrywood/detent/actions/workflows/ci.yml"
+	CodexCLIURL       = "https://github.com/openai/codex"
 
 	DocsBase = RepoURL + "/blob/" + docs.CommitSHA + "/docs/"
 
@@ -64,67 +63,7 @@ const (
 	DefiniteStatesMoveAutonomy  = "You, by talking to the agent."
 	DefiniteStatesMoveDetent    = "The runtime when the condition is met, or you by changing the state."
 	DefiniteStatesLaneRail      = "The board above and the lane rail below are the visible form of the claim: managed work sits at a state the workflow defines, rather than somewhere inside a session you have to read to locate."
-
-	LineageHeading = "Symphony named the thesis. Detent shipped the system."
-	LineageSummary = "\"Manage work, not agents\" is OpenAI Symphony's phrase. Detent grew out of that open spec " +
-		"and took the idea from spec to a shipped system."
 )
-
-type LineageFragment struct {
-	Text string
-	Mono bool
-}
-
-type lineageDivergence struct {
-	Title string
-	Body  []LineageFragment
-}
-
-var LineageSymphony = []LineageFragment{
-	{Text: "Symphony is an Apache-2.0 "},
-	{Text: "SPEC.md", Mono: true},
-	{Text: " plus an Elixir reference implementation that polls a Linear board."},
-}
-
-var LineageHistory = []LineageFragment{
-	{Text: "Detent began as an Elixir/OTP implementation adapted from Symphony's Linear target to GitHub Projects v2. "},
-	{Text: "It is now a ground-up Go rewrite with its own native board; that earlier implementation is archived."},
-}
-
-var LineageDivergences = []lineageDivergence{
-	{
-		Title: "One binary",
-		Body: []LineageFragment{
-			{Text: "The Hub and the runner are the same CGO-free Go binary for macOS, Linux, and Windows."},
-		},
-	},
-	{
-		Title: "A native board",
-		Body: []LineageFragment{
-			{Text: "The Hub holds issues, lanes, comments, dependencies, and Change Requests. GitHub is an optional integration for importing issues."},
-		},
-	},
-	{
-		Title: "Runners you enroll",
-		Body: []LineageFragment{
-			{Text: "Agents run on machines you enroll, next to your checkout, your toolchain, and your agent sign-ins."},
-		},
-	},
-	{
-		Title: "Configurable gates",
-		Body: []LineageFragment{
-			{Text: "Your gate command, an automated validator, or a person in Human Review, then serialized landing one change at a time."},
-		},
-	},
-	{
-		Title: "Operator surface",
-		Body: []LineageFragment{
-			{Text: "A web app, MCP access for your own agents, "},
-			{Text: "detent doctor", Mono: true},
-			{Text: ", and a GoReleaser pipeline."},
-		},
-	},
-}
 
 var versionAvailability = []VersionAvailability{
 	{

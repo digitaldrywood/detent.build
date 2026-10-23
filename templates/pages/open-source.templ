@@ -58,34 +58,7 @@ templ OpenSource() {
 				</ul>
 			</div>
 		}
-		@components.Section("04", "Lineage", "Where this came from.", content.LineageSummary) {
-			<div class="grid gap-4 lg:grid-cols-2">
-				@components.Card("p-6") {
-					<h3 class="text-base font-semibold text-text">What Symphony is</h3>
-					<p class="mt-3 text-sm leading-relaxed text-sec">
-						@lineageText(content.LineageSymphony)
-					</p>
-					<a href={ templ.SafeURL(content.SymphonyURL) } class="mt-3 inline-flex min-h-6 items-center font-mono text-xs text-accent hover:underline">
-						openai/symphony &#8599;
-					</a>
-				}
-				@components.Card("p-6") {
-					<h3 class="text-base font-semibold text-text">Where Detent diverged</h3>
-					<ul class="mt-3 flex flex-col gap-2 text-sm leading-relaxed text-sec">
-						for _, divergence := range content.LineageDivergences {
-							<li>
-								<span class="font-semibold text-text">{ divergence.Title }.</span>
-								{ " " }@lineageText(divergence.Body)
-							</li>
-						}
-					</ul>
-					<p class="mt-3 text-xs leading-relaxed text-dim">
-						@lineageText(content.LineageHistory)
-					</p>
-				}
-			</div>
-		}
-		@components.Section("05", "Contributing", "The same gates apply to you.",
+		@components.Section("04", "Contributing", "The same gates apply to you.",
 			"Detent's board dispatches agents against its own contracts, and human contributions go through the same gate and the same serialized landing.") {
 			<div class="grid gap-4 md:grid-cols-3">
 				@linkCard("Contributing guide", "How to set up, what make check runs, and the review conventions.", content.ContributingURL)
@@ -100,7 +73,7 @@ templ OpenSource() {
 func openSourceMeta() meta.PageMeta {
 	return meta.New(
 		"Source",
-		"Detent is source available under FSL-1.1-ALv2 and free to self-host. The license, releases, contributing guide, the Symphony lineage, and how Detent builds itself on Detent Cloud.",
+		"Detent is source available under FSL-1.1-ALv2 and free to self-host. The license, releases, contributing guide, and how Detent builds itself on Detent Cloud.",
 	).WithNav("open-source").WithPath("/open-source")
 }
 

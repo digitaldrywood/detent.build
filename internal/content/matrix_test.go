@@ -5,7 +5,7 @@ import "testing"
 // The site claims the comparison matrix is copied from docs/comparison.md,
 // including the rows Detent loses. A drifting copy makes that claim false, and
 // a dropped row is how the claim broke the first time — the ~5-min setup row
-// went missing. The October 7, 2026 source dropped the Symphony column and
+// went missing. The October 7, 2026 source dropped a competitor column and
 // the setup-time and free rows itself. These assertions pin shape and the rows most likely to be
 // quietly softened in Detent's favor.
 //
