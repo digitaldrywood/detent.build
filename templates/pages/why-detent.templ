@@ -12,8 +12,8 @@ templ WhyDetent() {
 	@layouts.Base(whyDetentMeta()) {
 		@partials.PageHeader(
 			"Why Detent",
-			"You are not steering an agent. You are running your process at scale.",
-			"This page is the argument, the two default choices that define Detent's footprint, and the comparison matrix — including the rows where Detent loses.",
+			"Run your own process across many agents at once.",
+			"This page covers the argument, the two default choices that define Detent's footprint, and the comparison matrix, including the rows where Detent loses.",
 		)
 		@partials.Inversion("01", true)
 		@components.Section("02", "Who this is for", "And who should close the tab.", "") {
@@ -56,9 +56,9 @@ templ WhyDetent() {
 				@components.Card("p-6") {
 					<h3 class="text-base font-semibold text-text">Your subscriptions pay for the model.</h3>
 					<p class="mt-3 text-sm leading-relaxed text-sec">
-						Runners drive agents through their own CLIs &#8212; Codex through
+						Runners drive agents through their own CLIs, Codex through
 						<span class="font-mono text-xs">codex app-server</span>, Claude Code through the
-						<span class="font-mono text-xs">claude</span> CLI &#8212; using the sign-in already on the
+						<span class="font-mono text-xs">claude</span> CLI, using the sign-in already on the
 						machine. Detent stores no model credentials.
 					</p>
 					<p class="mt-3 text-sm leading-relaxed text-sec">
@@ -93,7 +93,6 @@ templ WhyDetent() {
 				Copilot and Cursor have closed much of the &#8220;runs near my code&#8221; gap and win
 				zero-install inside their own platforms. They do not give you a board-native release runtime
 				under your control. Hermes, OpenClaw, and Hyperagent reach more channels than Detent does.
-				That is the trade, stated plainly.
 			</p>
 		}
 		@components.Section("05", "Objections", "The questions people actually ask.", "") {
@@ -101,7 +100,7 @@ templ WhyDetent() {
 				@objection("Will it ship garbage?",
 					"Not without passing the gates you wrote: your gate command on the finished change, an automated validator, a security audit, or a person in Human Review. Then the runner that holds the project lands one change at a time, and a change that cannot land goes to Blocked with its reason.")
 				@objection("What if the agent goes off the rails?",
-					"It works on its own branch in its own worktree, and it cannot land anything; only the runner lands, after your gates clear. Moving the issue out of an active lane revokes the worker and stops its process. A worktree is collision isolation, not an OS sandbox, so the guarantee is about what lands, not about what the process can touch.")
+					"It works on its own branch in its own worktree, and it cannot land anything; only the runner lands, after your gates clear. Moving the issue out of an active lane revokes the worker and stops its process. A worktree is collision isolation, not an OS sandbox, so the guarantee covers what lands. It does not limit what the process can touch.")
 				@objection("Is it only for code?",
 					"No. Lanes, roles, and the gate command are yours. A video pipeline or an approval workflow is a board with different lanes and a different definition of done.")
 				@objection("Does my code go to Detent Cloud?",

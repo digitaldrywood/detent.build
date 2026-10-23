@@ -26,17 +26,17 @@ templ Dashboard() {
 				/>
 				<figcaption class="mt-3 font-mono text-2xs text-dim">
 					A real board across nine projects, from an earlier release. Note the waiting reasons on the
-					blocked cards — the board says why something is stopped, not just that it is.
+					blocked cards. The board says why each one stopped.
 				</figcaption>
 			</figure>
 		</section>
-		@components.Section("01", "What it shows", "Instrument panel, not a status page.", "") {
+		@components.Section("01", "What it shows", "Live state, and the reason behind it.", "") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 				@surfaceCard("Live counts", "Running, queued, waiting, blocked, and completed over the last 48 hours, across every project in the organization.")
-				@surfaceCard("Running agents", "Which issue each agent has, how long it has been working, and what it is doing right now — dispatch, gate command, Change Request.")
-				@surfaceCard("Why something is stopped", "Not just the lane. The actual reason: dependency not ready, project paused, plan capacity reached, landing refused with its reason.")
+				@surfaceCard("Running agents", "Which issue each agent has, how long it has been working, and what it is doing right now: dispatch, gate command, or Change Request.")
+				@surfaceCard("Why something is stopped", "The lane, plus the actual reason: dependency not ready, project paused, plan capacity reached, landing refused with its reason.")
 				@surfaceCard("Token, budget, and rate limit", "Live spend against your cap and the current rate-limit posture, so a run that is about to hit a wall is visible before it does.")
-				@surfaceCard("Reports and activity", "Reports, an activity feed, and saved Work views — where work is accumulating and how long it sits in each lane.")
+				@surfaceCard("Reports and activity", "Reports, an activity feed, and saved Work views that show where work is accumulating and how long it sits in each lane.")
 				@surfaceCard("Density and staleness", "Compact, cozy, and comfy card densities, in the same Templ and HTMX shell on desktop and narrow screens.")
 			</div>
 			<p class="mt-4 max-w-[760px] text-sm leading-relaxed text-dim">
@@ -76,9 +76,9 @@ templ Dashboard() {
 			</div>
 		}
 		@components.Section("04", "Design rules", "The same system this site is built in.",
-			"The dashboard's palette, type scale, and geometry are the ones you are reading right now — the marketing site imports the product's tokens rather than approximating them.") {
+			"The dashboard's palette, type scale, and geometry are the ones you are reading right now. The marketing site imports the product's tokens instead of approximating them.") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-				@ruleCard("Four semantics, one accent", "ok, warn, error, info — and teal for interactivity only. Never a fifth semantic, and never accent for status.")
+				@ruleCard("Four semantics, one accent", "ok, warn, error, and info, plus teal for interactivity only. Never a fifth semantic, and never accent for status.")
 				@ruleCard("Hairlines, not shadows", "1px borders carry every boundary. Card radius 6px, chip radius 4px, on a strict 4px spacing grid.")
 				@ruleCard("Mono means machine", "State names, config, CLI output, and lane labels are set in Geist Mono because they are literal strings, not decoration.")
 				@ruleCard("One thing animates", "A 6px pulsing dot per active agent, and the held card's ring. Reduced-motion turns both off.")
@@ -91,7 +91,7 @@ templ Dashboard() {
 func dashboardMeta() meta.PageMeta {
 	return meta.New(
 		"Dashboard",
-		"A tour of the Detent operator surface: live lanes, running agents, waiting reasons, token and budget and rate-limit state, board flow charts, and the terminal UI.",
+		"A tour of the Detent operator surface: live lanes, running agents, waiting reasons, token and budget and rate-limit state, board flow charts, and MCP access.",
 	).WithNav("dashboard").WithPath("/dashboard")
 }
 

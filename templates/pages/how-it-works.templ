@@ -30,7 +30,7 @@ templ HowItWorks() {
 				<span class="font-mono text-xs text-sec">active</span> lanes dispatch an agent,
 				<span class="font-mono text-xs text-sec">holding</span> lanes wait, and
 				<span class="font-mono text-xs text-sec">terminal</span> lanes end the work. The board lives on
-				the Hub; GitHub issues can be imported into it, but GitHub is an optional integration, not the
+				the Hub; GitHub issues can be imported into it, but the Hub&#39;s board stays the
 				source of truth. Nothing here is specific to code.
 				<a href={ templ.SafeURL(content.Doc("concepts.md")) } class="text-accent hover:underline">Concepts: tracker and board states &#8594;</a>
 			</p>
@@ -42,7 +42,7 @@ templ HowItWorks() {
 				}
 			</ol>
 		}
-		@components.Section("03", "Isolation", "One worktree per issue — and what that does not mean.",
+		@components.Section("03", "Isolation", "One worktree per issue, and where that isolation stops.",
 			"Every claimed issue gets its own Git worktree from your source checkout, and its own branch. That is collision isolation, and it is worth being precise about where it stops.") {
 			<div class="grid gap-4 lg:grid-cols-2">
 				@components.Card("p-6") {
@@ -79,7 +79,7 @@ templ HowItWorks() {
 				}
 			</div>
 		}
-		@components.Section("04", "Gates", "A gate is a condition you wrote, not a vibe.",
+		@components.Section("04", "Gates", "A gate is a condition you wrote down.",
 			"The workflow decides what a change needs before it advances. These are the shipped options, and they compose.") {
 			<div class="grid gap-4 md:grid-cols-2">
 				@gateCard("Gate command", "gate.run is your check command, run on the finished change. Detent's own is make check-landing; yours can render a video or validate a document.")

@@ -107,7 +107,7 @@ templ Install(target content.InstallTarget) {
 				</div>
 			</div>
 		}
-		@components.Section("04", "Updating", "The package manager that installed it, owns it.", "") {
+		@components.Section("04", "Updating", "Whatever installed it should update it.", "") {
 			<div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
 				@updateCard("Release installer", "detent update", "Use --yes for automation. On a runner, detent update --yes drains running work before it restarts.")
 				@updateCard("Homebrew", "brew upgrade digitaldrywood/tap/detent", "")
@@ -121,7 +121,7 @@ templ Install(target content.InstallTarget) {
 
 func installMeta(target content.InstallTarget) meta.PageMeta {
 	return meta.New(
-		"Self-host — "+target.Label,
+		"Self-host: "+target.Label,
 		"Install Detent on macOS, Linux, or Windows to enroll a runner against Detent Cloud or run your own Hub: Homebrew, the checksum-verified shell and PowerShell installers, Winget, Scoop, .deb, .rpm, or go install.",
 	).WithNav("install").WithPath("/install")
 }
