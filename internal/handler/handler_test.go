@@ -65,9 +65,9 @@ func TestPagesRender(t *testing.T) {
 		path string
 		want string
 	}{
-		{"/", "Manage work, not agents."},
+		{"/", "Agents do the work, and your process decides when it&#39;s done."},
 		{"/how-it-works", "The mechanism, stop by stop."},
-		{"/why-detent", "You are not steering an agent."},
+		{"/why-detent", "Run your own process across many agents at once."},
 		{"/dashboard", "The board stays honest."},
 		{"/install", "It is the runner, and it can be the Hub."},
 		{"/open-source", "Source available. Free to self-host."},
@@ -387,8 +387,8 @@ func TestWorkflowStatesArePresentedAsConfigurable(t *testing.T) {
 			want: []string{
 				html.EscapeString(content.BoardCaption),
 				`id="lanes"`,
-				"Detent is the orchestration layer, not a coding tool.",
-				`content="` + content.OpenGraphDefaultImageAlt + `"`,
+				"Detent is an orchestration layer, and the work it moves does not have to be code.",
+				`content="` + html.EscapeString(content.OpenGraphDefaultImageAlt) + `"`,
 			},
 			forbidden: []string{"one item at every stop", "The six board lanes", "the gates decide when it lands. The six"},
 		},
@@ -431,7 +431,7 @@ func TestHomeExplainsDefiniteStatesBetweenHeroAndInversion(t *testing.T) {
 		content.DefiniteStatesWaitQuestion,
 		content.DefiniteStatesMoveQuestion,
 		content.DefiniteStatesLaneRail,
-		"A system, not an agent.",
+		"Where the intelligence lives.",
 	} {
 		position := strings.Index(body, html.EscapeString(want))
 		if position == -1 {
