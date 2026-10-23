@@ -41,7 +41,7 @@ const (
 	License     = "FSL-1.1-ALv2"
 
 	HomeTitle       = "Agent work orchestration"
-	HomeHeadline    = "Agents do the work, and your process decides when it's done."
+	HomeHeadline    = "Your process, at agent speed."
 	HomeDescription = "Detent is an orchestration layer for agent work. Write issues on a board whose lanes and gates your workflow defines; " +
 		"Detent hands each ready issue to an agent on a machine you control, checks the result against your gates, and moves it forward. " +
 		"Code, video, documents, or office workflows. Start free on Detent Cloud, or self-host the Hub."
@@ -469,7 +469,7 @@ const (
 	DashboardLaneHeading     = "Detent's configured delivery path."
 	HowItWorksStateHeading   = "A configured path, and the catches between states."
 	HowItWorksStateDetail    = "Lanes are workflow-defined. These six are the delivery path, and a workflow can define fewer, more, or different ones. Detent's own board configures nine states in total, adding Backlog and Blocked ahead of Todo and Cancelled alongside Done."
-	OpenGraphDefaultImageAlt = "Detent social card headed Agents do the work, and your process decides when it's done, with Rework returning from Human Review to In Progress in a workflow-defined delivery path."
+	OpenGraphDefaultImageAlt = "Detent social card headed Your process, at agent speed, with Rework returning from Human Review to In Progress in a workflow-defined delivery path."
 )
 
 // BoardCaption is the honesty note printed under the hero board.
