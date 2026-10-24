@@ -27,6 +27,7 @@ export async function reportFailures({ github, context, env, send = fetch }) {
       }
       const excerpt = output.slice(-16000).replaceAll('```', '`\u200b``');
       const runURL = `${env.GITHUB_SERVER_URL}/${env.GITHUB_REPOSITORY}/actions/runs/${context.runId}/attempts/${env.GITHUB_RUN_ATTEMPT}`;
+      const infrastructure = job.name === 'security-audit';
       const payload = {
         project_id: 'prj_e7aab744eb84410fafd437f478992bd1',
         fingerprint: `detent.build:hourly-ci:${job.name}`,
@@ -34,8 +35,8 @@ export async function reportFailures({ github, context, env, send = fetch }) {
         // without resetting its status. Delivery retries must be idempotent.
         state: 'Todo', priority: 2,
         delivery_id: `${context.runId}:${env.GITHUB_RUN_ATTEMPT}:${job.id}`,
-        summary: `Hourly CI failed: ${job.name}`,
-        details: `Run: ${runURL}\nJob: ${job.html_url}\nTested develop SHA: ${env.TESTED_SHA}\nConclusion: ${job.conclusion}\n\nFailing output (last 16000 characters; full log at the job link):\n\n\`\`\`text\n${excerpt}\n\`\`\`\n\n\`\`\`detent-agent\nschema: 1\neffort: high\n\`\`\``,
+        summary: infrastructure ? 'Release security audit infrastructure failure' : `Hourly CI failed: ${job.name}`,
+        details: `${infrastructure ? 'Infrastructure failure; no vulnerability is inferred. See release-security-audit artifacts for the attested deployed SHA and controller result.\n' : ''}Run: ${runURL}\nJob: ${job.html_url}\nTested develop SHA: ${env.TESTED_SHA}\nConclusion: ${job.conclusion}\n\nFailing output (last 16000 characters; full log at the job link):\n\n\`\`\`text\n${excerpt}\n\`\`\`\n\n\`\`\`detent-agent\nschema: 1\neffort: high\n\`\`\``,
       };
       const response = await send(env.INTAKE_URL, {
         method: 'POST', redirect: 'error', signal: AbortSignal.timeout(30000),

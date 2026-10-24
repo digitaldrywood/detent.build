@@ -722,6 +722,7 @@ func registeredIndexablePageRoutes(e *echo.Echo, catalog *docs.Catalog) map[stri
 	nonIndexableRoutes := map[string]struct{}{
 		// Health is a machine-readable availability endpoint, not a page.
 		"/health": {},
+		"/deployment": {},
 		// Robots directives are crawler configuration, not page content.
 		"/robots.txt": {},
 		"/google971b363feb71cd5c.html": {},

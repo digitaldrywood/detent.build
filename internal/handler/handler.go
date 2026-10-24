@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"runtime/debug"
 
 	"detent.build/internal/config"
 	"detent.build/internal/docs"
@@ -11,12 +12,14 @@ import (
 )
 
 type Handler struct {
-	cfg  *config.Config
-	docs *docs.Catalog
+	cfg    *config.Config
+	docs   *docs.Catalog
+	commit string
 }
 
 func New(cfg *config.Config) *Handler {
-	return &Handler{cfg: cfg, docs: docs.Published}
+	info, _ := debug.ReadBuildInfo()
+	return &Handler{cfg: cfg, docs: docs.Published, commit: deploymentCommit(info)}
 }
 
 func (h *Handler) RegisterRoutes(e *echo.Echo) {
@@ -31,6 +34,7 @@ func (h *Handler) RegisterRoutes(e *echo.Echo) {
 	e.GET("/sitemap.xml", h.Sitemap)
 
 	e.GET("/health", h.Health)
+	e.GET("/deployment", h.Deployment)
 
 	e.GET("/", h.Home)
 	e.GET("/how-it-works", h.HowItWorks)

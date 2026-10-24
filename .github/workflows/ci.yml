@@ -61,6 +61,7 @@ jobs:
           go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
           npm ci
           node --test scripts/ci/*.test.mjs
+          node scripts/ci/test-release-audit-integration.mjs
           make check
           templ fmt -fail templates/ ui/
           CGO_ENABLED=0 go build -o "$RUNNER_TEMP/server" ./cmd/server
@@ -190,8 +191,72 @@ jobs:
           PROMOTED_HEAD: ${{ needs.promote.outputs.head }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
+  security-audit:
+    needs: [snapshot, promote, smoke]
+    if: >-
+      always() && github.ref == 'refs/heads/develop' &&
+      needs.snapshot.result == 'success' && needs.promote.result == 'success' &&
+      (needs.smoke.result == 'success' || needs.smoke.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.snapshot.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+      - name: Attest the commit serving production
+        id: deployment
+        env:
+          EXPECTED_DEPLOYED_SHA: ${{ needs.promote.outputs.head }}
+        run: node scripts/ci/release-audit.mjs pin
+      # Reviewed Detent #1481 controller, independent of the audited Git tree.
+      - uses: actions/checkout@v7
+        with:
+          repository: digitaldrywood/detent
+          ref: 30d8a2c26b9539b59013b8428f7dd033529b50af
+          path: .audit-controller
+          persist-credentials: false
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.10'
+          cache-dependency-path: .audit-controller/go.sum
+      - name: Build trusted controller and install pinned provider
+        run: |
+          cd .audit-controller
+          test "$(git rev-parse HEAD)" = 30d8a2c26b9539b59013b8428f7dd033529b50af
+          go build -o "$RUNNER_TEMP/cifailure" ./tools/cifailure
+          npm install --prefix "$RUNNER_TEMP/audit-provider" @openai/codex@0.160.0
+          mkdir -p "$RUNNER_TEMP/audit-bin"
+          install -m 755 ../scripts/ci/audit-codex.sh "$RUNNER_TEMP/audit-bin/codex"
+          echo "$RUNNER_TEMP/audit-bin" >> "$GITHUB_PATH"
+      - name: Audit the attested deployed commit and publish native records
+        env:
+          TMPDIR: ${{ runner.temp }}
+          DETENT_MCP_URL: ${{ secrets.DETENT_MCP_URL }}
+          DETENT_API_KEY: ${{ secrets.DETENT_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.DETENT_RELEASE_AUDIT_OPENAI_API_KEY }}
+          CI_RELEASE_BRANCH: ${{ vars.DETENT_RELEASE_SERIES }}
+          DETENT_RELEASE_AUDIT_MODEL: ${{ vars.DETENT_RELEASE_AUDIT_MODEL }}
+        run: |
+          [[ -n "$DETENT_MCP_URL" && -n "$DETENT_API_KEY" && -n "$OPENAI_API_KEY" ]] || {
+            echo 'Audit infrastructure: configure the native audit connection and provider credentials documented in docs/deploy.md.'
+            exit 1
+          }
+          node scripts/ci/release-audit.mjs run
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: release-security-audit
+          path: ${{ runner.temp }}/release-audit-evidence
+          if-no-files-found: warn
+          retention-days: 30
+
   report:
-    needs: [snapshot, check, browser, promote, smoke]
+    needs: [snapshot, check, browser, promote, smoke, security-audit]
     if: always() && github.ref == 'refs/heads/develop' && contains(needs.*.result, 'failure')
     runs-on: ubuntu-latest
     timeout-minutes: 10

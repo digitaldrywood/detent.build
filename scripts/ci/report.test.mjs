@@ -90,3 +90,12 @@ test('missing credentials and unacknowledged HTML responses fail visibly', async
     send: async () => ({ ok: true, json: async () => ({}) }),
   }), /did not acknowledge/);
 });
+
+test('audit infrastructure failures use native deduplication and never claim a vulnerability', async () => {
+  const f = fixture();
+  f.jobs.splice(0, f.jobs.length, { id: 7, name: 'security-audit', conclusion: 'failure', html_url: 'https://example.test/job/7' });
+  await reportFailures({ ...f, context, env });
+  assert.equal(f.deliveries[0].summary, 'Release security audit infrastructure failure');
+  assert.equal(f.deliveries[0].fingerprint, 'detent.build:hourly-ci:security-audit');
+  assert.match(f.deliveries[0].details, /Infrastructure failure; no vulnerability is inferred/);
+});

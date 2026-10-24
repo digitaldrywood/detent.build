@@ -1,0 +1,386 @@
+// Compiled only in a scratch checkout of the workflow's pinned Detent controller.
+// This is a synthetic audit, not evidence of a vulnerability in detent.build.
+package main
+
+import (
+	"bytes"
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/digitaldrywood/detent/internal/issueorigin"
+	"github.com/digitaldrywood/detent/internal/releaseaudit"
+	"github.com/digitaldrywood/detent/internal/tracker"
+)
+
+const siteFixturePath = "internal/handler/deployment.go"
+const siteFixtureFingerprint = siteFixturePath + ":Deployment:synthetic-ownership-fixture"
+const siteFixtureCoverage = "route::owner::api::access-control"
+
+type siteAuditRequest struct {
+	Identity   releaseaudit.Identity  `json:"identity"`
+	Allowance  releaseaudit.Allowance `json:"allowance"`
+	Repository string                 `json:"repository_directory"`
+}
+
+type siteAuditRecords struct {
+	latest     map[string]releaseaudit.Snapshot
+	failStatus string
+}
+
+func (r *siteAuditRecords) Load(_ context.Context, project string) ([]releaseaudit.Snapshot, error) {
+	result := []releaseaudit.Snapshot{}
+	for _, state := range r.latest {
+		if state.Identity.ProjectID == project {
+			result = append(result, state)
+		}
+	}
+	return result, nil
+}
+
+func (r *siteAuditRecords) Publish(_ context.Context, state releaseaudit.Snapshot) error {
+	if state.Status == r.failStatus {
+		return errors.New("fixture: final publication unavailable")
+	}
+	// Retain value snapshots so the real stage must publish before reporting.
+	raw, err := json.Marshal(state)
+	if err != nil {
+		return err
+	}
+	var retained releaseaudit.Snapshot
+	if err := json.Unmarshal(raw, &retained); err != nil {
+		return err
+	}
+	r.latest[state.Identity.RunID] = retained
+	return nil
+}
+
+type siteAuditSandbox struct{}
+
+func (siteAuditSandbox) Execute(_ context.Context, args []string, _ string) (string, error) {
+	if len(args) != 1 || args[0] != "synthetic-ownership-fixture" {
+		return "", errors.New("unexpected fixture command")
+	}
+	return "Synthetic ownership fixture: the other owner's object changed.", nil
+}
+
+type siteAuditProvider struct {
+	verdict, failPhase string
+	calls              int
+}
+
+func (p *siteAuditProvider) Invoke(ctx context.Context, invocation releaseaudit.Invocation, observe func(releaseaudit.Usage) error) (releaseaudit.Response, error) {
+	p.calls++
+	response := releaseaudit.Response{SessionID: fmt.Sprintf("fixture-session-%d", p.calls), Output: json.RawMessage(`{}`)}
+	if err := observe(releaseaudit.Usage{Input: 3, Output: 2, Cached: 1}); err != nil {
+		return response, err
+	}
+	source, err := invocation.Source.Read(ctx, siteFixturePath)
+	if err != nil || !bytes.HasPrefix(source, []byte("package handler\n")) {
+		return response, errors.New("provider did not read the pinned site source")
+	}
+	if invocation.Phase == p.failPhase {
+		return response, errors.New("fixture: provider unavailable")
+	}
+	switch invocation.Phase {
+	case "recon-ledger":
+		response.Output = siteAuditLedger("planned")
+	case "hunt":
+		response.Output, err = json.Marshal(map[string]any{
+			"ledger":     siteAuditLedger("candidate"),
+			"candidates": []releaseaudit.Candidate{{Fingerprint: siteFixtureFingerprint, CoverageID: siteFixtureCoverage, Record: siteAuditFinding(p.verdict)}},
+		})
+	case "coverage-critic", "final-coverage-critic":
+		response.Output = siteAuditLedger("candidate")
+	case "candidate-disprover", "independent-record-verifier", "replacement-record-verifier":
+		if invocation.Phase == "candidate-disprover" && invocation.Sandbox != nil {
+			if _, err := invocation.Sandbox.Execute(ctx, []string{"synthetic-ownership-fixture"}, invocation.Scratch); err != nil {
+				return response, err
+			}
+		}
+		response.Output = siteAuditFinding(p.verdict)
+	}
+	return response, err
+}
+
+func siteAuditLedger(status string) json.RawMessage {
+	owner, paths, checks, fingerprints := "null", "[]", "[]", "[]"
+	if status != "planned" {
+		owner, paths = `"agent-0006"`, `["`+siteFixturePath+`"]`
+		checks = `[{"agent_id":"agent-0006","reviewed_paths":["` + siteFixturePath + `"],"invariant":"Synthetic ownership boundary.","method":"source","result":"Controlled fixture candidate.","artifact":null}]`
+		fingerprints = `["` + siteFixtureFingerprint + `"]`
+	}
+	return json.RawMessage(fmt.Sprintf(`[{"coverage_id":"%s","canonical_refs":{"surface":"route","boundary":"owner","subsystem":"api","attack_class":"access-control"},"surface":"Route","boundary":"Object ownership","subsystem":"API","attack_class":"Access control","starting_paths":["%s"],"ordinary_attack_class_block":"ATTACK-CLASSES.md#Access control","selected_companion_blocks":[],"excluded_blocks":[],"prior_status":"new","attempts":[],"wave":1,"status":"%s","agent_id":%s,"reviewed_paths":%s,"local_checks":%s,"result_fingerprints":%s,"unresolved":[]}]`, siteFixtureCoverage, siteFixturePath, status, owner, paths, checks, fingerprints))
+}
+
+func siteAuditFinding(verdict string) json.RawMessage {
+	base := `"fingerprint":"` + siteFixtureFingerprint + `","title":"Synthetic ownership fixture","description":"Controlled test data, not a site vulnerability.","trace":[{"kind":"entrypoint","file":"` + siteFixturePath + `","line":1,"scope":"Deployment","description":"Synthetic entrypoint."},{"kind":"sink","file":"` + siteFixturePath + `","line":1,"scope":"Deployment","description":"Synthetic sink."}],"evidence":[{"file":"` + siteFixturePath + `","line":1,"description":"Controlled fixture evidence."}]`
+	if verdict == "confirmed" {
+		return json.RawMessage(`{"verdict":"confirmed",` + base + `,"root_cause":"Synthetic ownership fixture.","intended_behavior":"Only an object's owner changes it.","conditions":[],"execution":{"attacker_perspective":"Synthetic unprivileged user.","payloads":["Synthetic object ID."],"instructions":["Run the controlled fixture."],"observed_result":"Synthetic ownership fixture: the other owner's object changed."},"remediation":{"strategy":"Synthetic ownership check."},"severity":{"likelihood":{"score":"medium","reason":"Controlled fixture."},"impact":{"score":"medium","reason":"Controlled fixture."},"overall_severity":"medium"},"confidence":{"score":"high","reason":"Controlled observation."}}`)
+	}
+	return json.RawMessage(`{"verdict":"needs_validation",` + base + `,"claimed_root_cause":"Synthetic ownership fixture.","blockers":["Controlled validation gap."],"validation_plan":{"local":"Run the synthetic fixture."}}`)
+}
+
+// This service stores requests from the real controller REST transport. It does
+// not implement fingerprint matching: the pinned reporter owns issue reuse.
+type siteNativeService struct {
+	t                                    *testing.T
+	project, organization, commit, runID string
+	records                              *siteAuditRecords
+	item                                 *tracker.NativeIssue
+	comments                             []tracker.NativeComment
+	creates, patches                     int
+	denyCreates                          bool
+}
+
+func (s *siteNativeService) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	s.t.Helper()
+	w.Header().Set("Content-Type", "application/json")
+	if r.Header.Get("Authorization") != "Bearer fixture-native-key" {
+		s.t.Error("missing project credential")
+		http.Error(w, "unauthorized", 401)
+		return
+	}
+	base := "/api/v2/organizations/" + s.organization + "/projects/" + s.project
+	if !strings.HasPrefix(r.URL.Path, base) {
+		s.t.Errorf("foreign native path: %s", r.URL.Path)
+		http.Error(w, "foreign project", 400)
+		return
+	}
+	path := strings.TrimPrefix(r.URL.Path, base)
+	var output any
+	switch {
+	case r.Method == "GET" && path == "":
+		output = map[string]any{"project_id": s.project, "organization_id": s.organization, "profile": "native", "states": []map[string]any{{"name": "Backlog"}, {"name": "Todo", "dispatchable": true}}}
+	case r.Method == "GET" && path == "/work-items":
+		items := []tracker.NativeIssue{}
+		if s.item != nil {
+			items = append(items, *s.item)
+		}
+		output = map[string]any{"items": items}
+	case r.Method == "GET" && s.item != nil && path == "/work-items/wi_fixture":
+		output = s.item
+	case r.Method == "GET" && path == "/work-items/wi_fixture/comments":
+		output = map[string]any{"items": s.comments}
+	case r.Method == "POST" && path == "/work-items":
+		if s.denyCreates {
+			http.Error(w, `{"error":"fixture reporting denied"}`, 400)
+			return
+		}
+		var input tracker.CreateIssue
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			s.t.Error(err)
+			http.Error(w, "invalid request", 400)
+			return
+		}
+		if s.item != nil {
+			s.t.Error("controller created a second issue instead of reusing its fingerprint")
+		}
+		s.requirePublished(input.Body)
+		s.creates++
+		s.item = &tracker.NativeIssue{NativeReference: tracker.NativeReference{WorkItemID: "wi_fixture", ProjectID: tracker.ProjectID(s.project), OrganizationID: tracker.OrganizationID(s.organization), Revision: 1, Number: 1}, Title: input.Title, Body: input.Body, State: input.State, Priority: input.Priority, Labels: input.Labels}
+		output = s.item
+	case r.Method == "POST" && path == "/work-items/wi_fixture/comments":
+		var input tracker.CreateComment
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			s.t.Error(err)
+			http.Error(w, "invalid request", 400)
+			return
+		}
+		s.requirePublished(input.Body)
+		s.comments = append(s.comments, tracker.NativeComment{OrganizationID: tracker.OrganizationID(s.organization), ProjectID: tracker.ProjectID(s.project), WorkItemID: "wi_fixture", Body: input.Body})
+		output = s.comments[len(s.comments)-1]
+	case r.Method == "PATCH":
+		s.patches++
+		if s.item == nil || s.item.State == "Blocked" {
+			s.t.Error("reporter tried to modify held work")
+			http.Error(w, "held work", 400)
+			return
+		}
+		var input tracker.UpdateIssue
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			s.t.Error(err)
+			http.Error(w, "invalid update", 400)
+			return
+		}
+		if priority := input.Priority.Level(); priority != nil {
+			s.item.Priority = priority
+		}
+		if input.Labels != nil {
+			s.item.Labels = *input.Labels
+		}
+		s.item.Revision++
+		output = s.item
+	default:
+		s.t.Errorf("unexpected native operation %s %s", r.Method, path)
+		http.Error(w, "unexpected operation", 400)
+		return
+	}
+	if err := json.NewEncoder(w).Encode(output); err != nil {
+		s.t.Error(err)
+	}
+}
+
+func (s *siteNativeService) requirePublished(body string) {
+	s.t.Helper()
+	if !strings.Contains(body, "Confirmed record") {
+		return
+	}
+	snapshot := s.records.latest[s.runID]
+	if snapshot.Identity.Commit == s.commit && len(snapshot.Findings) == 1 {
+		return
+	}
+	s.t.Error("confirmed repair preceded finding checkpoint publication")
+}
+
+func TestDetentBuildReleaseAudit(t *testing.T) {
+	raw, err := os.ReadFile(os.Getenv("DETENT_BUILD_AUDIT_REQUEST"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var request siteAuditRequest
+	if err := json.Unmarshal(raw, &request); err != nil {
+		t.Fatal(err)
+	}
+	if request.Identity.ProjectID != "prj_e7aab744eb84410fafd437f478992bd1" || request.Identity.Repository != "digitaldrywood/detent.build" {
+		t.Fatal("not the adopting site's request")
+	}
+	outcomes := []map[string]any{}
+
+	for _, tc := range []struct {
+		name, verdict, status, failPhase, failPublication string
+		calls                                             int
+		deny                                              bool
+	}{
+		{name: "confirmed_create_reuse_and_delivery_replay", verdict: "confirmed", status: "findings"},
+		{name: "needs_validation_has_no_repair", verdict: "needs_validation", status: "needs_validation"},
+		{name: "incomplete_has_no_repair", verdict: "confirmed", status: "incomplete", calls: 8},
+		{name: "provider_failure_is_infrastructure", verdict: "confirmed", status: "failed", failPhase: "recon-surfaces"},
+		{name: "final_checkpoint_failure_is_infrastructure", verdict: "confirmed", status: "failed", failPublication: "findings"},
+		{name: "reporting_failure_is_not_success", verdict: "confirmed", status: "failed", deny: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			records := &siteAuditRecords{latest: map[string]releaseaudit.Snapshot{}, failStatus: tc.failPublication}
+			native := &siteNativeService{t: t, project: request.Identity.ProjectID, organization: "org_fixture", commit: request.Identity.Commit, records: records, comments: []tracker.NativeComment{}, denyCreates: tc.deny}
+			server := httptest.NewTLSServer(native)
+			defer server.Close()
+			source, err := releaseaudit.NewGitSource(t.Context(), request.Repository, request.Identity.Commit, t.TempDir())
+			if err != nil {
+				t.Fatal(err)
+			}
+			run := func(runID string) releaseaudit.Snapshot {
+				t.Helper()
+				native.runID = runID
+				transport, err := newCloudREST(server.URL+"/api/v2/organizations/org_fixture/mcp", native.project, "fixture-native-key", server.Client())
+				if err != nil {
+					t.Fatal(err)
+				}
+				var evidence bytes.Buffer
+				destination := &cloudDestination{command: transport.call, project: native.project, evidence: &evidence}
+				if err := destination.load(t.Context()); err != nil {
+					t.Fatal(err)
+				}
+				stage, err := releaseaudit.New(&siteAuditProvider{verdict: tc.verdict, failPhase: tc.failPhase}, records, releaseAuditReporter{destination: destination}, siteAuditSandbox{})
+				if err != nil {
+					t.Fatal(err)
+				}
+				identity, allowance := request.Identity, request.Allowance
+				identity.RunID = runID
+				identity.RunURL = "https://github.com/digitaldrywood/detent.build/actions/runs/" + runID + "/attempts/1"
+				if tc.calls != 0 {
+					allowance.Invocations = tc.calls
+				}
+				result, err := stage.Run(t.Context(), releaseaudit.Request{Identity: identity, Allowance: allowance, Source: source, Scratch: t.TempDir()})
+				exitCode, diagnostic := 0, ""
+				if err != nil {
+					exitCode, diagnostic = 1, err.Error()
+				}
+				outcomes = append(outcomes, map[string]any{"name": tc.name, "result": result, "exit_code": exitCode, "error": diagnostic})
+				if result.Status != tc.status {
+					t.Fatalf("stage status = %s, want %s: %v", result.Status, tc.status, err)
+				}
+				if tc.status == "failed" && err == nil {
+					t.Fatal("infrastructure failure returned success")
+				}
+				if tc.status == "incomplete" && !errors.Is(err, releaseaudit.ErrAllowance) {
+					t.Fatalf("incomplete lost allowance reason: %v", err)
+				}
+				if tc.status != "failed" && tc.status != "incomplete" && err != nil {
+					t.Fatal(err)
+				}
+				return result
+			}
+			result := run("42")
+			switch tc.status {
+			case "findings":
+				if native.creates != 1 || native.item.State != "Todo" || native.item.Priority == nil || *native.item.Priority != 1 {
+					t.Fatalf("confirmed finding did not create Todo/High: %+v", native.item)
+				}
+				origin, ok := issueorigin.Parse(native.item.Body)
+				if !ok || origin.Fingerprint != issueorigin.ReleaseStabilizationFingerprint(request.Identity.ReleaseSeries) {
+					t.Fatal("missing selected series fingerprint")
+				}
+				digest := sha256.Sum256([]byte(native.project + "\x00" + siteFixtureFingerprint))
+				key := hex.EncodeToString(digest[:])
+				for _, want := range []string{key, request.Identity.Commit, releaseaudit.BundleCommit} {
+					if !strings.Contains(native.item.Body, want) {
+						t.Fatalf("missing finding provenance %q", want)
+					}
+				}
+				urgent := 0
+				native.item.State, native.item.Priority = "Blocked", &urgent
+				native.item.Body += "\nHuman hold: preserve this decision."
+				run("43") // A new stage and REST destination must rediscover the issue.
+				run("43") // A replay must not append a duplicate occurrence.
+				if native.creates != 1 || len(native.comments) != 1 || native.patches != 0 || native.item.State != "Blocked" || *native.item.Priority != 0 {
+					t.Fatalf("fingerprint reuse changed held work: creates=%d comments=%d patches=%d", native.creates, len(native.comments), native.patches)
+				}
+				for _, want := range []string{key, request.Identity.Commit, "/runs/43/", releaseaudit.BundleCommit} {
+					if !strings.Contains(native.comments[0].Body, want) {
+						t.Fatalf("missing occurrence provenance %q", want)
+					}
+				}
+				t.Logf("confirmed: one native Todo/High issue; same fingerprint reused by run 43; replay deduplicated; Blocked/urgent hold preserved; finding checkpoint preceded repair")
+			case "needs_validation", "incomplete":
+				if native.creates != 0 || len(native.comments) != 0 {
+					t.Fatal("nonconfirmed result created repair work")
+				}
+				t.Logf("%s: retained by stage without a repair issue", tc.status)
+			case "failed":
+				if len(result.Infrastructure) == 0 {
+					t.Fatal("missing infrastructure classification")
+				}
+				if tc.deny {
+					if native.item != nil {
+						t.Fatal("failed publication claimed issue success")
+					}
+				} else if tc.failPublication != "" {
+					// The same job already owns a confirmed repair. The pinned
+					// reporter marks that owner as infrastructure on this failure.
+					if native.item == nil || native.creates != 1 || !slices.Contains(native.item.Labels, "ci-infrastructure-failure") {
+						t.Fatal("final checkpoint failure did not mark the existing repair as infrastructure")
+					}
+				} else if native.item == nil || !strings.Contains(native.item.Body, "not a vulnerability finding") || len(result.Findings) != 0 {
+					t.Fatal("provider failure was not reported as infrastructure")
+				}
+				t.Logf("infrastructure failure retained; native reporting denied=%t; never treated as a vulnerability or clean audit", tc.deny)
+			}
+		})
+	}
+	encoded, err := json.Marshal(outcomes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(os.Getenv("DETENT_BUILD_AUDIT_RESULTS"), encoded, 0o600); err != nil {
+		t.Fatal(err)
+	}
+}
