@@ -15,7 +15,7 @@
 
 [phases.setup]
 nixpkgsArchive = 'da6dc0e7b26060f2f71ce3ef7088fb56ee44fa36'
-nixPkgs = ["go_1_27", "nodejs_22"]
+nixPkgs = ["go_1_27", "nodejs_22", "git"] # Git supplies Go's embedded deployment revision.
 
 [phases.install]
 cmds = [
@@ -32,7 +32,7 @@ cmds = [
 cmds = [
     "/root/go/bin/templ generate",
     "npx @tailwindcss/cli -i static/css/input.css -o static/css/output.css --minify",
-    "CGO_ENABLED=0 go build -trimpath -ldflags='-s -w' -o out ./cmd/server",
+    "CGO_ENABLED=0 go build -buildvcs=true -trimpath -ldflags='-s -w' -o out ./cmd/server",
 ]
 
 [start]
