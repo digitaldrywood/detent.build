@@ -158,6 +158,16 @@ func TestPublishedRegistryMatchesCuratedInformationArchitecture(t *testing.T) {
 	}
 }
 
+func TestExternalReferencesOmitRemovedUpstreamDocuments(t *testing.T) {
+	for _, reference := range ExternalReferences {
+		for _, removed := range []string{"docs/release.md", "docs/development.md", "docs/comparison.md"} {
+			if reference.URL == RepositoryBlobURL(removed) {
+				t.Errorf("external reference %q points to removed upstream document %s", reference.Title, removed)
+			}
+		}
+	}
+}
+
 func TestPublishedPagesAreRenderedWithPinnedSources(t *testing.T) {
 	for _, page := range Published.Pages() {
 		t.Run(page.SourcePath, func(t *testing.T) {

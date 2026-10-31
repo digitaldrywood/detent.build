@@ -202,12 +202,68 @@ var Current = Registry{
 		unpublishedDeletion("templates/detent.github_local.yaml"),
 		unpublishedDeletion("templates/detent.non_code_artifact.yaml"),
 		tombstoned("workflow-overlays.md", "/docs/workflow-overlays"),
+		// v0.164.2 -> v0.170.0: f8d2b7571 removed these unpublished sources.
+		deletedIn170("artifact-access-contract.md"),
+		deletedIn170("artifacts-deployment.md"),
+		deletedIn170("branching.md"),
+		deletedIn170("brand/detent-mark-mono.svg"),
+		deletedIn170("brand/detent-mark.svg"),
+		deletedIn170("cloud-attachments.md"),
+		deletedIn170("cloud-domain-migration.md"),
+		deletedIn170("cloud-hub-rfc.md"),
+		deletedIn170("cloud-pilot-evidence.md"),
+		deletedIn170("cloud-workflow-migration.md"),
+		deletedIn170("comparison.md"),
+		deletedIn170("conversation/configuration-map.md"),
+		deletedIn170("conversation/decisions.md"),
+		deletedIn170("conversation/design-inventory.md"),
+		deletedIn170("conversation/operations.md"),
+		deletedIn170("deployment-mcp-fixtures.md"),
+		deletedIn170("design-system/color-review.md"),
+		deletedIn170("design-system/workpad.md"),
+		deletedIn170("development.md"),
+		deletedIn170("examples/detent-cloud-migration-workflow.json"),
+		deletedIn170("github-profiles.md"),
+		deletedIn170("hosted-billing.md"),
+		deletedIn170("hosted-identity.md"),
+		deletedIn170("instruction-activity-audit.md"),
+		deletedIn170("instruction-cost.md"),
+		deletedIn170("local-board-migration.md"),
+		deletedIn170("monthly-budgets.md"),
+		deletedIn170("native-implementation-review-rollout.md"),
+		deletedIn170("native-issue-archive.md"),
+		deletedIn170("redesign-contrast.md"),
+		deletedIn170("release.md"),
+		deletedIn170("scheduled-cloud-diagnostics.md"),
+		deletedIn170("sprite-usage.md"),
+		deletedIn170("sprites-cloud-runners-spike.md"),
+		deletedIn170("structured-workpad-signaling-migration.md"),
+		deletedIn170("superpowers/specs/2026-09-11-merge-lane-operator-invariants-design.md"),
+		deletedIn170("templates/WORKFLOW.issue_field.md"),
+		deletedIn170("templates/WORKFLOW.label.md"),
+		deletedIn170("templates/WORKFLOW.project_v2.md"),
+		deletedIn170("templates/blocked-handoff.md"),
+		deletedIn170("templates/detent-orchestration-workflow.patch"),
+		deletedIn170("templates/detent.issue_field.yaml"),
+		deletedIn170("templates/detent.label.yaml"),
+		deletedIn170("templates/detent.project_v2.yaml"),
+		deletedIn170("templates/onboarding-legacy-paragraphs.md"),
+		deletedIn170("templates/templates.go"),
+		deletedIn170("test-suite-audit.md"),
+		deletedIn170("thread-resume-spike.md"),
+		deletedIn170("validation/test-suite-audit/codex-review-keep.tsv"),
+		deletedIn170("validation/test-suite-audit/codex-verify-25.tsv"),
+		deletedIn170("validation/test-suite-audit/deleted.tsv"),
+		deletedIn170("validation/test-suite-audit/near-duplicates.tsv"),
+		deletedIn170("workflow-layout-migration.md"),
+		deletedIn170("workspace-retention.md"),
 	},
 }
 
 const (
 	release057 = "1543929187369eca2703abd2a655cf86e9e5d83e"
 	release164 = "13d15fec6a142058dd74d1275256bfa261442958"
+	release170 = "57bd43c9b797ff2c012c1fa327b947137935008f"
 )
 
 func published(currentPath, publicPath string) InventoryDecision {
@@ -224,4 +280,8 @@ func tombstoned(previousPath, publicPath string) InventoryDecision {
 
 func unpublishedDeletion(previousPath string) InventoryDecision {
 	return InventoryDecision{FromCommit: release057, ToCommit: release164, Kind: ChangeDeleted, PreviousPath: previousPath, Resolution: ResolutionUnpublished}
+}
+
+func deletedIn170(previousPath string) InventoryDecision {
+	return InventoryDecision{FromCommit: release164, ToCommit: release170, Kind: ChangeDeleted, PreviousPath: previousPath, Resolution: ResolutionUnpublished}
 }

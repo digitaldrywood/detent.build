@@ -1,0 +1,163 @@
+{
+  "tag": "v0.170.0",
+  "tag_object_sha": "f18994cb01119af8e490d496a612d8a7e906e4fd",
+  "commit_sha": "57bd43c9b797ff2c012c1fa327b947137935008f",
+  "files": [
+    {
+      "path": "admission.md"
+    },
+    {
+      "path": "api-mcp-setup.md"
+    },
+    {
+      "path": "cli.md"
+    },
+    {
+      "path": "cloud-onboarding.md"
+    },
+    {
+      "path": "concepts.md"
+    },
+    {
+      "path": "config.md"
+    },
+    {
+      "path": "dashboard-api.md"
+    },
+    {
+      "path": "dependency-workflows.md"
+    },
+    {
+      "path": "design-system/README.md"
+    },
+    {
+      "path": "design-system/accessibility.md"
+    },
+    {
+      "path": "design-system/brand.md"
+    },
+    {
+      "path": "design-system/components.md"
+    },
+    {
+      "path": "design-system/contributing.md"
+    },
+    {
+      "path": "design-system/element-catalog.md"
+    },
+    {
+      "path": "design-system/foundations.md"
+    },
+    {
+      "path": "design-system/images/button.jpg"
+    },
+    {
+      "path": "design-system/images/composer.jpg"
+    },
+    {
+      "path": "design-system/images/conversation-timeline.jpg"
+    },
+    {
+      "path": "design-system/images/foundations-type.jpg"
+    },
+    {
+      "path": "design-system/images/gallery-overview-dark.jpg"
+    },
+    {
+      "path": "design-system/images/gallery-overview-light.jpg"
+    },
+    {
+      "path": "design-system/images/menu-open.jpg"
+    },
+    {
+      "path": "design-system/images/sidebar-390.jpg"
+    },
+    {
+      "path": "design-system/images/work-board.jpg"
+    },
+    {
+      "path": "design-system/patterns.md"
+    },
+    {
+      "path": "diagnosis.md"
+    },
+    {
+      "path": "examples/artifacts/Caddyfile"
+    },
+    {
+      "path": "examples/artifacts/detent-artifacts.service"
+    },
+    {
+      "path": "examples/artifacts/service.json"
+    },
+    {
+      "path": "examples/cloud/connection.conf"
+    },
+    {
+      "path": "examples/cloud/nginx-check.conf"
+    },
+    {
+      "path": "examples/cloud/production.conf"
+    },
+    {
+      "path": "examples/cloud/staging.conf"
+    },
+    {
+      "path": "examples/hub/Caddyfile"
+    },
+    {
+      "path": "examples/hub/README.md"
+    },
+    {
+      "path": "examples/hub/com.digitaldrywood.detent.hub.plist"
+    },
+    {
+      "path": "examples/hub/detent-hub.service"
+    },
+    {
+      "path": "hosted-allowances.md"
+    },
+    {
+      "path": "hub-api.md"
+    },
+    {
+      "path": "hub-local-migration.md"
+    },
+    {
+      "path": "hub-self-hosting.md"
+    },
+    {
+      "path": "invariants.md"
+    },
+    {
+      "path": "local-models-ollama.md"
+    },
+    {
+      "path": "mcp-capabilities.md"
+    },
+    {
+      "path": "native-review.md"
+    },
+    {
+      "path": "operations.md"
+    },
+    {
+      "path": "pi-agent.md"
+    },
+    {
+      "path": "project-delivery.md"
+    },
+    {
+      "path": "runner-capacity.md"
+    },
+    {
+      "path": "runner-usage.md"
+    },
+    {
+      "path": "sprite-runners.md"
+    },
+    {
+      "path": "webhook-freshness.md"
+    }
+  ]
+}

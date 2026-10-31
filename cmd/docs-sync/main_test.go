@@ -469,6 +469,39 @@ func TestValidateInventoryChangesRejectsUnclassifiedChange(t *testing.T) {
 	}
 }
 
+func TestPinnedInventoryCrossesUpstreamCleanup(t *testing.T) {
+	previous, exists, err := readManifest("../../internal/docs/manifest.json")
+	if err != nil || !exists {
+		t.Fatalf("read pinned manifest: exists=%v, error=%v", exists, err)
+	}
+	incoming, exists, err := readManifest("testdata/v0.170.0-inventory.json")
+	if err != nil || !exists {
+		t.Fatalf("read cleanup fixture: exists=%v, error=%v", exists, err)
+	}
+	decisions := decisionsFor(previous.CommitSHA, incoming.CommitSHA, docsregistry.Current.Inventory)
+	changes, err := inventoryChanges(previous.Files, incoming.Files, decisions)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(changes) != 54 {
+		t.Fatalf("inventory changes = %d, want 54 deletions from v0.164.2", len(changes))
+	}
+	for _, change := range changes {
+		if change.Kind != docsregistry.ChangeDeleted {
+			t.Errorf("unexpected non-deletion: %#v", change)
+		}
+	}
+	if err := validateInventoryChanges(changes, nil, docsregistry.Current); err == nil {
+		t.Fatal("cleanup accepted without inventory decisions")
+	}
+	if err := validateInventoryChanges(changes, decisions, docsregistry.Current); err != nil {
+		t.Fatalf("cleanup transition rejected: %v", err)
+	}
+	if err := validatePublishedSources(incoming.Files, docsregistry.Current); err != nil {
+		t.Fatalf("cleanup removes a published source: %v", err)
+	}
+}
+
 func TestValidateInventoryDecisionRoutePolicies(t *testing.T) {
 	registry := docsregistry.Registry{
 		Pages: []docsregistry.Page{

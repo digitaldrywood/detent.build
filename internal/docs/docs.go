@@ -82,10 +82,7 @@ type Catalog struct {
 }
 
 var ExternalReferences = []ExternalReference{
-	{"Release process", RepositoryBlobURL("docs/release.md")},
-	{"Development", RepositoryBlobURL("docs/development.md")},
 	{"Contribution guide", RepositoryBlobURL("CONTRIBUTING.md")},
-	{"Comparison", RepositoryBlobURL("docs/comparison.md")},
 }
 
 var Published = mustLoadCatalog(Files, SiteFiles, docsregistry.Current)
